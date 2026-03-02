@@ -43,15 +43,17 @@ class StoreController extends Controller
         ->select(
             'ssm.product_id',
             'p.name as product_name',
+            'p.default_fee_nominal',
             DB::raw("SUM(ssm.quantity) as total_qty")
         )
         ->where('ssm.store_id', $store->id)
-        ->groupBy('ssm.product_id', 'p.name')
+        ->groupBy('ssm.product_id', 'p.name', 'p.default_fee_nominal')
         ->having('total_qty', '>', 0)
         ->get();
 
     $products = [];
     $totalQty = 0;
+    $totalEstimasiFee = 0;
 
     foreach ($stockData as $row) {
 
@@ -61,6 +63,8 @@ class StoreController extends Controller
 
         $qty = (int) $row->total_qty;
         $price = (float) ($storePrice ?? 0);
+        $feeNominal = (float) $row->default_fee_nominal;
+        $estimasiFee = $qty * $feeNominal;
 
         $products[] = [
             'product_id' => $row->product_id,
@@ -68,11 +72,14 @@ class StoreController extends Controller
             'qty'        => $qty,
             'price'      => $price,
             'subtotal'   => $qty * $price,
+            'fee_nominal'  => $feeNominal,
+            'estimasi_fee' => $estimasiFee,
         ];
 
         $totalQty += $qty;
+        $totalEstimasiFee += $estimasiFee;
     }
-
+    $store->total_estimasi_fee = $totalEstimasiFee;
     $store->products_stock = $products;
     $store->total_stock_qty = $totalQty;
 }

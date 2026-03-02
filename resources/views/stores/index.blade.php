@@ -55,6 +55,7 @@
                 @php
                     $globalProducts = [];
                     $globalTotalValue = 0;
+                    $globalEstimasiFee = 0;
 
                     foreach ($stores as $store) {
                         if (!empty($store->products_stock)) {
@@ -68,6 +69,7 @@
 
                                 // Tambahkan subtotal ke total global
                                 $globalTotalValue += $product['subtotal'] ?? 0;
+                                $globalEstimasiFee += $product['estimasi_fee'] ?? 0;
                             }
                         }
                     }
@@ -87,6 +89,11 @@
                                 </li>
                             @endforeach
                         </ul>
+
+                        <div class="mt-4 pt-3 border-t text-sm font-semibold text-green-700 flex justify-between">
+                           <span>Estimasi Fee Maksimal Jika Stok Habis</span>
+                           <span>Rp {{ number_format($globalEstimasiFee,0,',','.') }}</span>
+                    </div>
 
                         {{-- TOTAL NILAI RUPIAH --}}
                         <div class="mt-4 pt-3 border-t">

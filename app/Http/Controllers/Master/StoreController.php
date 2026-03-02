@@ -15,10 +15,10 @@ class StoreController extends Controller
     public function index(Request $request)
     {
         // =====================================================
-        // WAJIB PILIH SALES DULU (KHUSUS ADMIN)
+        // WAJIB PILIH SALES DULU (KHUSUS ADMIN - SESSION BASED)
         // =====================================================
         if (auth()->user()->role === 'admin' && !$request->filled('sales_id')) {
-            return redirect()->route('visits.choose_sales');
+        return redirect()->route('visits.choose_sales');
         }
 
         $query = Store::with('area');
@@ -125,11 +125,6 @@ class StoreController extends Controller
             ->with('success', 'Toko berhasil ditambahkan dan harga otomatis dibuat.');
     }
 
-    /**
-     * ============================
-     * EDIT STORE
-     * ============================
-     */
     public function edit(Store $store)
     {
         $areas = Area::where('is_active', 1)
@@ -139,11 +134,6 @@ class StoreController extends Controller
         return view('stores.edit', compact('store', 'areas'));
     }
 
-    /**
-     * ============================
-     * UPDATE STORE
-     * ============================
-     */
     public function update(Request $request, Store $store)
     {
         if (auth()->user()->role === 'admin') {
@@ -172,7 +162,6 @@ class StoreController extends Controller
 
         } else {
 
-            // SALES hanya boleh pindah area
             $request->validate([
                 'area_id' => 'required|exists:areas,id',
             ]);

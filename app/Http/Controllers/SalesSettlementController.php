@@ -305,6 +305,34 @@ class SalesSettlementController extends Controller
     }
 
 
+        public function storeCost(Request $request, SalesSettlement $settlement)
+    {
+        $request->validate([
+            'jenis_biaya' => 'required|in:bensin,parkir,makan,tol,lain_lain',
+            'nominal'     => 'required|numeric|min:0.01',
+            'keterangan'  => 'nullable|string'
+        ]);
+
+        // RULE BISNIS
+        if ($settlement->status === 'closed' && auth()->user()->role !== 'admin') {
+            abort(403, 'Settlement sudah ditutup. Hanya admin yang bisa menambahkan biaya.');
+        }
+
+        DB::transaction(function () use ($request, $settlement) {
+
+            SalesSettlementCostDetail::create([
+                'sales_settlement_id' => $settlement->id,
+                'jenis_biaya'         => $request->jenis_biaya,
+                'nominal'             => $request->nominal,
+                'keterangan'          => $request->keterangan,
+            ]);
+
+        });
+
+        return back()->with('success', 'Biaya operasional berhasil ditambahkan.');
+    }
+
+
     public function reopen(SalesSettlement $settlement)
     {
         DB::transaction(function () use ($settlement) {

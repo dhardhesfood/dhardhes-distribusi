@@ -16,6 +16,7 @@
                 @else
                     <div class="space-y-3">
                         @foreach($salesUsers as $user)
+
                             <a href="{{ route('stores.index', ['sales_id' => $user->id]) }}"
                                class="block p-4 border rounded hover:bg-gray-50 transition">
                                 <div class="font-semibold">
@@ -25,6 +26,7 @@
                                     Role: {{ $user->role }}
                                 </div>
                             </a>
+
                         @endforeach
                     </div>
                 @endif

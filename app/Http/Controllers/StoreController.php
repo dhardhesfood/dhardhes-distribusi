@@ -10,8 +10,8 @@ class StoreController extends Controller
 {
     public function index(Request $request)
     {
-        // 🔥 WAJIB pilih sales dulu untuk admin
-        if (auth()->user()->role === 'admin' && !$request->has('sales_id')) {
+        // 🔥 WAJIB pilih sales dulu untuk admin (berdasarkan session, bukan query)
+        if (auth()->user()->role === 'admin' && !session()->has('active_sales_id')) {
             return redirect()->route('visits.choose_sales');
         }
 

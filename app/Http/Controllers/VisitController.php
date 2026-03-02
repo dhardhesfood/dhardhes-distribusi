@@ -75,25 +75,18 @@ class VisitController extends Controller
 
     return view('visits.choose-sales', compact('salesUsers'));
 }
-    public function create(Request $request, $storeId)
-    {
-        $store = Store::findOrFail($storeId);
 
-        // Tentukan sales target
-        if (auth()->user()->role === 'admin') {
+    public function create(Request $request, $storeId)   
+{
+    $store = Store::findOrFail($storeId);
 
-    $targetUserId = $request->input('sales_id');
+    // Tentukan sales target
+    if (auth()->user()->role === 'admin') {
+
+    $targetUserId = $request->query('sales_id');
 
     if (!$targetUserId) {
-        abort(422, 'Sales harus dipilih.');
-    }
-
-    $targetUser = \App\Models\User::where('id', $targetUserId)
-        ->whereIn('role', ['sales','admin'])
-        ->first();
-
-    if (!$targetUser) {
-        abort(422, 'User sales tidak valid.');
+        return redirect()->route('visits.choose_sales');
     }
 
 } else {
@@ -134,8 +127,8 @@ if (!$session) {
             }
 
             return redirect()
-                ->route('stores.index')
-                ->with('error', $e->getMessage());
+            ->route('stores.index', ['sales_id' => $targetUserId])
+            ->with('error', $e->getMessage());
         }
     }
 

@@ -89,6 +89,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/stores/create', [StoreController::class, 'create'])
         ->name('stores.create');
 
+    Route::get('/stores/{store}/edit', [StoreController::class, 'edit'])
+    ->name('stores.edit');
+
+    Route::put('/stores/{store}', [StoreController::class, 'update'])
+    ->name('stores.update');    
+
     Route::post('/stores', [StoreController::class, 'store'])
         ->name('stores.store');
 
@@ -100,8 +106,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/areas', [AreaController::class, 'index'])
         ->name('areas.index');
 
-    Route::post('/areas', [AreaController::class, 'store'])
-        ->name('areas.store');
 
     /*
     |--------------------------------------------------------------------------
@@ -258,6 +262,18 @@ Route::middleware(['auth','admin'])->group(function () {
 
     Route::get('/areas/create', [AreaController::class, 'create'])
         ->name('areas.create');
+
+    Route::get('/areas/{area}/edit', [AreaController::class, 'edit'])
+    ->name('areas.edit');
+
+    Route::put('/areas/{area}', [AreaController::class, 'update'])
+    ->name('areas.update');    
+
+    Route::post('/areas', [AreaController::class, 'store'])
+    ->name('areas.store');
+    
+    Route::delete('/areas/{area}', [AreaController::class, 'destroy'])
+    ->name('areas.destroy');
 
     Route::resource('products', ProductController::class);
 

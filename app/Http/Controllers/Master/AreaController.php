@@ -32,49 +32,65 @@ class AreaController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:areas,name',
-            'code' => 'nullable|string|max:255|unique:areas,code',
+            'name'        => 'required|string|max:255|unique:areas,name',
+            'code'        => 'nullable|string|max:255|unique:areas,code',
             'description' => 'nullable|string',
-            'is_active' => 'nullable|boolean',
+            'is_active'   => 'nullable|boolean',
         ]);
 
         $validated['is_active'] = $request->has('is_active') ? 1 : 0;
 
         Area::create($validated);
 
-        return redirect()->route('areas.index')
+        return redirect()
+            ->route('areas.index')
             ->with('success', 'Area berhasil ditambahkan.');
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Area $area)
     {
-        //
+        return view('areas.edit', compact('area'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Area $area)
     {
-        //
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255|unique:areas,name,' . $area->id,
+            'code'        => 'nullable|string|max:255|unique:areas,code,' . $area->id,
+            'description' => 'nullable|string',
+            'is_active'   => 'nullable|boolean',
+        ]);
+
+        $validated['is_active'] = $request->has('is_active') ? 1 : 0;
+
+        $area->update($validated);
+
+        return redirect()
+            ->route('areas.index')
+            ->with('success', 'Area berhasil diperbarui.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Area $area)
     {
-        //
+        if ($area->stores()->exists()) {
+            return redirect()
+                ->route('areas.index')
+                ->with('error', 'Area tidak bisa dihapus karena masih memiliki toko.');
+        }
+
+        $area->delete();
+
+        return redirect()
+            ->route('areas.index')
+            ->with('success', 'Area berhasil dihapus.');
     }
 }

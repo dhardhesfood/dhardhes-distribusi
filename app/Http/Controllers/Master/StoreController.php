@@ -125,6 +125,68 @@ class StoreController extends Controller
             ->with('success', 'Toko berhasil ditambahkan dan harga otomatis dibuat.');
     }
 
+    /**
+     * ============================
+     * EDIT STORE
+     * ============================
+     */
+    public function edit(Store $store)
+    {
+        $areas = Area::where('is_active', 1)
+            ->orderBy('name')
+            ->get();
+
+        return view('stores.edit', compact('store', 'areas'));
+    }
+
+    /**
+     * ============================
+     * UPDATE STORE
+     * ============================
+     */
+    public function update(Request $request, Store $store)
+    {
+        if (auth()->user()->role === 'admin') {
+
+            $request->validate([
+                'area_id'             => 'required|exists:areas,id',
+                'name'                => 'required|string|max:255',
+                'owner_name'          => 'nullable|string|max:255',
+                'phone'               => 'nullable|string|max:50',
+                'address'             => 'nullable|string',
+                'city'                => 'nullable|string|max:100',
+                'visit_interval_days' => 'required|integer|min:1',
+                'is_active'           => 'nullable|boolean',
+            ]);
+
+            $store->update([
+                'area_id'             => $request->area_id,
+                'name'                => $request->name,
+                'owner_name'          => $request->owner_name,
+                'phone'               => $request->phone,
+                'address'             => $request->address,
+                'city'                => $request->city,
+                'visit_interval_days' => $request->visit_interval_days,
+                'is_active'           => $request->boolean('is_active'),
+            ]);
+
+        } else {
+
+            // SALES hanya boleh pindah area
+            $request->validate([
+                'area_id' => 'required|exists:areas,id',
+            ]);
+
+            $store->update([
+                'area_id' => $request->area_id,
+            ]);
+        }
+
+        return redirect()
+            ->route('stores.index')
+            ->with('success', 'Toko berhasil diperbarui.');
+    }
+
     public function editPrices(Store $store)
     {
         $this->syncStorePrices($store);
@@ -187,6 +249,10 @@ class StoreController extends Controller
 
     public function destroy(string $id)
     {
+        if (auth()->user()->role !== 'admin') {
+            abort(403);
+        }
+
         $store = Store::findOrFail($id);
         $store->delete();
 

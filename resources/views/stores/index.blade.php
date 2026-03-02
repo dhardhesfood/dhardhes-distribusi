@@ -155,6 +155,13 @@
                                 </a>
                             @endif
 
+                            {{-- EDIT (Admin & Sales) --}}
+                            <a href="{{ route('stores.edit', $store->id) }}"
+                               class="inline-flex justify-center items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-xs sm:text-sm font-medium rounded-md shadow-md transition whitespace-nowrap">
+                                Edit
+                            </a>
+
+                            {{-- ADMIN ONLY ACTIONS --}}
                             @if(auth()->user()->role === 'admin')
 
                                 <a href="{{ route('stores.prices.edit', $store->id) }}"

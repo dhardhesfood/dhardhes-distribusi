@@ -54,14 +54,20 @@
 
                 @php
                     $globalProducts = [];
+                    $globalTotalValue = 0;
 
                     foreach ($stores as $store) {
                         if (!empty($store->products_stock)) {
                             foreach ($store->products_stock as $product) {
+
                                 if (!isset($globalProducts[$product['name']])) {
                                     $globalProducts[$product['name']] = 0;
                                 }
+
                                 $globalProducts[$product['name']] += $product['qty'];
+
+                                // Tambahkan subtotal ke total global
+                                $globalTotalValue += $product['subtotal'] ?? 0;
                             }
                         }
                     }
@@ -81,6 +87,16 @@
                                 </li>
                             @endforeach
                         </ul>
+
+                        {{-- TOTAL NILAI RUPIAH --}}
+                        <div class="mt-4 pt-3 border-t">
+                            <div class="flex justify-between text-sm font-semibold text-gray-800">
+                                <span>Total Nilai Rupiah Stok (Sesuai Harga Toko)</span>
+                                <span>
+                                    Rp {{ number_format($globalTotalValue, 0, ',', '.') }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 @endif
 
@@ -117,7 +133,9 @@
                                         @foreach($store->products_stock as $product)
                                             <li class="flex justify-between border-b pb-1">
                                                 <span>{{ $product['name'] }}</span>
-                                                <span class="font-semibold">{{ $product['qty'] }}</span>
+                                                <span class="font-semibold">
+                                                    {{ $product['qty'] }}
+                                                </span>
                                             </li>
                                         @endforeach
                                     </ul>
@@ -139,7 +157,6 @@
 
                         <div class="flex flex-col sm:flex-row gap-2 items-end">
 
-                            {{-- KUNJUNGAN --}}
                             @if(request('sales_id'))
                                 <a href="{{ route('visits.create', [
                                     'store' => $store->id,
@@ -155,13 +172,11 @@
                                 </a>
                             @endif
 
-                            {{-- EDIT (Admin & Sales) --}}
                             <a href="{{ route('stores.edit', $store->id) }}"
                                class="inline-flex justify-center items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-xs sm:text-sm font-medium rounded-md shadow-md transition whitespace-nowrap">
                                 Edit
                             </a>
 
-                            {{-- ADMIN ONLY ACTIONS --}}
                             @if(auth()->user()->role === 'admin')
 
                                 <a href="{{ route('stores.prices.edit', $store->id) }}"

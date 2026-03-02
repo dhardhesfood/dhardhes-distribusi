@@ -38,33 +38,44 @@ class StoreController extends Controller
         // ==============================
         foreach ($stores as $store) {
 
-            $stockData = DB::table('store_stock_movements as ssm')
-                ->join('products as p', 'p.id', '=', 'ssm.product_id')
-                ->select(
-                    'ssm.product_id',
-                    'p.name as product_name',
-                    DB::raw("SUM(ssm.quantity) as total_qty")
-                )
-                ->where('ssm.store_id', $store->id)
-                ->groupBy('ssm.product_id', 'p.name')
-                ->having('total_qty', '>', 0)
-                ->get();
+    $stockData = DB::table('store_stock_movements as ssm')
+        ->join('products as p', 'p.id', '=', 'ssm.product_id')
+        ->select(
+            'ssm.product_id',
+            'p.name as product_name',
+            DB::raw("SUM(ssm.quantity) as total_qty")
+        )
+        ->where('ssm.store_id', $store->id)
+        ->groupBy('ssm.product_id', 'p.name')
+        ->having('total_qty', '>', 0)
+        ->get();
 
-            $products = [];
-            $totalQty = 0;
+    $products = [];
+    $totalQty = 0;
 
-            foreach ($stockData as $row) {
-                $products[] = [
-                    'name' => $row->product_name,
-                    'qty'  => (int) $row->total_qty,
-                ];
+    foreach ($stockData as $row) {
 
-                $totalQty += (int) $row->total_qty;
-            }
+        $storePrice = StorePrice::where('store_id', $store->id)
+            ->where('product_id', $row->product_id)
+            ->value('price');
 
-            $store->products_stock = $products;
-            $store->total_stock_qty = $totalQty;
-        }
+        $qty = (int) $row->total_qty;
+        $price = (float) ($storePrice ?? 0);
+
+        $products[] = [
+            'product_id' => $row->product_id,
+            'name'       => $row->product_name,
+            'qty'        => $qty,
+            'price'      => $price,
+            'subtotal'   => $qty * $price,
+        ];
+
+        $totalQty += $qty;
+    }
+
+    $store->products_stock = $products;
+    $store->total_stock_qty = $totalQty;
+}
 
         $areas = Area::withCount('stores')
             ->orderBy('name')

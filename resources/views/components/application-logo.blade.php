@@ -1,0 +1,1 @@
+<img src="{{ asset('logo.svg') }}" {{ $attributes->merge(['class' => 'block h-9 w-auto']) }} alt="Dhardhes Logo">

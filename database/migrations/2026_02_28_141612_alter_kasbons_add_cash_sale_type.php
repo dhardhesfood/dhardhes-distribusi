@@ -1,0 +1,38 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        DB::statement("
+            ALTER TABLE kasbons 
+            MODIFY type ENUM(
+                'manual',
+                'shortage',
+                'stock_conversion',
+                'cash_sale'
+            ) NOT NULL DEFAULT 'manual'
+        ");
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        DB::statement("
+            ALTER TABLE kasbons 
+            MODIFY type ENUM(
+                'manual',
+                'shortage',
+                'stock_conversion'
+            ) NOT NULL DEFAULT 'manual'
+        ");
+    }
+};

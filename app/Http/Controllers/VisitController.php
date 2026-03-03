@@ -389,4 +389,38 @@ $visit->update($updateData);
             ->route('visits.show', $visit->id)
             ->with('success', 'Visit berhasil di-approve.');
     }
+        /*
+    |--------------------------------------------------------------------------
+    | REOPEN VISIT (ADMIN ONLY)
+    |--------------------------------------------------------------------------
+    */
+
+    public function reopen($visitId)
+    {
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Hanya admin yang dapat membuka kembali visit.');
+        }
+
+        $visit = Visit::with('salesTransaction')
+            ->where('id', $visitId)
+            ->firstOrFail();
+
+        // Cek settlement belum closed
+        if (SalesSettlement::isClosed($visit->user_id, $visit->visit_date)) {
+            abort(403, 'Settlement sudah ditutup. Visit tidak dapat dibuka kembali.');
+        }
+
+        try {
+
+            $this->visitService->rollbackVisit($visit);
+
+        } catch (\Exception $e) {
+
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('visits.edit', $visit->id)
+            ->with('success', 'Visit berhasil dibuka kembali.');
+    }
 }

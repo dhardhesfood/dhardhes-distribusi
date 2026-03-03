@@ -9,31 +9,87 @@
                 'completed' => 'Selesai (Menunggu Approve)',
                 'approved'  => 'Disetujui'
             ];
-        @endphp
+
+            $isAdmin = auth()->user()->role === 'admin';
+
+            $canReopen = false;
+
+            if ($isAdmin 
+            && in_array($visit->status, ['completed','approved'])
+            && !\App\Models\SalesSettlement::isClosed($visit->user_id, $visit->visit_date)
+            ) {
+
+            $hasPayment = false;
+
+            $transaction = $visit->salesTransaction;
+
+            if ($transaction) {
+
+            $receivable = \App\Models\Receivable::where(
+            'sales_transaction_id',
+            $transaction->id
+            )->first();
+
+            if ($receivable && $receivable->payments()->exists()) {
+            $hasPayment = true;
+            }
+           }
+
+           if (!$hasPayment) {
+            $canReopen = true;
+         }
+       }
+
+    @endphp
 
         <div class="mb-6 text-sm flex justify-between items-start">
 
             <div>
-                <p>
-                    Status:
-                    <strong class="capitalize">
-                        {{ $statusText[$visit->status] ?? $visit->status }}
-                    </strong>
+              <p>
+                Toko:
+                <strong>
+                {{ optional($visit->store)->name ?? '-' }}
+                </strong>
                 </p>
+
+              <p>
+                Status:
+                 <strong class="capitalize">
+                {{ $statusText[$visit->status] ?? $visit->status }}
+                </strong>
+                </p>
+
                 <p>Tanggal: {{ $visit->visit_date }}</p>
                 <p>Next Visit: {{ $visit->next_visit_date ?? '-' }}</p>
             </div>
 
-            {{-- TOMBOL APPROVE --}}
-            @if(auth()->user()->role === 'admin' && $visit->status === 'completed')
-                <form method="POST" action="{{ route('visits.approve', $visit->id) }}">
-                    @csrf
-                    <button type="submit"
-                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow">
-                        Approve Visit
-                    </button>
-                </form>
-            @endif
+            <div class="flex gap-3">
+
+                {{-- TOMBOL APPROVE --}}
+                @if($isAdmin && $visit->status === 'completed')
+                    <form method="POST" action="{{ route('visits.approve', $visit->id) }}">
+                        @csrf
+                        <button type="submit"
+                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow">
+                            Approve Visit
+                        </button>
+                    </form>
+                @endif
+
+                {{-- TOMBOL REOPEN --}}
+                @if($canReopen)
+                    <form method="POST"
+                          action="{{ route('visits.reopen', $visit->id) }}"
+                          onsubmit="return confirm('Yakin ingin membuka kembali visit ini? Semua transaksi akan direset.');">
+                        @csrf
+                        <button type="submit"
+                            class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded shadow">
+                            Reopen Visit
+                        </button>
+                    </form>
+                @endif
+
+            </div>
 
         </div>
 
@@ -127,14 +183,14 @@
             <div class="flex justify-between">
                 <span>Total Fee</span>
                 <span>
-                    Rp {{ number_format($visit->salesTransaction->total_fee ?? 0, 0, ',', '.') }}
+                    Rp {{ number_format(optional($visit->salesTransaction)->total_fee ?? 0, 0, ',', '.') }}
                 </span>
             </div>
 
             <div class="flex justify-between font-bold text-lg mt-2">
                 <span>Total Tagihan</span>
                 <span>
-                    Rp {{ number_format($visit->salesTransaction->total_amount ?? 0, 0, ',', '.') }}
+                    Rp {{ number_format(optional($visit->salesTransaction)->total_amount ?? 0, 0, ',', '.') }}
                 </span>
             </div>
 

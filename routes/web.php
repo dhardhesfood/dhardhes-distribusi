@@ -248,6 +248,9 @@ Route::middleware(['auth','admin'])->group(function () {
     Route::post('/visits/{visit}/approve', [VisitController::class, 'approve'])
         ->name('visits.approve');
 
+    Route::post('/visits/{visit}/reopen', [VisitController::class, 'reopen'])
+    ->name('visits.reopen');    
+
     Route::delete('/visits/{visit}', [VisitController::class, 'destroy'])
         ->name('visits.destroy');
 
@@ -309,6 +312,20 @@ Route::middleware(['auth','admin'])->group(function () {
 
     Route::get('/reports/kpi', [ReportMarginController::class, 'kpi'])
         ->name('reports.kpi');
+        /*
+|--------------------------------------------------------------------------
+| STOCK OPNAME (ADMIN ONLY)
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/stores/{store}/stock-opname', [\App\Http\Controllers\StockOpnameController::class, 'create'])
+    ->name('stock-opnames.create');
+
+Route::post('/stores/{store}/stock-opname', [\App\Http\Controllers\StockOpnameController::class, 'store'])
+    ->name('stock-opnames.store');
+
+Route::get('/stock-opnames/{stockOpname}', [\App\Http\Controllers\StockOpnameController::class, 'show'])
+    ->name('stock-opnames.show');
 
 
     /*

@@ -67,7 +67,6 @@
 
                                 $globalProducts[$product['name']] += $product['qty'];
 
-                                // Tambahkan subtotal ke total global
                                 $globalTotalValue += $product['subtotal'] ?? 0;
                                 $globalEstimasiFee += $product['estimasi_fee'] ?? 0;
                             }
@@ -93,9 +92,8 @@
                         <div class="mt-4 pt-3 border-t text-sm font-semibold text-green-700 flex justify-between">
                            <span>Estimasi Fee Maksimal Jika Stok Habis</span>
                            <span>Rp {{ number_format($globalEstimasiFee,0,',','.') }}</span>
-                    </div>
+                        </div>
 
-                        {{-- TOTAL NILAI RUPIAH --}}
                         <div class="mt-4 pt-3 border-t">
                             <div class="flex justify-between text-sm font-semibold text-gray-800">
                                 <span>Total Nilai Rupiah Stok (Sesuai Harga Toko)</span>
@@ -189,6 +187,12 @@
                                 <a href="{{ route('stores.prices.edit', $store->id) }}"
                                    class="inline-flex justify-center items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-medium rounded-md shadow-md transition whitespace-nowrap">
                                     Kelola Harga
+                                </a>
+
+                                {{-- 🔥 TAMBAHAN BARU: PENYESUAIAN STOK --}}
+                                <a href="{{ route('stock-opnames.create', $store->id) }}"
+                                   class="inline-flex justify-center items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-medium rounded-md shadow-md transition whitespace-nowrap">
+                                    Penyesuaian Stok
                                 </a>
 
                                 <form action="{{ route('stores.destroy', $store->id) }}"

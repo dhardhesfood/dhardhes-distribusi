@@ -293,4 +293,85 @@ class VisitService
             ]);
         });
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ROLLBACK VISIT (ADMIN SAFE REOPEN)
+    |--------------------------------------------------------------------------
+    */
+
+    public function rollbackVisit(Visit $visit)
+    {
+        DB::transaction(function () use ($visit) {
+
+            if ($visit->status !== 'completed' && $visit->status !== 'approved') {
+                throw new \Exception("Visit belum bisa di-rollback.");
+            }
+
+            $transaction = $visit->salesTransaction;
+
+            if (!$transaction) {
+                throw new \Exception("Sales transaction tidak ditemukan.");
+            }
+
+            // Cek apakah sudah ada pembayaran piutang
+            $receivable = \App\Models\Receivable::where(
+                'sales_transaction_id',
+                $transaction->id
+            )->first();
+
+            if ($receivable && $receivable->payments()->exists()) {
+                throw new \Exception("Visit tidak bisa diubah karena sudah ada pembayaran piutang.");
+            }
+
+            /*
+            |-----------------------------------------
+            | Hapus ledger stok toko
+            |-----------------------------------------
+            */
+            StoreStockMovement::where('reference_id', $visit->id)
+                ->where('reference_type', 'visit')
+                ->delete();
+
+            /*
+            |-----------------------------------------
+            | Hapus ledger stok sales
+            |-----------------------------------------
+            */
+            StockMovement::where('reference_id', $visit->id)
+                ->where('reference_type', 'visit')
+                ->delete();
+
+            /*
+            |-----------------------------------------
+            | Hapus sales transaction
+            | (items & receivable cascade otomatis)
+            |-----------------------------------------
+            */
+            $transaction->delete();
+
+            /*
+            |-----------------------------------------
+            | Reset visit item
+            |-----------------------------------------
+            */
+            foreach ($visit->items as $item) {
+                $item->update([
+                    'sold_qty' => 0,
+                ]);
+            }
+
+            /*
+            |-----------------------------------------
+            | Kembalikan status visit
+            |-----------------------------------------
+            */
+            $visit->update([
+                'status' => 'draft',
+                'approved_at' => null,
+                'approved_by' => null,
+            ]);
+        });    
+    }
+
 }

@@ -209,75 +209,92 @@ class SalesStockSessionController extends Controller
     }
 
     public function close(Request $request, $id)
-    {
-        if (!in_array(auth()->user()->role, ['admin','admin_gudang'])) {
-            abort(403);
-        }
+{
+    if (!in_array(auth()->user()->role, ['admin','admin_gudang'])) {
+        abort(403);
+    }
 
-        $session = SalesStockSession::with('items.product')
-            ->where('status','open')
-            ->findOrFail($id);
+    $session = SalesStockSession::with('items.product')
+        ->where('status','open')
+        ->findOrFail($id);
 
-        DB::transaction(function () use ($request, $session) {
+    DB::transaction(function () use ($request, $session) {
 
-            $hasMinus = false;
+        $hasMinus = false;
 
-            foreach ($session->items as $item) {
+        foreach ($session->items as $item) {
 
-                $systemRemaining = StockMovement::where('product_id', $item->product_id)
-                    ->where('session_id', $session->id)
-                    ->sum('quantity');
+            $systemRemaining = StockMovement::where('product_id', $item->product_id)
+                ->where('session_id', $session->id)
+                ->sum('quantity');
 
-                $physicalRemaining = (int) ($request->physical_qty[$item->product_id] ?? 0);
-                $difference        = $physicalRemaining - $systemRemaining;
+            $physicalRemaining = (int) ($request->physical_qty[$item->product_id] ?? 0);
+            $difference        = $physicalRemaining - $systemRemaining;
 
-                $item->update([
-                    'system_remaining_qty'   => $systemRemaining,
-                    'physical_remaining_qty' => $physicalRemaining,
-                    'difference_qty'         => $difference,
+            $item->update([
+                'system_remaining_qty'   => $systemRemaining,
+                'physical_remaining_qty' => $physicalRemaining,
+                'difference_qty'         => $difference,
+            ]);
+
+            // 🔴 MINUS → KASBON
+            if ($difference < 0) {
+
+                $hasMinus = true;
+
+                $minusQty       = abs($difference);
+                $warehousePrice = (float) $item->product->warehouse_price;
+                $amountTotal    = $minusQty * $warehousePrice;
+
+                Kasbon::create([
+                    'user_id'        => $session->user_id,
+                    'created_by'     => auth()->id(),
+                    'amount_total'   => $amountTotal,
+                    'type'           => 'shortage',
+                    'reference_id'   => $session->id,
+                    'reference_type' => 'sales_stock_session',
+                    'description'    => 'Stok minus session ID '.$session->id.' - '.$item->product->name,
                 ]);
-
-                if ($difference < 0) {
-
-                    $hasMinus = true;
-
-                    $minusQty       = abs($difference);
-                    $warehousePrice = (float) $item->product->warehouse_price;
-                    $amountTotal    = $minusQty * $warehousePrice;
-
-                    Kasbon::create([
-                        'user_id'       => $session->user_id,
-                        'created_by'    => auth()->id(),
-                        'amount_total'  => $amountTotal,
-                        'type'          => 'shortage',
-                        'reference_id'  => $session->id,
-                        'reference_type'=> 'sales_stock_session',
-                        'description'   => 'Stok minus session ID '.$session->id.' - '.$item->product->name,
-                    ]);
-                }
-
-                if ($systemRemaining != 0) {
-
-                    StockMovement::create([
-                        'product_id'     => $item->product_id,
-                        'quantity'       => -$systemRemaining,
-                        'type'           => 'warehouse_in',
-                        'reference_id'   => $session->id,
-                        'reference_type' => 'sales_stock_session_close',
-                        'session_id'     => $session->id,
-                        'notes'          => 'Reset saldo saat tutup session',
-                    ]);
-                }
             }
 
-            $session->update([
-                'status'   => $hasMinus ? 'minus' : 'done',
-                'end_date' => now(),
-            ]);
-        });
+            // 🟢 PLUS → ADJUSTMENT POSITIVE (ledger only)
+            if ($difference > 0) {
 
-        return redirect()
-            ->route('sales-stock-sessions.index')
-            ->with('success','Session berhasil ditutup & saldo direset.');
-    }
+                StockMovement::create([
+                    'product_id'     => $item->product_id,
+                    'quantity'       => $difference,
+                    'type'           => 'adjustment',
+                    'reference_id'   => $session->id,
+                    'reference_type' => 'sales_stock_session_close',
+                    'session_id'     => $session->id,
+                    'notes'          => 'Adjustment positif selisih stok session ID '.$session->id,
+                ]);
+            }
+
+            // 🔄 RESET SALDO SESSION
+            if ($systemRemaining != 0) {
+
+                StockMovement::create([
+                    'product_id'     => $item->product_id,
+                    'quantity'       => -$systemRemaining,
+                    'type'           => 'warehouse_in',
+                    'reference_id'   => $session->id,
+                    'reference_type' => 'sales_stock_session_close',
+                    'session_id'     => $session->id,
+                    'notes'          => 'Reset saldo saat tutup session',
+                ]);
+            }
+        }
+
+        $session->update([
+            'status'   => $hasMinus ? 'minus' : 'done',
+            'end_date' => now(),
+        ]);
+    });
+
+    return redirect()
+        ->route('sales-stock-sessions.index')
+        ->with('success','Session berhasil ditutup & saldo direset.');
+}
+
 }

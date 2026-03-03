@@ -26,41 +26,32 @@
         <form method="POST" action="{{ route('cash-sales.store') }}">
             @csrf
 
-            <!-- Informasi Umum -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-
-                <div>
-                    <label class="block text-sm font-medium mb-1">Tanggal</label>
-                    <input type="date" name="sale_date"
+            <!-- Tanggal -->
+            <div class="mb-4 max-w-sm">
+                <label class="block text-sm font-medium mb-1">Tanggal</label>
+                @if(auth()->user()->role === 'sales')
+                    <input type="date"
+                        name="sale_date"
                         value="{{ old('sale_date', date('Y-m-d')) }}"
-                        class="w-full border rounded px-3 py-2" required>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-1">Metode Pembayaran</label>
-                    <select name="payment_method"
-                        class="w-full border rounded px-3 py-2" required>
-                        <option value="cash" {{ old('payment_method') == 'cash' ? 'selected' : '' }}>Cash</option>
-                        <option value="transfer" {{ old('payment_method') == 'transfer' ? 'selected' : '' }}>Transfer</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-1">Discount</label>
-                    <input type="number" name="discount" id="discount"
-                        value="{{ old('discount', 0) }}"
-                        class="w-full border rounded px-3 py-2"
-                        oninput="calculateTotal()">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-1">Nominal Dibayar</label>
-                    <input type="number" name="paid_amount" id="paid_amount"
-                        value="{{ old('paid_amount', 0) }}"
+                        class="w-full border rounded px-3 py-2 bg-gray-100"
+                        readonly>
+                @else
+                    <input type="date"
+                        name="sale_date"
+                        value="{{ old('sale_date', date('Y-m-d')) }}"
                         class="w-full border rounded px-3 py-2"
                         required>
-                </div>
+                @endif
+            </div>
 
+            <!-- Nama -->
+            <div class="mb-6 max-w-sm">
+                <label class="block text-sm font-medium mb-1">Nama</label>
+                <input type="text"
+                    name="customer_name"
+                    value="{{ old('customer_name') }}"
+                    class="w-full border rounded px-3 py-2"
+                    placeholder="Nama pembeli">
             </div>
 
             <!-- Tabel Produk -->
@@ -77,13 +68,60 @@
                             <th class="p-2 text-left">Produk</th>
                             <th class="p-2 text-right">Harga</th>
                             <th class="p-2 text-right">Qty</th>
-                            <th class="p-2 text-right">Bonus</th>
                             <th class="p-2 text-right">Subtotal</th>
                             <th class="p-2"></th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
+            </div>
+
+            <!-- BONUS SECTION -->
+            <div class="mb-6">
+                <button type="button"
+                        onclick="addBonusRow()"
+                        class="bg-yellow-500 text-white px-4 py-2 rounded mb-4">
+                    + Tambah Bonus
+                </button>
+
+                <table class="w-full border" id="bonus-table">
+                    <thead class="bg-yellow-50">
+                        <tr>
+                            <th class="p-2 text-left">Produk Bonus</th>
+                            <th class="p-2 text-right">Jumlah Bonus</th>
+                            <th class="p-2"></th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- Metode Pembayaran -->
+            <div class="mb-4 max-w-sm">
+                <label class="block text-sm font-medium mb-1">Metode Pembayaran</label>
+                <select name="payment_method"
+                    class="w-full border rounded px-3 py-2" required>
+                    <option value="cash" {{ old('payment_method') == 'cash' ? 'selected' : '' }}>Cash</option>
+                    <option value="transfer" {{ old('payment_method') == 'transfer' ? 'selected' : '' }}>Transfer</option>
+                </select>
+            </div>
+
+            <!-- Discount -->
+            <div class="mb-4 max-w-sm">
+                <label class="block text-sm font-medium mb-1">Discount</label>
+                <input type="number" name="discount" id="discount"
+                    value="{{ old('discount', 0) }}"
+                    class="w-full border rounded px-3 py-2"
+                    oninput="calculateTotal()">
+            </div>
+
+            <!-- Nominal Dibayar -->
+            <div class="mb-6 max-w-sm">
+                <label class="block text-sm font-medium mb-1">Nominal Dibayar</label>
+                <input type="number" name="paid_amount" id="paid_amount"
+                    value="{{ old('paid_amount', 0) }}"
+                    class="w-full border rounded px-3 py-2"
+                    required>
             </div>
 
             <!-- Total -->
@@ -110,9 +148,9 @@
 <script>
 let products = @json($products);
 let rowIndex = 0;
+let bonusIndex = 0;
 
 function addRow() {
-
     let tbody = document.querySelector("#items-table tbody");
     let currentIndex = rowIndex++;
 
@@ -143,13 +181,6 @@ function addRow() {
                 oninput="calculateTotal()">
         </td>
 
-        <td class="p-2">
-            <input type="number" name="items[${currentIndex}][bonus_qty]"
-                value="0"
-                class="w-full border rounded px-2 py-1"
-                oninput="calculateTotal()">
-        </td>
-
         <td class="p-2 text-right">
             <span class="subtotal-display">0</span>
         </td>
@@ -157,6 +188,43 @@ function addRow() {
         <td class="p-2 text-center">
             <button type="button"
                 onclick="this.closest('tr').remove(); calculateTotal();"
+                class="text-red-600 font-bold">
+                X
+            </button>
+        </td>
+    `;
+
+    tbody.appendChild(row);
+}
+
+function addBonusRow() {
+    let tbody = document.querySelector("#bonus-table tbody");
+    let currentIndex = bonusIndex++;
+
+    let row = document.createElement("tr");
+
+    row.innerHTML = `
+        <td class="p-2">
+            <select name="bonuses[${currentIndex}][product_id]"
+                class="w-full border rounded px-2 py-1">
+                <option value="">-- Pilih Produk Bonus --</option>
+                ${products.map(p => `
+                    <option value="${p.id}">
+                        ${p.name}
+                    </option>
+                `).join('')}
+            </select>
+        </td>
+
+        <td class="p-2">
+            <input type="number" name="bonuses[${currentIndex}][qty]"
+                value="0"
+                class="w-full border rounded px-2 py-1">
+        </td>
+
+        <td class="p-2 text-center">
+            <button type="button"
+                onclick="this.closest('tr').remove();"
                 class="text-red-600 font-bold">
                 X
             </button>

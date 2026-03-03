@@ -120,7 +120,7 @@ class VisitService
 
             foreach ($visit->items as $item) {
 
-                $soldQty      = (int) $item->initial_stock - (int) $item->return_qty;
+    $soldQty      = (int) $item->initial_stock - (int) $item->return_qty;
                 $reductionQty = (int) $item->stock_reduction_qty;
                 $newQty       = (int) $item->new_delivery_qty;
 

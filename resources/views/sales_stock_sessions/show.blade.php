@@ -9,7 +9,13 @@
             </h2>
             <div class="text-xs sm:text-sm text-gray-600 mt-2">
                 Sales: {{ $session->user->name }} <br>
-                Mulai: {{ $session->start_date }} <br>
+                Mulai: 
+                @if($session->created_at)
+                {{ $session->created_at->format('d-m-Y H:i') }}
+                @else
+                {{ $session->start_date }}
+                @endif
+            <br>
                 Status:
                 @if($session->status === 'open')
                     <span class="px-2 py-1 bg-yellow-400 text-white rounded text-[10px] sm:text-xs">OPEN</span>
@@ -47,16 +53,36 @@
                     <tr>
                         <th class="p-2 border text-left">Produk</th>
                         <th class="p-2 border text-right">Stok Awal</th>
+                        <th class="p-2 border text-right">Sisa Stok</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($session->items as $item)
+
+                        @php
+                            $sisaStok = $item->opening_qty;
+
+                            if(isset($movements) && $movements->count()){
+                                $lastMovement = $movements
+                                    ->where('product_id', $item->product_id)
+                                    ->sortByDesc('id')
+                                    ->first();
+
+                                if($lastMovement){
+                                    $sisaStok = $lastMovement->running_balance;
+                                }
+                            }
+                        @endphp
+
                     <tr>
                         <td class="p-2 border">
                             {{ $item->product->name }}
                         </td>
                         <td class="p-2 border text-right">
                             {{ $item->opening_qty }}
+                        </td>
+                        <td class="p-2 border text-right font-semibold">
+                            {{ $sisaStok }}
                         </td>
                     </tr>
                     @endforeach

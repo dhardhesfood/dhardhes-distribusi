@@ -16,7 +16,11 @@
                 @forelse($visits as $visit)
                 <tr class="text-center">
                     <td class="border p-2">
-                        {{ $visit->visit_date }}
+                        @if($visit->created_at)
+                            {{ $visit->created_at->format('d-m-Y H:i') }}
+                        @else
+                            {{ $visit->visit_date }}
+                        @endif
                     </td>
 
                     <td class="border p-2">
@@ -46,7 +50,6 @@
                     <td class="border p-2">
                         <div class="flex justify-center items-center gap-2 flex-nowrap">
 
-                            {{-- Detail (Semua User) --}}
                             <a href="{{ route('visits.show', $visit->id) }}"
                                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs transition">
                                 Detail
@@ -54,13 +57,11 @@
 
                             @if(auth()->user()->role === 'admin')
 
-                                {{-- Edit hanya admin --}}
                                 <a href="{{ route('visits.edit', $visit->id) }}"
                                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-xs transition">
                                     Edit
                                 </a>
 
-                                {{-- Hapus hanya admin & hanya draft --}}
                                 @if($visit->status === 'draft')
                                     <form action="{{ route('visits.destroy', $visit->id) }}"
                                           method="POST"

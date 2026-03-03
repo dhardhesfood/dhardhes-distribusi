@@ -42,26 +42,25 @@
 
     @endphp
 
-        <div class="mb-6 text-sm flex justify-between items-start">
+        <div class="p-6 max-w-6xl mx-auto">
 
-            <div>
-              <p>
-                Toko:
-                <strong>
-                {{ optional($visit->store)->name ?? '-' }}
-                </strong>
-                </p>
+        <h2 class="text-xl font-bold mb-4">Detail Kunjungan</h2>
 
-              <p>
-                Status:
-                 <strong class="capitalize">
-                {{ $statusText[$visit->status] ?? $visit->status }}
-                </strong>
-                </p>
+        <div class="mb-4 space-y-1">
+            <p><strong>Toko:</strong> {{ $visit->store->name ?? '-' }}</p>
+            <p><strong>Status:</strong> {{ ucfirst($visit->status) }}</p>
 
-                <p>Tanggal: {{ $visit->visit_date }}</p>
-                <p>Next Visit: {{ $visit->next_visit_date ?? '-' }}</p>
-            </div>
+            <p>
+                <strong>Tanggal:</strong>
+                @if($visit->created_at)
+                    {{ $visit->created_at->format('d-m-Y H:i') }}
+                @else
+                    {{ $visit->visit_date }}
+                @endif
+            </p>
+
+            <p><strong>Next Visit:</strong> {{ $visit->next_visit ?? '-' }}</p>
+        </div>
 
             <div class="flex gap-3">
 

@@ -64,7 +64,6 @@
 
             <div class="flex gap-3">
 
-                {{-- TOMBOL APPROVE --}}
                 @if($isAdmin && $visit->status === 'completed')
                     <form method="POST" action="{{ route('visits.approve', $visit->id) }}">
                         @csrf
@@ -75,7 +74,6 @@
                     </form>
                 @endif
 
-                {{-- TOMBOL REOPEN --}}
                 @if($canReopen)
                     <form method="POST"
                           action="{{ route('visits.reopen', $visit->id) }}"
@@ -92,7 +90,7 @@
 
         </div>
 
-        {{-- ================= TOMBOL NAVIGASI ================= --}}
+        {{-- NAVIGASI --}}
         <div class="mb-6 flex gap-3">
             <a href="{{ route('dashboard') }}"
                class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded shadow text-sm">
@@ -105,7 +103,7 @@
             </a>
         </div>
 
-        {{-- ================= AUTO REDIRECT ================= --}}
+        {{-- AUTO REDIRECT --}}
         @if($visit->status === 'completed')
             <div class="mb-6 p-4 bg-green-100 border border-green-300 rounded text-sm text-green-700">
                 Visit berhasil diproses. Anda akan diarahkan ke Daftar Kunjungan dalam 5 detik.
@@ -126,6 +124,7 @@
                     <th class="border p-2 text-left">Produk</th>
                     <th class="border p-2">Stok Awal</th>
                     <th class="border p-2">Sisa Stok</th>
+                    <th class="border p-2">Cek Stok</th> {{-- TAMBAHAN --}}
                     <th class="border p-2">Terjual</th>
                     <th class="border p-2">Penambahan</th>
                     <th class="border p-2">Pengurangan</th>
@@ -145,6 +144,10 @@
 
                     <td class="border p-2">
                         {{ $item->return_qty }}
+                    </td>
+
+                    <td class="border p-2 font-semibold text-purple-600">
+                        {{ $item->physical_stock ?? '-' }}
                     </td>
 
                     <td class="border p-2 font-semibold text-blue-600">
@@ -167,7 +170,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="border p-2 text-center text-gray-500">
+                    <td colspan="8" class="border p-2 text-center text-gray-500">
                         Tidak ada data produk
                     </td>
                 </tr>

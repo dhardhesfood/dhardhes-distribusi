@@ -16,6 +16,7 @@ class VisitItem extends Model
         'new_delivery_qty',
         'bonus_qty',
         'stock_reduction_qty', // 🔥 WAJIB ADA
+        'physical_stock', // 🔥 CEK STOK (TIDAK MEMPENGARUHI PENJUALAN)
         'price_snapshot',
         'fee_snapshot',
         'cost_snapshot',
@@ -29,6 +30,7 @@ class VisitItem extends Model
         'new_delivery_qty'     => 'integer',
         'bonus_qty'            => 'integer',
         'stock_reduction_qty'  => 'integer',
+        'physical_stock'       => 'integer',
         'price_snapshot'       => 'decimal:2',
         'fee_snapshot'         => 'decimal:2',
         'cost_snapshot'        => 'decimal:2',

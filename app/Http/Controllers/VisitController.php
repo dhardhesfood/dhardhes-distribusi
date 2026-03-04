@@ -276,6 +276,7 @@ if (!$session) {
             $returnQty    = (int) $request->input("return_qty.{$item->id}", 0);
             $newQty       = (int) $request->input("new_delivery_qty.{$item->id}", 0);
             $reductionQty = (int) $request->input("stock_reduction_qty.{$item->id}", 0);
+            $physicalStock = (int) $request->input("physical_stock.{$item->id}", 0);
 
             if ($returnQty < 0 || $newQty < 0 || $reductionQty < 0) {
                 abort(422, "Nilai tidak boleh negatif.");
@@ -293,6 +294,7 @@ if (!$session) {
                 'return_qty'          => $returnQty,
                 'new_delivery_qty'    => $newQty,
                 'stock_reduction_qty' => $reductionQty,
+                'physical_stock'      => $physicalStock,
                 'sold_qty'            => 0,
             ]);
         }

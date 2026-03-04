@@ -78,7 +78,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-3 text-sm">
+            <div class="grid grid-cols-4 gap-3 text-sm">
 
                 <div>
                     <label>Sisa</label>
@@ -103,6 +103,15 @@
                     <label>Tarik</label>
                     <input type="number"
                            name="stock_reduction_qty[{{ $item->id }}]"
+                           value="0"
+                           min="0"
+                           class="w-full border p-2 rounded">
+                </div>
+
+                <div>
+                    <label>Cek Stok</label>
+                    <input type="number"
+                           name="physical_stock[{{ $item->id }}]"
                            value="0"
                            min="0"
                            class="w-full border p-2 rounded">

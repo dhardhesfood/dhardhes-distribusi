@@ -145,12 +145,41 @@
                                         @endforeach
                                     </ul>
 
-                                    <div class="mt-2 text-xs text-gray-600">
-                                        Total Qty:
-                                        <span class="font-semibold">
-                                            {{ $store->total_stock_qty }}
-                                        </span>
-                                    </div>
+                                    @php
+$lastPhysicalStocks = \App\Models\VisitItem::whereHas('visit', function($q) use ($store) {
+        $q->where('store_id', $store->id);
+    })
+    ->orderBy('id','desc')
+    ->get()
+    ->groupBy('product_id')
+    ->map(function($items){
+        return $items->first()->physical_stock;
+    });
+@endphp
+
+@if(!empty($store->products_stock))
+    <div class="mt-2 text-xs text-red-600 font-semibold">
+        Cek Stok Terakhir:
+    </div>
+
+    <ul class="text-xs text-red-600">
+        @foreach($store->products_stock as $product)
+
+            @php
+                $physical = $lastPhysicalStocks[$product['product_id']] ?? null;
+            @endphp
+
+            @if(!is_null($physical))
+                <li class="flex justify-between">
+                    <span>{{ $product['name'] }}</span>
+                    <span>{{ $physical }}</span>
+                </li>
+            @endif
+
+        @endforeach
+    </ul>
+@endif
+
                                 @else
                                     <div class="text-gray-400 text-xs">
                                         Tidak ada stok

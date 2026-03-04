@@ -122,7 +122,7 @@
                         @if(auth()->user()->role === 'admin')
                             <div class="mb-4">
                                 <div class="text-xs sm:text-sm font-semibold text-gray-600 mb-2">
-                                    {{ $sales->firstWhere('user_id', $userId)['name'] ?? 'Sales' }}
+                                    {{ collect($sales)->firstWhere('user_id', $userId)['name'] ?? 'Sales' }}
                                 </div>
                         @endif
 

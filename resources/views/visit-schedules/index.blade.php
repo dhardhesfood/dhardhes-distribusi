@@ -117,6 +117,22 @@ Tidak ada data produk.
 
 @endif
 
+<div class="mt-4 border-t pt-3 space-y-2 text-sm">
+
+<div class="flex justify-between text-green-700 font-semibold">
+<span>Estimasi Fee Maksimal Jika Stok Habis</span>
+<span>
+Rp {{ number_format($grandTotalEstimasiFee,0,',','.') }}
+</span>
+</div>
+
+<div class="flex justify-between font-semibold">
+<span>Total Nilai Rupiah Stok (Sesuai Harga Toko)</span>
+<span>
+Rp {{ number_format($grandTotalNilaiStok,0,',','.') }}
+</span>
+</div>
+
 </div>
 
 
@@ -126,11 +142,25 @@ Tidak ada data produk.
 <form method="GET" class="flex flex-col md:flex-row gap-3 md:items-end">
 
 <div>
-<label class="text-sm font-medium">Pilih Tanggal</label>
-<input type="date"
-name="tanggal"
-value="{{ $selectedDate }}"
-class="border p-2 rounded w-full">
+<label class="text-sm font-medium">Filter Area</label>
+
+<select name="area_id" class="border p-2 rounded w-full">
+
+<option value="">Semua Area</option>
+
+@foreach($areas as $area)
+
+<option value="{{ $area->id }}"
+{{ $selectedArea == $area->id ? 'selected' : '' }}>
+
+{{ $area->name }}
+
+</option>
+
+@endforeach
+
+</select>
+
 </div>
 
 <div>

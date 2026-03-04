@@ -151,7 +151,7 @@
             </div>
 
             <div class="flex justify-between mb-1">
-                <span>Biaya Admin</span>
+                <span>Potongan</span>
                 <span id="display_admin">Rp 0</span>
             </div>
 
@@ -166,11 +166,11 @@
 
         {{-- ADMIN FEE --}}
         <div class="mb-4">
-            <label class="block font-semibold mb-1">Biaya Admin</label>
+            <label class="block font-semibold mb-1">Potongan</label>
             <input type="number"
                    name="admin_fee"
                    id="admin_fee"
-                   value="0"
+                   value="{{ old('admin_fee', $visit->admin_fee ?? 0) }}"
                    min="0"
                    class="w-full border p-2 rounded">
         </div>

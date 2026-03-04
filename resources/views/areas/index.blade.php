@@ -21,14 +21,13 @@
             @endif
 
             <!-- Tombol Tambah (Admin Only) -->
-            @if(auth()->user()->role === 'admin')
+        
                 <div class="mb-6">
                     <a href="{{ route('areas.create') }}"
                        class="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow transition">
                         + Tambah Area
                     </a>
                 </div>
-            @endif
 
             <div class="bg-white shadow-md rounded-lg overflow-hidden">
                 <table class="min-w-full border border-gray-200">
@@ -71,27 +70,25 @@
                                 </td>
 
                                 <td class="px-4 py-2 border">
-                                    @if(auth()->user()->role === 'admin')
-                                        <a href="{{ route('areas.edit', $area->id) }}"
-                                           class="text-blue-600 hover:underline mr-3">
-                                            Edit
-                                        </a>
+                                    <a href="{{ route('areas.edit', $area->id) }}"
+                                     class="text-blue-600 hover:underline mr-3">
+                                    Edit
+                                </a>
 
-                                        <form action="{{ route('areas.destroy', $area->id) }}"
-                                              method="POST"
-                                              style="display:inline;"
-                                              onsubmit="return confirm('Yakin ingin menghapus area ini?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                    class="text-red-600 hover:underline"
-                                                    style="background:none; border:none; padding:0;">
-                                                Hapus
-                                            </button>
-                                        </form>
-                                    @else
-                                        -
-                                    @endif
+                               @if(auth()->user()->role === 'admin')
+                               <form action="{{ route('areas.destroy', $area->id) }}"
+                                     method="POST"
+                                     style="display:inline;"
+                                     onsubmit="return confirm('Yakin ingin menghapus area ini?');">
+                                    @csrf
+                                    @method('DELETE')
+                               <button type="submit"
+                                     class="text-red-600 hover:underline"
+                                     style="background:none; border:none; padding:0;">
+                                    Hapus
+                               </button>
+                              </form>
+                               @endif
                                 </td>
                             </tr>
                         @empty

@@ -23,6 +23,7 @@ class Visit extends Model
         'photo_path',
         'status',
         'notes',
+        'admin_fee',
     ];
 
     protected $casts = [

@@ -7,7 +7,7 @@
 
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
 
-                <form method="GET" action="{{ route('stores.index') }}" class="w-full sm:w-auto">
+                <form method="GET" action="{{ route('stores.index') }}" class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
 
                     @if(request('sales_id'))
                         <input type="hidden" name="sales_id" value="{{ request('sales_id') }}">
@@ -15,7 +15,7 @@
 
                     <select name="area_id"
                             onchange="this.form.submit()"
-                            class="w-full sm:w-auto border-gray-300 rounded-md shadow-sm text-sm">
+                            class="border-gray-300 rounded-md shadow-sm text-sm px-2 py-2">
                         <option value="">Semua Area</option>
                         @foreach($areas as $area)
                             <option value="{{ $area->id }}"
@@ -24,7 +24,13 @@
                             </option>
                         @endforeach
                     </select>
+
                 </form>
+
+                <button onclick="openStoreSearch()"
+                class="inline-flex justify-center items-center w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-md">
+                🔍 Cari Toko
+                </button>
 
                 <a href="{{ route('stores.create') }}"
                    class="inline-flex justify-center items-center w-full sm:w-auto px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg shadow-lg transition duration-150">
@@ -33,6 +39,7 @@
 
             </div>
         </div>
+
     </x-slot>
 
     <div class="py-6">
@@ -218,7 +225,6 @@ $lastPhysicalStocks = \App\Models\VisitItem::whereHas('visit', function($q) use 
                                     Kelola Harga
                                 </a>
 
-                                {{-- 🔥 TAMBAHAN BARU: PENYESUAIAN STOK --}}
                                 <a href="{{ route('stock-opnames.create', $store->id) }}"
                                    class="inline-flex justify-center items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-medium rounded-md shadow-md transition whitespace-nowrap">
                                     Penyesuaian Stok
@@ -254,4 +260,91 @@ $lastPhysicalStocks = \App\Models\VisitItem::whereHas('visit', function($q) use 
 
         </div>
     </div>
+
+<div id="storeSearchModal"
+     onclick="closeStoreSearch()"
+     class="fixed inset-0 bg-black bg-opacity-40 hidden items-start justify-center pt-24 z-50">
+
+    <div class="bg-white w-full max-w-xl rounded-lg shadow-xl" onclick="event.stopPropagation()">
+
+        <div class="p-4 border-b">
+            <input
+                type="text"
+                id="storeSearchInput"
+                placeholder="Ketik nama toko..."
+                class="w-full border-gray-300 rounded-md"
+                onkeyup="filterStores()">
+        </div>
+
+        <div id="storeSearchList"
+             class="max-h-72 overflow-y-auto text-sm">
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+let stores = @json($allStores->pluck('name'));
+
+function openStoreSearch(){
+    document.getElementById('storeSearchModal').classList.remove('hidden');
+    document.getElementById('storeSearchInput').focus();
+    filterStores();
+}
+
+function closeStoreSearch(){
+    document.getElementById('storeSearchModal').classList.add('hidden');
+}
+
+function filterStores(){
+
+    let keyword = document.getElementById('storeSearchInput').value.toLowerCase();
+    let list = document.getElementById('storeSearchList');
+
+    list.innerHTML = '';
+
+    stores
+        .filter(s => s.toLowerCase().includes(keyword))
+        .slice(0,10)
+        .forEach(name => {
+
+            let item = document.createElement('div');
+
+            item.className = "px-4 py-2 hover:bg-gray-100 cursor-pointer";
+
+            item.innerText = name;
+
+            item.onclick = function(){
+
+                let url = new URL(window.location.href);
+
+                url.searchParams.set('search', name);
+
+                window.location = url.toString();
+
+            }
+
+            list.appendChild(item);
+
+        });
+
+}
+
+document.addEventListener('keydown',function(e){
+
+    if(e.key === "Escape"){
+        closeStoreSearch();
+    }
+
+    if(e.ctrlKey && e.key === "k"){
+        e.preventDefault();
+        openStoreSearch();
+    }
+
+});
+
+</script>
+
 </x-app-layout>

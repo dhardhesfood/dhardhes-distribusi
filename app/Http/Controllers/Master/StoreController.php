@@ -34,6 +34,13 @@ class StoreController extends Controller
         $stores = $query->orderBy('name')->get();
 
         // ==============================
+        // LIST SEMUA TOKO (UNTUK SEARCH DROPDOWN)
+        // ==============================
+        $allStores = Store::select('name')
+            ->orderBy('name')
+            ->get();
+
+        // ==============================
         // HITUNG STOK PER TOKO (LEDGER)
         // ==============================
         foreach ($stores as $store) {
@@ -88,7 +95,7 @@ class StoreController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('stores.index', compact('stores', 'areas'));
+        return view('stores.index', compact('stores', 'areas', 'allStores'));
     }
 
     public function create()

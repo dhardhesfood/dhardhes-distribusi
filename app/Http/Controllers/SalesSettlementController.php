@@ -50,8 +50,10 @@ class SalesSettlementController extends Controller
             $cash = SalesTransaction::whereIn('visit_id',$visitIds)
                 ->sum('cash_paid');
 
-            $consignment = SalesTransaction::whereIn('visit_id',$visitIds)
-                ->sum(DB::raw('total_amount - cash_paid'));
+            $consignment = DB::table('sales_transactions as st')
+                ->join('visits as v','st.visit_id','=','v.id')
+                ->whereIn('st.visit_id',$visitIds)
+                ->sum(DB::raw('(st.total_amount - v.admin_fee) - st.cash_paid'));
 
             $receivable = ReceivablePayment::where('user_id',$userId)
                 ->whereDate('payment_date',$date)
@@ -103,8 +105,10 @@ class SalesSettlementController extends Controller
         $cashSales = SalesTransaction::whereIn('visit_id', $visitIds)
             ->sum('cash_paid');
 
-        $consignmentSales = SalesTransaction::whereIn('visit_id', $visitIds)
-            ->sum(DB::raw('total_amount - cash_paid'));
+        $consignmentSales = DB::table('sales_transactions as st')
+            ->join('visits as v', 'st.visit_id', '=', 'v.id')
+            ->whereIn('st.visit_id', $visitIds)
+            ->sum(DB::raw('(st.total_amount - v.admin_fee) - st.cash_paid'));
 
         $receivablePayments = ReceivablePayment::where('user_id', $userId)
             ->whereDate('payment_date', $date)
@@ -142,15 +146,17 @@ class SalesSettlementController extends Controller
 
         $storeDetails = DB::table('sales_transactions as st')
             ->join('stores as s', 'st.store_id', '=', 's.id')
+            ->join('visits as v', 'st.visit_id', '=', 'v.id')
             ->whereIn('st.visit_id', $visitIds)
             ->select(
                 'st.visit_id',
                 's.id as store_id',
                 's.name as store_name',
                 DB::raw("SUM(st.total_amount) as total_penjualan"),
+                DB::raw("SUM(v.admin_fee) as admin_fee"),
                 DB::raw("SUM(st.total_fee) as total_fee"),
                 DB::raw("SUM(st.cash_paid) as total_cash"),
-                DB::raw("SUM(st.total_amount - st.cash_paid) as total_consignment")
+                DB::raw("SUM((st.total_amount - v.admin_fee) - st.cash_paid) as total_consignment")
             )
             ->groupBy('st.visit_id','s.id','s.name')
             ->get();

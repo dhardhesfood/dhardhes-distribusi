@@ -238,8 +238,12 @@ class VisitService
                 }
             }
 
-            if ($cashPaid > $totalPenjualan) {
+            $adminFee = (float) $visit->admin_fee;
+            $tagihanToko = $totalPenjualan - $adminFee;
+
+            if ($cashPaid > $tagihanToko) {
                 throw new \Exception("Jumlah bayar melebihi total tagihan.");
+
             }
 
             DB::table('sales_transactions')
@@ -251,7 +255,7 @@ class VisitService
                     'cash_paid'    => $cashPaid,
                 ]);
 
-            $remaining = $totalPenjualan - $cashPaid;
+            $remaining = $tagihanToko - $cashPaid;
 
             $existingReceivable = Receivable::where('sales_transaction_id', $transactionId)->first();
 

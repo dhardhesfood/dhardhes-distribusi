@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Store;
+use App\Models\Area;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -15,10 +16,22 @@ class VisitScheduleController extends Controller
         $selectedDate = Carbon::parse($selectedDate);
 
         $filterStatus = $request->input('status');
+        $filterArea   = $request->input('area_id');
 
-        $stores = Store::with('area')
-            ->where('is_active', 1)
-            ->get();
+        // ambil semua area untuk dropdown
+        $areas = Area::orderBy('name')->get();
+
+        $storesQuery = Store::with('area')
+            ->where('is_active', 1);
+
+        // ==========================
+        // FILTER AREA
+        // ==========================
+        if ($filterArea) {
+            $storesQuery->where('area_id', $filterArea);
+        }
+
+        $stores = $storesQuery->get();
 
         $data = [];
 
@@ -31,6 +44,8 @@ class VisitScheduleController extends Controller
 
         $grandTotalProduk = 0;
         $grandTotalQty = 0;
+        $grandTotalEstimasiFee = 0;
+        $grandTotalNilaiStok = 0;
 
         foreach ($stores as $store) {
 
@@ -56,9 +71,6 @@ class VisitScheduleController extends Controller
                 }
             }
 
-            // ==========================
-            // FILTER STATUS (JIKA ADA)
-            // ==========================
             if ($filterStatus && $status !== $filterStatus) {
                 continue;
             }
@@ -71,10 +83,11 @@ class VisitScheduleController extends Controller
                 ->select(
                     'ssm.product_id',
                     'p.name as product_name',
+                    'p.default_fee_nominal',
                     DB::raw("SUM(ssm.quantity) as total_qty")
                 )
                 ->where('ssm.store_id', $store->id)
-                ->groupBy('ssm.product_id', 'p.name')
+                ->groupBy('ssm.product_id', 'p.name', 'p.default_fee_nominal')
                 ->having('total_qty', '>', 0)
                 ->get();
 
@@ -83,19 +96,32 @@ class VisitScheduleController extends Controller
             $totalQty = 0;
 
             foreach ($stockData as $row) {
-                $products[] = [
-                    'name' => $row->product_name,
-                    'qty'  => (int) $row->total_qty,
-                ];
+
+                $qty = (int) $row->total_qty;
+
+            $price = DB::table('store_prices')
+               ->where('store_id', $store->id)
+               ->where('product_id', $row->product_id)
+               ->value('price');
+
+            $price = (float) ($price ?? 0);
+            $feeNominal = (float) ($row->default_fee_nominal ?? 0);
+
+            $estimasiFee = $qty * $feeNominal;
+            $subtotal = $qty * $price;
+
+            $products[] = [
+            'name' => $row->product_name,
+            'qty'  => $qty,
+          ];
+
+            $grandTotalEstimasiFee += $estimasiFee;
+            $grandTotalNilaiStok += $subtotal;
 
                 $totalProduk++;
                 $totalQty += (int) $row->total_qty;
             }
 
-            // ==========================
-            // HITUNG SUMMARY & GRAND TOTAL
-            // (HANYA YANG LOLOS FILTER)
-            // ==========================
             $summary[$status]++;
             $grandTotalProduk += $totalProduk;
             $grandTotalQty += $totalQty;
@@ -126,11 +152,15 @@ class VisitScheduleController extends Controller
 
         return view('visit-schedules.index', [
             'stores' => $data,
+            'areas' => $areas,
             'selectedDate' => $selectedDate->format('Y-m-d'),
+            'selectedArea' => $filterArea,
             'summary' => $summary,
             'totalStores' => count($data),
             'grandTotalProduk' => $grandTotalProduk,
             'grandTotalQty' => $grandTotalQty,
+            'grandTotalEstimasiFee' => $grandTotalEstimasiFee,
+            'grandTotalNilaiStok' => $grandTotalNilaiStok,
         ]);
     }
 }

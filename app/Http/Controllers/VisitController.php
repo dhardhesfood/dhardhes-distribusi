@@ -317,7 +317,7 @@ if (!$session) {
         }
 
         $updateData = [
-    'admin_fee' => (float) ($validated['admin_fee'] ?? 0),
+    'admin_fee' => (float) $request->input('admin_fee', 0),
 ];
 
 // hanya admin boleh ubah tanggal

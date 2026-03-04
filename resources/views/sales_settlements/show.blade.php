@@ -94,8 +94,9 @@
                 <tr>
                     <th class="p-2 text-left">Nama Toko</th>
                     <th class="p-2 text-right">Total Penjualan</th>
+                    <th class="p-2 text-right">Biaya Admin</th>
                     <th class="p-2 text-right">Cash</th>
-                    <th class="p-2 text-right">Konsinyasi</th>
+                    <th class="p-2 text-right">Piutang Toko</th>
                     <th class="p-2 text-right">Fee</th>
                 </tr>
             </thead>
@@ -115,6 +116,7 @@
                         @endif
                     </td>
                     <td class="p-2 text-right">Rp {{ number_format($store->total_penjualan,0,',','.') }}</td>
+                    <td class="p-2 text-right">Rp {{ number_format($store->admin_fee,0,',','.') }}</td>
                     <td class="p-2 text-right">Rp {{ number_format($store->total_cash,0,',','.') }}</td>
                     <td class="p-2 text-right">Rp {{ number_format($store->total_consignment,0,',','.') }}</td>
                     <td class="p-2 text-right">Rp {{ number_format($store->total_fee,0,',','.') }}</td>
@@ -274,7 +276,7 @@
         <table class="w-full border">
             <tbody class="divide-y">
                 <tr>
-                    <td class="p-2 font-medium">Penjualan Tunai (Visit)</td>
+                    <td class="p-2 font-medium">Penjualan Tunai (Visit/Kunjungan)</td>
                     <td class="p-2 text-right">Rp {{ number_format($cashSales,0,',','.') }}</td>
                 </tr>
                 <tr>
@@ -282,15 +284,15 @@
                     <td class="p-2 text-right">Rp {{ number_format($cashSaleDirect,0,',','.') }}</td>
                 </tr>
                 <tr>
-                    <td class="p-2 font-medium">Penjualan Konsinyasi</td>
+                    <td class="p-2 font-medium">Total Piutang Toko</td>
                     <td class="p-2 text-right">Rp {{ number_format($consignmentSales,0,',','.') }}</td>
                 </tr>
                 <tr>
-                    <td class="p-2 font-medium">Pembayaran Piutang</td>
+                    <td class="p-2 font-medium">Pembayaran Piutang Toko</td>
                     <td class="p-2 text-right">Rp {{ number_format($receivablePayments,0,',','.') }}</td>
                 </tr>
                 <tr>
-                    <td class="p-2 font-medium">Total Admin Fee</td>
+                    <td class="p-2 font-medium">Total Biaya Admin</td>
                     <td class="p-2 text-right">Rp {{ number_format($adminFee,0,',','.') }}</td>
                 </tr>
                 <tr>

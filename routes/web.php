@@ -43,6 +43,18 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 
 Route::middleware(['auth'])->group(function () {
 
+    Route::get('/areas/create', [AreaController::class, 'create'])
+        ->name('areas.create');
+
+    Route::get('/areas/{area}/edit', [AreaController::class, 'edit'])
+    ->name('areas.edit');
+
+    Route::put('/areas/{area}', [AreaController::class, 'update'])
+    ->name('areas.update');    
+
+    Route::post('/areas', [AreaController::class, 'store'])
+    ->name('areas.store');
+
     /*
     |--------------------------------------------------------------------------
     | KPI SALES
@@ -262,18 +274,6 @@ Route::middleware(['auth','admin'])->group(function () {
 
     Route::delete('/stores/{store}', [StoreController::class, 'destroy'])
         ->name('stores.destroy');
-
-    Route::get('/areas/create', [AreaController::class, 'create'])
-        ->name('areas.create');
-
-    Route::get('/areas/{area}/edit', [AreaController::class, 'edit'])
-    ->name('areas.edit');
-
-    Route::put('/areas/{area}', [AreaController::class, 'update'])
-    ->name('areas.update');    
-
-    Route::post('/areas', [AreaController::class, 'store'])
-    ->name('areas.store');
     
     Route::delete('/areas/{area}', [AreaController::class, 'destroy'])
     ->name('areas.destroy');

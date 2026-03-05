@@ -29,7 +29,23 @@ class SalesStockSessionController extends Controller
         }
 
         $users = User::whereIn('role', ['sales','admin'])->get();
-        $products = Product::where('is_active', 1)->get();
+        $products = Product::where('is_active', 1)
+            ->select('products.*')
+            ->selectRaw("
+           (
+                    SELECT COALESCE(SUM(
+                    CASE
+                    WHEN type = 'warehouse_in' THEN quantity
+                    WHEN type = 'warehouse_out' THEN -quantity
+                    WHEN type = 'adjustment' THEN quantity
+                    ELSE 0
+                    END
+                ),0)
+                    FROM stock_movements
+                    WHERE stock_movements.product_id = products.id
+                 ) as warehouse_stock
+        ")
+           ->get();
 
         return view('sales_stock_sessions.create', compact('users','products'));
     }
@@ -63,6 +79,32 @@ class SalesStockSessionController extends Controller
 
                 $qty = (int) $qty;
                 if ($qty <= 0) continue;
+                // CEK STOK GUDANG
+            $warehouseStock = DB::table('stock_movements')
+                ->select(DB::raw("
+                SUM(
+                CASE
+                WHEN type = 'warehouse_in' THEN quantity
+                WHEN type = 'warehouse_out' THEN -quantity
+                WHEN type = 'adjustment' THEN quantity
+                ELSE 0
+                END
+                ) as stock
+        "))
+    ->where('product_id', $productId)
+    ->lockForUpdate()
+    ->value('stock') ?? 0;
+
+if ($qty > $warehouseStock) {
+
+    $product = Product::find($productId);
+
+    throw new \Exception(
+        'Stok gudang tidak cukup untuk produk: '
+        .$product->name
+        .' (tersedia '.$warehouseStock.')'
+    );
+}
 
                 SalesStockSessionItem::create([
                     'session_id' => $session->id,
@@ -229,6 +271,9 @@ class SalesStockSessionController extends Controller
                 ->sum('quantity');
 
             $physicalRemaining = (int) ($request->physical_qty[$item->product_id] ?? 0);
+            $damageQty         = (int) ($request->damage_qty[$item->product_id] ?? 0);
+
+            $goodStock         = $physicalRemaining - $damageQty;
             $difference        = $physicalRemaining - $systemRemaining;
 
             $item->update([
@@ -257,26 +302,26 @@ class SalesStockSessionController extends Controller
                 ]);
             }
 
-            // 🟢 PLUS → ADJUSTMENT POSITIVE (ledger only)
-            if ($difference > 0) {
+            // 🔧 BARANG RUSAK
+            if ($damageQty > 0) {
 
                 StockMovement::create([
                     'product_id'     => $item->product_id,
-                    'quantity'       => $difference,
-                    'type'           => 'adjustment',
+                    'quantity'       => -$damageQty,
+                    'type'           => 'damage',
                     'reference_id'   => $session->id,
                     'reference_type' => 'sales_stock_session_close',
                     'session_id'     => $session->id,
-                    'notes'          => 'Adjustment positif selisih stok session ID '.$session->id,
+                    'notes'          => 'Barang rusak saat tutup session',
                 ]);
             }
 
             // 🔄 RESET SALDO SESSION
-            if ($systemRemaining != 0) {
+            if ($goodStock > 0) {
 
                 StockMovement::create([
                     'product_id'     => $item->product_id,
-                    'quantity'       => -$systemRemaining,
+                    'quantity'       => $goodStock,
                     'type'           => 'warehouse_in',
                     'reference_id'   => $session->id,
                     'reference_type' => 'sales_stock_session_close',

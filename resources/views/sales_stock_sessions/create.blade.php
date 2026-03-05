@@ -68,6 +68,7 @@
                     <thead class="bg-gray-100">
                         <tr>
                             <th class="border p-2 text-left">Produk</th>
+                            <th class="border p-2 text-center">Stok Gudang</th>
                             <th class="border p-2 text-center">Qty Awal</th>
                         </tr>
                     </thead>
@@ -76,6 +77,9 @@
                             <tr>
                                 <td class="border p-2">
                                     {{ $product->name }}
+                                </td>
+                                <td class="border p-2 text-center">
+                                    {{ number_format($product->warehouse_stock) }}
                                 </td>
                                 <td class="border p-2 text-center">
                                     <input type="number"

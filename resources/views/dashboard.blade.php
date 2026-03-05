@@ -79,6 +79,23 @@
             'emoji'=>'⚠️'
         ],
 
+        [
+    'route'=>'productions.create',
+    'label'=>'Produksi',
+    'tag'=>'Gudang',
+    'color'=>'bg-indigo-600 hover:bg-indigo-700',
+    'emoji'=>'🏭',
+    'roles'=>['admin','admin_gudang']
+],
+
+[
+    'route'=>'warehouse.index',
+    'label'=>'Stok Gudang',
+    'tag'=>'Gudang',
+    'color'=>'bg-violet-600 hover:bg-violet-700',
+    'emoji'=>'📦'
+],
+
     ];
 
     // 🔐 FILTER KHUSUS ADMIN GUDANG
@@ -86,7 +103,9 @@
         $menus = collect($menus)->filter(function($menu){
             return in_array($menu['route'], [
                 'sales-stock-sessions.index',
-                'visit.schedules.index'
+                'visit.schedules.index',
+                'productions.create',
+                'warehouse.index'
             ]);
         })->values()->toArray();
     }
@@ -95,6 +114,12 @@
     <div class="flex flex-col gap-3">
 
         @foreach($menus as $menu)
+
+          @php
+          if(isset($menu['roles']) && !in_array(auth()->user()->role, $menu['roles'])){
+          continue;
+    }
+       @endphp
 
         <a href="{{ route($menu['route']) }}"
            class="group flex items-center justify-between px-5 py-4 rounded-2xl shadow-sm transition duration-200 text-white {{ $menu['color'] }}">

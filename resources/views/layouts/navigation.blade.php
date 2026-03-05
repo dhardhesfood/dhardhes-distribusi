@@ -17,6 +17,10 @@
                         Dashboard
                     </x-nav-link>
 
+                    <x-nav-link :href="route('sales-stock-sessions.index')" :active="request()->routeIs('sales-stock-sessions.*')">
+                        Session Stok Sales
+                    </x-nav-link>
+
                     @if(auth()->user()->role !== 'admin_gudang')
 
                     <x-nav-link :href="route('areas.index')" :active="request()->routeIs('areas.*')">
@@ -45,6 +49,10 @@
 
                     <x-nav-link :href="route('reports.margin.index')" :active="request()->routeIs('reports.*')">
                         Reports
+                    </x-nav-link>
+
+                    <x-nav-link :href="route('productions.create')" :active="request()->routeIs('productions.*')">
+                        Produksi
                     </x-nav-link>
 
                     @endif

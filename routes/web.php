@@ -20,6 +20,7 @@ use App\Http\Controllers\SalesFeeController;
 use App\Http\Controllers\Master\StoreController;
 use App\Http\Controllers\Master\AreaController;
 use App\Http\Controllers\SystemBackupController;
+use App\Http\Controllers\ProductionController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -138,6 +139,38 @@ Route::middleware(['auth'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
+    | PRODUCTIONS (GUDANG)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/productions/create', [ProductionController::class, 'create'])
+        ->name('productions.create');
+
+    Route::post('/productions', [ProductionController::class, 'store'])
+        ->name('productions.store');
+
+    /*
+    |--------------------------------------------------------------------------
+    | WAREHOUSE (STOK GUDANG)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/warehouse', [\App\Http\Controllers\WarehouseController::class, 'index'])
+        ->name('warehouse.index');
+    
+    /*
+    |--------------------------------------------------------------------------
+    | WAREHOUSE → SALES TRANSFER
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/warehouse/transfer-to-sales', [\App\Http\Controllers\WarehouseController::class, 'createTransfer'])
+        ->name('warehouse.transfer.create');
+
+    Route::post('/warehouse/transfer-to-sales', [\App\Http\Controllers\WarehouseController::class, 'storeTransfer'])
+        ->name('warehouse.transfer.store');    
+
+    /*
+    |--------------------------------------------------------------------------
     | SALES STOCK SESSION
     |--------------------------------------------------------------------------
     */
@@ -249,7 +282,15 @@ Route::middleware(['auth'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth','admin'])->group(function () {
+    Route::middleware(['auth','admin'])->group(function () {
+
+    Route::get('/warehouse/adjustment', 
+           [\App\Http\Controllers\WarehouseAdjustmentController::class, 'create']
+           )->name('warehouse.adjustment.create');
+
+    Route::post('/warehouse/adjustment', 
+           [\App\Http\Controllers\WarehouseAdjustmentController::class, 'store']
+           )->name('warehouse.adjustment.store');
 
     Route::post('/sales-fees/pay', [SalesFeeController::class, 'pay'])
         ->name('sales-fees.pay');
@@ -326,7 +367,6 @@ Route::post('/stores/{store}/stock-opname', [\App\Http\Controllers\StockOpnameCo
 
 Route::get('/stock-opnames/{stockOpname}', [\App\Http\Controllers\StockOpnameController::class, 'show'])
     ->name('stock-opnames.show');
-
 
     /*
     |--------------------------------------------------------------------------

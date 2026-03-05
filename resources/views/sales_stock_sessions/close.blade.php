@@ -31,34 +31,59 @@
               action="{{ route('sales-stock-sessions.close', $session->id) }}">
             @csrf
 
-            <table class="w-full border text-sm">
+            <div class="overflow-x-auto">
+            <table class="w-full border text-sm md:text-base min-w-[600px]">
+            
                 <thead class="bg-gray-100">
-                    <tr>
+
+                <tr>        
+                    
                         <th class="border p-2 text-left">Produk</th>
                         <th class="border p-2 text-center">Stok Sistem</th>
                         <th class="border p-2 text-center">Stok Fisik</th>
+                        <th class="border p-2 text-center">Barang Rusak</th>
+                        <th class="border p-2 text-center">Selisih</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($session->items as $item)
 
                         <tr class="text-center">
-                            <td class="border p-2 text-left">
-                                {{ $item->product->name }}
-                            </td>
 
-                            <td class="border p-2">
-                                {{ $item->system_remaining_qty }}
-                            </td>
+<td class="border p-2 text-left font-medium text-sm md:text-base">
+{{ $item->product->name }}
+</td>
 
-                            <td class="border p-2">
-                                <input type="number"
-                                       name="physical_qty[{{ $item->product_id }}]"
-                                       value="{{ $item->system_remaining_qty }}"
-                                       min="0"
-                                       class="border p-1 rounded w-24 text-center">
-                            </td>
-                        </tr>
+<td class="border p-2 font-semibold">
+{{ $item->system_remaining_qty }}
+</td>
+
+<td class="border p-2">
+<input type="number"
+name="physical_qty[{{ $item->product_id }}]"
+value="{{ $item->system_remaining_qty }}"
+min="0"
+data-product="{{ $item->product_id }}"
+data-system="{{ $item->system_remaining_qty }}"
+class="physical-input border px-2 py-1 rounded w-14 md:w-16 text-center">
+</td>
+
+<td class="border p-2">
+<input type="number"
+name="damage_qty[{{ $item->product_id }}]"
+value="0"
+min="0"
+data-product="{{ $item->product_id }}"
+class="damage-input border px-2 py-1 rounded w-14 md:w-16 text-center">
+</td>
+
+<td class="border p-2 text-center text-gray-600">
+<span class="difference" data-product="{{ $item->product_id }}">
+0
+</span>
+</td>
+
+</tr>
 
                     @endforeach
                 </tbody>
@@ -85,4 +110,65 @@
 
 </div>
 
+<script>
+
+function updateDifference(productId){
+
+let physical = document.querySelector(
+'input.physical-input[data-product="'+productId+'"]'
+);
+
+let damage = document.querySelector(
+'input.damage-input[data-product="'+productId+'"]'
+);
+
+let system = parseInt(physical.dataset.system || 0);
+
+let physicalVal = parseInt(physical.value || 0);
+let damageVal   = parseInt(damage.value || 0);
+
+let difference = physicalVal - system;
+
+let el = document.querySelector(
+'.difference[data-product="'+productId+'"]'
+);
+
+el.innerText = difference;
+
+if(difference < 0){
+el.classList.add('text-red-600');
+el.classList.remove('text-green-600');
+}
+
+else if(difference > 0){
+el.classList.add('text-green-600');
+el.classList.remove('text-red-600');
+}
+
+else{
+el.classList.remove('text-red-600');
+el.classList.remove('text-green-600');
+}
+
+}
+
+document.querySelectorAll('.physical-input').forEach(function(input){
+
+input.addEventListener('input', function(){
+updateDifference(this.dataset.product);
+});
+
+});
+
+document.querySelectorAll('.damage-input').forEach(function(input){
+
+input.addEventListener('input', function(){
+updateDifference(this.dataset.product);
+});
+
+});
+
+</script>
+
 </x-app-layout>
+

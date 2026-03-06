@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\StockMovement;
+use App\Models\WarehouseNote;
 use Illuminate\Support\Facades\DB;
 
 class WarehouseController extends Controller
@@ -39,7 +40,12 @@ class WarehouseController extends Controller
             ->orderBy('products.name')
             ->get();
 
-        return view('warehouse.index', compact('stocks'));
+        $notes = \App\Models\WarehouseNote::with('user')
+           ->where('created_at', '>=', now()->subDays(7))
+           ->orderBy('created_at', 'desc')
+           ->get();
+
+       return view('warehouse.index', compact('stocks','notes'));
     }
 
     /**
@@ -93,4 +99,18 @@ class WarehouseController extends Controller
             ->route('warehouse.index')
             ->with('success', 'Transfer stok ke sales berhasil.');
     }
+
+    public function storeNote(Request $request)
+{
+    $request->validate([
+        'message' => 'required|string|max:1000'
+    ]);
+
+    \App\Models\WarehouseNote::create([
+        'user_id' => auth()->id(),
+        'message' => $request->message
+    ]);
+
+    return redirect()->route('warehouse.index');
+}
 }

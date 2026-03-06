@@ -1,4 +1,27 @@
 <x-app-layout>
+
+@php
+
+$today = \Carbon\Carbon::today();
+$lateStoresCount = 0;
+
+foreach ($stores as $s) {
+
+    if ($s->last_visit_date) {
+
+        $next = \Carbon\Carbon::parse($s->last_visit_date)
+            ->addDays($s->visit_interval_days);
+
+        if ($today->gt($next)) {
+            $lateStoresCount++;
+        }
+
+    }
+
+}
+
+@endphp
+
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -31,6 +54,11 @@
                 class="inline-flex justify-center items-center w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-md">
                 🔍 Cari Toko
                 </button>
+
+                <a href="{{ route('stores.index', array_merge(request()->all(), ['late' => 1])) }}"
+                   class="inline-flex justify-center items-center w-full sm:w-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-md">
+                🔴 Terlambat ({{ $lateStoresCount }})
+                </a>
 
                 <a href="{{ route('stores.create') }}"
                    class="inline-flex justify-center items-center w-full sm:w-auto px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg shadow-lg transition duration-150">
@@ -114,6 +142,33 @@
 
                 @forelse($stores as $store)
 
+                @php
+
+                    $showStore = true;
+
+                    if(request('late')){
+
+               if(!$store->last_visit_date){
+               $showStore = false;
+               } else {
+
+                   $next = \Carbon\Carbon::parse($store->last_visit_date)
+                   ->addDays($store->visit_interval_days);
+
+               if(\Carbon\Carbon::today()->lte($next)){
+               $showStore = false;
+        }
+
+    }
+
+}
+
+@endphp
+
+@if(!$showStore)
+    @continue
+@endif
+
                     <div class="flex justify-between items-start sm:items-center border-b py-4 gap-4">
 
                         <div class="pr-2 w-full">
@@ -125,6 +180,91 @@
                             <div class="text-sm text-gray-500">
                                 Area: {{ optional($store->area)->name ?? '-' }}
                             </div>
+                            @php
+
+$showStore = true;
+
+if(request('late')){
+
+    if(!$store->last_visit_date){
+        $showStore = false;
+    } else {
+
+        $next = \Carbon\Carbon::parse($store->last_visit_date)
+            ->addDays($store->visit_interval_days);
+
+        if(\Carbon\Carbon::today()->lte($next)){
+            $showStore = false;
+        }
+
+    }
+
+}
+
+@endphp
+
+@if(!$showStore)
+    @continue
+@endif
+
+                            @php
+$lastVisit = $store->last_visit_date
+    ? \Carbon\Carbon::parse($store->last_visit_date)
+    : null;
+
+$nextVisit = $lastVisit
+    ? $lastVisit->copy()->addDays($store->visit_interval_days)
+    : null;
+
+$statusVisit = null;
+
+if ($nextVisit) {
+    $today = \Carbon\Carbon::today();
+
+    if ($today->gt($nextVisit)) {
+        $statusVisit = 'late';
+    } elseif ($today->eq($nextVisit)) {
+        $statusVisit = 'today';
+    } else {
+        $statusVisit = 'ok';
+    }
+}
+@endphp
+
+<div class="text-xs text-gray-600 mt-1">
+    Terakhir Dikunjungi:
+    <span class="font-medium">
+        {{ $lastVisit ? $lastVisit->format('d M Y') : '-' }}
+    </span>
+</div>
+
+<div class="text-xs text-gray-600">
+    Kunjungan Berikutnya:
+    <span class="font-medium">
+        {{ $nextVisit ? $nextVisit->format('d M Y') : '-' }}
+    </span>
+</div>
+
+@if($statusVisit)
+<div class="text-xs mt-1">
+    Status Kunjungan:
+
+    @if($statusVisit === 'late')
+        <span class="text-red-600 font-semibold">
+            🔴 Terlambat
+        </span>
+    @elseif($statusVisit === 'today')
+        <span class="text-yellow-600 font-semibold">
+            🟡 Hari Ini
+        </span>
+    @else
+        <span class="text-green-600 font-semibold">
+            🟢 Aman
+        </span>
+    @endif
+
+</div>
+@endif
 
                             <div class="text-sm mt-1">
                                 Status:

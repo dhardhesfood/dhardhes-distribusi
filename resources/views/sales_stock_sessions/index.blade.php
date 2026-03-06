@@ -44,16 +44,17 @@
 
                             {{-- MULAI (pakai created_at untuk jam real) --}}
                             <td class="border px-2 py-2">
-                                @if($session->created_at)
-                                    <div class="leading-tight text-[11px] text-gray-800">
-                                        {{ $session->created_at->format('d-m-Y') }}
-                                    </div>
-                                    <div class="leading-tight text-[10px] text-gray-600">
-                                        {{ $session->created_at->format('H:i') }}
-                                    </div>
-                                @else
-                                    -
-                                @endif
+                                @if($session->start_date)
+                            <div class="leading-tight text-[11px] text-gray-800">
+                               {{ \Carbon\Carbon::parse($session->start_date)->format('d-m-Y') }}
+                       </div>
+
+                            <div class="leading-tight text-[10px] text-gray-600">
+                               {{ $session->created_at ? $session->created_at->format('H:i') : '-' }}
+                       </div>
+                            @else
+                            -
+                           @endif
                             </td>
 
                             {{-- SELESAI --}}

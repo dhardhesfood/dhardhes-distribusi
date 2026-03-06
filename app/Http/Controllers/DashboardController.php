@@ -7,6 +7,7 @@ use App\Models\SalesSettlement;
 use App\Models\Kasbon;
 use App\Models\Receivable;
 use App\Models\Store;
+use App\Models\Visit;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -41,13 +42,17 @@ class DashboardController extends Controller
             ->where('is_active',1)
             ->get();
 
+        // Visit menunggu approval admin
+        $pendingVisits = Visit::where('status', 'completed')->count();    
+
         return view('dashboard', compact(
             'totalSettlementToday',
             'totalShortageToday',
             'totalSettlementMonth',
             'totalKasbonActive',
             'totalPiutang',
-            'stores'
+            'stores',
+            'pendingVisits'
         ));
     }
 }

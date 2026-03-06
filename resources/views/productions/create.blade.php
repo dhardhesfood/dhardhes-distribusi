@@ -1,8 +1,26 @@
 <x-app-layout>
     <x-slot name="header">
+
+       <div style="display:flex;justify-content:space-between;align-items:center;">
+
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             Input Produksi
         </h2>
+
+        <div style="display:flex;gap:10px;">
+
+    <a href="{{ url('/dashboard') }}"
+       style="background:#2563eb;color:white;padding:6px 12px;border-radius:6px;text-decoration:none;">
+        Dashboard
+    </a>
+
+    <a href="javascript:history.back()"
+       style="background:#6b7280;color:white;padding:6px 12px;border-radius:6px;text-decoration:none;">
+        Kembali
+    </a>
+
+</div>
+
     </x-slot>
 
     <div class="py-6">

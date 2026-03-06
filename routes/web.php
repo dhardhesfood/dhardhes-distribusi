@@ -63,15 +63,7 @@ Route::middleware(['auth'])->group(function () {
     */
     Route::get('/reports/kpi-sales', [KpiSalesController::class, 'index'])
         ->name('reports.kpi.sales');
-
-    /*
-    |--------------------------------------------------------------------------
-    | JADWAL KUNJUNGAN
-    |--------------------------------------------------------------------------
-    */
-    Route::get('/visit-schedules', [VisitScheduleController::class, 'index'])
-        ->name('visit.schedules.index');
-
+        
     /*
     |--------------------------------------------------------------------------
     | SALES FEES
@@ -157,6 +149,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/warehouse', [\App\Http\Controllers\WarehouseController::class, 'index'])
         ->name('warehouse.index');
+
+    Route::post('/warehouse/note', [App\Http\Controllers\WarehouseController::class, 'storeNote'])
+    ->name('warehouse.note.store');
     
     /*
     |--------------------------------------------------------------------------

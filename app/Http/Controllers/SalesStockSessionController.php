@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\StockMovement;
 use App\Models\Kasbon;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class SalesStockSessionController extends Controller
@@ -71,7 +72,9 @@ class SalesStockSessionController extends Controller
             $session = SalesStockSession::create([
                 'user_id'    => $request->user_id,
                 'created_by' => auth()->id(),
-                'start_date' => $request->start_date ?? now(),
+                'start_date' => $request->start_date
+                ? Carbon::parse($request->start_date)->format('Y-m-d 00:00:00')
+                : now()->format('Y-m-d H:i:s'),
                 'status'     => 'open',
             ]);
 

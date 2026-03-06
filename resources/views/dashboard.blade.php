@@ -7,6 +7,27 @@
 
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
+    @if(isset($pendingVisits) && $pendingVisits > 0)
+
+<div class="mb-5 bg-red-100 border border-red-300 text-red-800 px-5 py-4 rounded-xl shadow">
+
+    <div class="flex items-center justify-between">
+
+        <div class="font-semibold">
+            ⚠️ {{ $pendingVisits }} Visit menunggu approval admin
+        </div>
+
+        <a href="{{ route('visits.index') }}"
+           class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm">
+            Lihat Visit
+        </a>
+
+    </div>
+
+</div>
+
+@endif
+
     @php
     $menus = [
 
@@ -17,14 +38,6 @@
             'tag'=>'Operasional',
             'color'=>'bg-blue-600 hover:bg-blue-700',
             'emoji'=>'⚙️'
-        ],
-
-        [
-            'route'=>'visit.schedules.index',
-            'label'=>'Jadwal Pengiriman',
-            'tag'=>'Operasional',
-            'color'=>'bg-blue-600 hover:bg-blue-700',
-            'emoji'=>'🚚'
         ],
 
         // ================= KEUANGAN =================
@@ -103,7 +116,6 @@
         $menus = collect($menus)->filter(function($menu){
             return in_array($menu['route'], [
                 'sales-stock-sessions.index',
-                'visit.schedules.index',
                 'productions.create',
                 'warehouse.index'
             ]);

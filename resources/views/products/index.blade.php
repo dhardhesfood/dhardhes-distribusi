@@ -1,7 +1,22 @@
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-    <h2 style="font-size:18px;font-weight:700;">
-        Daftar Produk
-    </h2>
+
+    <div style="display:flex;align-items:center;gap:10px;">
+
+        <a href="{{ url('/dashboard') }}"
+           style="background:#2563eb;color:white;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:600;">
+            Dashboard
+        </a>
+
+        <a href="javascript:history.back()"
+           style="background:#6b7280;color:white;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:600;">
+            Kembali
+        </a>
+
+        <h2 style="font-size:18px;font-weight:700;margin-left:10px;">
+            Daftar Produk
+        </h2>
+
+    </div>
 
     <a href="{{ route('products.create') }}"
        style="background:#16a34a;color:white;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:600;">

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\StockOpname;
 use App\Models\Store;
 use App\Models\Product;
+use App\Models\StoreStockMovement;
 use App\Services\StockOpnameService;
 
 class StockOpnameController extends Controller
@@ -24,15 +25,32 @@ class StockOpnameController extends Controller
     */
 
     public function create(Store $store)
-    {
-        if (auth()->user()->role !== 'admin') {
-            abort(403);
-        }
-
-        $products = Product::orderBy('name')->get();
-
-        return view('stock_opnames.create', compact('store','products'));
+{
+    if (auth()->user()->role !== 'admin') {
+        abort(403);
     }
+
+    // ambil semua produk
+    $products = Product::orderBy('name')->get();
+
+    // cek stok toko per produk
+    $products = $products->map(function ($product) use ($store) {
+
+        $stock = StoreStockMovement::getStoreProductStock(
+            $store->id,
+            $product->id
+        );
+
+        $product->store_stock = $stock;
+
+        return $product;
+    });
+
+    // urutkan: stok terbesar di atas
+    $products = $products->sortByDesc('store_stock');
+
+    return view('stock_opnames.create', compact('store','products'));
+}
 
     /*
     |--------------------------------------------------------------------------
@@ -47,17 +65,21 @@ class StockOpnameController extends Controller
         }
 
         $request->validate([
-            'actual_stock' => 'required|array',
-            'actual_stock.*' => 'required|integer|min:0',
-            'notes' => 'nullable|string'
-        ]);
+        'visit_date' => 'required|date',
+        'actual_stock' => 'required|array',
+        'actual_stock.*' => 'required|integer|min:0',
+        'notes' => 'nullable|string'
+       ]);
+
+        $visitDate = $request->visit_date;
 
         $opname = $this->service->process(
-            $store->id,
-            auth()->id(),
-            $request->notes,
-            $request->actual_stock
-        );
+        $store->id,
+        auth()->id(),
+        $request->notes,
+        $request->actual_stock,
+        $request->visit_date
+    );
 
         return redirect()
             ->route('stock-opnames.show', $opname->id)

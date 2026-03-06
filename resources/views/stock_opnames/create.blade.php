@@ -5,9 +5,33 @@
             Stock Opname - {{ $store->name }}
         </h2>
 
+        <div class="mb-6">
+    <label class="block text-sm font-medium mb-1">
+        Tanggal Opname
+    </label>
+
+    <input type="date"
+       name="visit_date"
+       value="{{ date('Y-m-d') }}"
+       required
+       class="border rounded px-3 py-2 text-sm w-60">
+    </div>
+
         <form method="POST"
               action="{{ route('stock-opnames.store', $store->id) }}">
             @csrf
+            
+      <div class="mb-6">
+    <label class="block text-sm font-medium mb-1">
+        Tanggal Kunjungan
+    </label>
+
+    <input type="date"
+           name="visit_date"
+           value="{{ date('Y-m-d') }}"
+           required
+           class="border rounded p-2 text-sm w-60">
+   </div>
 
             <div class="mb-6">
                 <label class="block text-sm font-medium mb-1">

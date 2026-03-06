@@ -56,9 +56,22 @@ foreach ($stores as $s) {
                 </button>
 
                 <a href="{{ route('stores.index', array_merge(request()->all(), ['late' => 1])) }}"
-                   class="inline-flex justify-center items-center w-full sm:w-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-md">
-                🔴 Terlambat ({{ $lateStoresCount }})
-                </a>
+class="inline-flex justify-center items-center w-full sm:w-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-md transition transform hover:scale-105 hover:shadow-lg active:scale-95">
+🔴 Terlambat ({{ $lateStoresCount }})
+</a>
+
+                <a href="{{ route('stores.index', array_merge(request()->all(), ['heavy' => 1])) }}"
+class="inline-flex justify-center items-center w-full sm:w-auto px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-lg shadow-md transition transform hover:scale-105 hover:shadow-lg active:scale-95">
+🟠 Terlambat Berat
+</a>
+
+                <a href="{{ route('stores.index', array_merge(request()->all(), ['withdraw' => 1])) }}"
+class="inline-flex justify-center items-center w-full sm:w-auto px-4 py-2 text-white text-sm font-semibold rounded-lg shadow-md"
+style="background-color:black;"
+onmouseover="this.style.backgroundColor='#333'"
+onmouseout="this.style.backgroundColor='black'">
+⚫ Pertimbangkan Ditarik
+</a>
 
                 <a href="{{ route('stores.create') }}"
                    class="inline-flex justify-center items-center w-full sm:w-auto px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg shadow-lg transition duration-150">
@@ -144,23 +157,18 @@ foreach ($stores as $s) {
 
                 @php
 
-                    $showStore = true;
+$showStore = true;
 
-                    if(request('late')){
+if(request('late')){
+    $showStore = $store->visit_status === 'late';
+}
 
-               if(!$store->last_visit_date){
-               $showStore = false;
-               } else {
+if(request('heavy')){
+    $showStore = $store->visit_status === 'heavy';
+}
 
-                   $next = \Carbon\Carbon::parse($store->last_visit_date)
-                   ->addDays($store->visit_interval_days);
-
-               if(\Carbon\Carbon::today()->lte($next)){
-               $showStore = false;
-        }
-
-    }
-
+if(request('withdraw')){
+    $showStore = $store->visit_status === 'withdraw';
 }
 
 @endphp
@@ -180,32 +188,6 @@ foreach ($stores as $s) {
                             <div class="text-sm text-gray-500">
                                 Area: {{ optional($store->area)->name ?? '-' }}
                             </div>
-                            @php
-
-$showStore = true;
-
-if(request('late')){
-
-    if(!$store->last_visit_date){
-        $showStore = false;
-    } else {
-
-        $next = \Carbon\Carbon::parse($store->last_visit_date)
-            ->addDays($store->visit_interval_days);
-
-        if(\Carbon\Carbon::today()->lte($next)){
-            $showStore = false;
-        }
-
-    }
-
-}
-
-@endphp
-
-@if(!$showStore)
-    @continue
-@endif
 
                             @php
 $lastVisit = $store->last_visit_date
@@ -215,20 +197,6 @@ $lastVisit = $store->last_visit_date
 $nextVisit = $lastVisit
     ? $lastVisit->copy()->addDays($store->visit_interval_days)
     : null;
-
-$statusVisit = null;
-
-if ($nextVisit) {
-    $today = \Carbon\Carbon::today();
-
-    if ($today->gt($nextVisit)) {
-        $statusVisit = 'late';
-    } elseif ($today->eq($nextVisit)) {
-        $statusVisit = 'today';
-    } else {
-        $statusVisit = 'ok';
-    }
-}
 @endphp
 
 <div class="text-xs text-gray-600 mt-1">
@@ -245,27 +213,29 @@ if ($nextVisit) {
     </span>
 </div>
 
-@if($statusVisit)
 <div class="text-xs mt-1">
     Status Kunjungan:
 
-    @if($statusVisit === 'late')
-        <span class="text-red-600 font-semibold">
-            🔴 Terlambat
-        </span>
-    @elseif($statusVisit === 'today')
-        <span class="text-yellow-600 font-semibold">
-            🟡 Hari Ini
-        </span>
-    @else
-        <span class="text-green-600 font-semibold">
-            🟢 Aman
-        </span>
-    @endif
+    @if($store->visit_status === 'safe')
+        <span class="text-green-600 font-semibold">🟢 Aman</span>
 
-</div>
+    @elseif($store->visit_status === 'today')
+        <span class="text-yellow-600 font-semibold">🟡 Hari Ini</span>
+
+    @elseif($store->visit_status === 'late')
+        <span class="text-red-600 font-semibold">🔴 Terlambat</span>
+
+    @elseif($store->visit_status === 'heavy')
+        <span class="text-orange-600 font-semibold">🟠 Terlambat Berat</span>
+
+    @elseif($store->visit_status === 'withdraw')
+        <span class="text-gray-800 font-semibold">⚫ Pertimbangkan Ditarik</span>
+
+    @else
+        <span class="text-gray-400">-</span>
 @endif
 
+</div>
                             <div class="text-sm mt-1">
                                 Status:
                                 @if($store->is_active)

@@ -16,12 +16,8 @@
                 @forelse($visits as $visit)
                 <tr class="text-center">
                     <td class="border p-2">
-                        @if($visit->created_at)
-                            {{ $visit->created_at->format('d-m-Y H:i') }}
-                        @else
-                            {{ $visit->visit_date }}
-                        @endif
-                    </td>
+                        {{ \Carbon\Carbon::parse($visit->visit_date)->format('d-m-Y H:i') }}
+                   </td>
 
                     <td class="border p-2">
                         {{ $visit->store->name ?? '-' }}

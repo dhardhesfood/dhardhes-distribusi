@@ -7,7 +7,12 @@
          <div class="mb-4 space-y-1">
             <p><strong>Toko:</strong> {{ $visit->store->name ?? '-' }}</p>
             <p><strong>Status:</strong> {{ ucfirst($visit->status) }}</p>
-            <p> <strong>Tanggal:</strong> @if($visit->created_at) {{ $visit->created_at->format('d-m-Y H:i') }} @else {{ $visit->visit_date }} @endif </p>
+            
+            <p>
+              <strong>Tanggal:</strong>
+              {{ \Carbon\Carbon::parse($visit->visit_date)->format('d-m-Y H:i') }}
+            </p>
+
             <p><strong>Next Visit:</strong> {{ $visit->next_visit ?? '-' }}</p>
          </div>
          <div class="flex gap-3">

@@ -67,4 +67,42 @@ class Store extends Model
     {
         return $this->hasMany(StoreStockMovement::class);
     }
+
+/*
+|--------------------------------------------------------------------------
+| STATUS KUNJUNGAN TOKO
+|--------------------------------------------------------------------------
+*/
+
+public function getVisitStatusAttribute()
+{
+    if (!$this->last_visit_date) {
+        return null;
+    }
+
+    $today = \Carbon\Carbon::today();
+
+    $nextVisit = \Carbon\Carbon::parse($this->last_visit_date)
+        ->addDays($this->visit_interval_days);
+
+    if ($today->lt($nextVisit)) {
+        return 'safe';
+    }
+
+    if ($today->eq($nextVisit)) {
+        return 'today';
+    }
+
+    $lateDays = $nextVisit->diffInDays($today);
+
+    if ($lateDays > 135) {
+        return 'withdraw';
+    }
+
+    if ($lateDays > 100) {
+        return 'heavy';
+    }
+
+    return 'late';
+}
 }

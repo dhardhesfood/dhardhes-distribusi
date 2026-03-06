@@ -7,19 +7,23 @@ use App\Models\StockOpname;
 use App\Models\StockOpnameItem;
 use App\Models\StoreStockMovement;
 use App\Models\Product;
+use App\Models\Visit;
+use App\Models\Store;
+use Carbon\Carbon;
 
 class StockOpnameService
 {
-    public function process($storeId, $createdBy, $notes, $actualStocks)
+    public function process($storeId, $createdBy, $notes, $actualStocks, $visitDate)
     {
 
-        return DB::transaction(function () use ($storeId, $createdBy, $notes, $actualStocks) {
+        return DB::transaction(function () use ($storeId, $createdBy, $notes, $actualStocks, $visitDate) {
 
             // 1️⃣ Buat header opname
             $opname = StockOpname::create([
                 'store_id'  => $storeId,
                 'created_by'=> $createdBy,
                 'notes'     => $notes,
+                'visit_date' => $visitDate
             ]);
 
             // 2️⃣ Ambil semua produk (TERMASUK yang belum pernah masuk toko)
@@ -55,7 +59,25 @@ class StockOpnameService
                 }
             }
 
-            return $opname;
+            $store = Store::find($storeId);
+
+            $visitDateParsed = Carbon::parse($visitDate);
+
+            $nextVisit = $visitDateParsed->copy()->addDays($store->visit_interval_days);
+
+Visit::create([
+    'store_id' => $storeId,
+    'user_id' => $createdBy,
+    'visit_date' => $visitDateParsed,
+    'next_visit_date' => $nextVisit,
+    'status' => 'approved'
+]);
+
+$store->update([
+    'last_visit_date' => $visitDateParsed
+]);
+
+return $opname;
         });
     }
 }

@@ -63,8 +63,44 @@
       </table>
       {{-- ================= TOTAL ================= --}} 
       <div class="mt-8 border-t pt-4 text-sm">
-         <div class="flex justify-between"> <span>Total Fee</span> <span> Rp {{ number_format(optional($visit->salesTransaction)->total_fee ?? 0, 0, ',', '.') }} </span> </div>
-         <div class="flex justify-between font-bold text-lg mt-2"> <span>Total Tagihan</span> <span> Rp {{ number_format(optional($visit->salesTransaction)->total_amount ?? 0, 0, ',', '.') }} </span> </div>
+         <div class="mt-8 border-t pt-4 text-sm">
+
+    @php
+        $transaction = $visit->salesTransaction;
+        $totalPenjualan = $transaction->total_amount ?? 0;
+        $adminFee = $visit->admin_fee ?? 0;
+        $tagihan = $totalPenjualan - $adminFee;
+    @endphp
+
+    <div class="flex justify-between">
+    <span>Total Penjualan</span>
+    <span>
+        Rp {{ number_format($totalPenjualan, 0, ',', '.') }}
+    </span>
+</div>
+
+<div class="flex justify-between text-red-600">
+    <span>Biaya Admin</span>
+    <span>
+        - Rp {{ number_format($adminFee, 0, ',', '.') }}
+    </span>
+</div>
+
+<div class="flex justify-between font-bold text-lg mt-2 border-t pt-2">
+    <span>Total Tagihan</span>
+    <span>
+        Rp {{ number_format($tagihan, 0, ',', '.') }}
+    </span>
+</div>
+
+<div class="flex justify-between mt-3 text-gray-700">
+    <span>Total Fee</span>
+    <span>
+        Rp {{ number_format($transaction->total_fee ?? 0, 0, ',', '.') }}
+    </span>
+</div>
+
+</div>
       </div>
       {{-- ================= HISTORY MOVEMENT ================= --}} 
       <hr class="my-8">

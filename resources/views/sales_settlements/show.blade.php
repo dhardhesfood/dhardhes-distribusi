@@ -1,5 +1,64 @@
 <x-app-layout>
 
+<style>
+
+@media print {
+
+    /* Semua teks jadi biru */
+    body, table, th, td, div, span {
+        color:#1d4ed8 !important;
+    }
+
+    /* Hilangkan warna abu bawaan tailwind */
+    .text-gray-600,
+    .text-gray-500,
+    .text-gray-700,
+    .text-gray-800 {
+        color:#1d4ed8 !important;
+    }
+
+    /* Link juga biru */
+    a {
+        color:#1d4ed8 !important;
+        text-decoration:none;
+    }
+
+    /* Angka negatif / status merah */
+    .text-red-600,
+    .bg-red-600 {
+        color:#dc2626 !important;
+        background:none !important;
+        font-weight:bold;
+    }
+
+    /* Status kurang setor */
+    .status-minus {
+        color:#dc2626 !important;
+        font-weight:bold;
+    }
+
+    /* status lunas */
+    .status-ok {
+        color:#1d4ed8 !important;
+        font-weight:bold;
+    }
+
+    /* Hilangkan shadow agar print bersih */
+    .shadow {
+        box-shadow:none !important;
+    }
+
+    /* Hilangkan background tailwind */
+    .bg-white,
+    .bg-gray-100,
+    .bg-blue-50 {
+        background:none !important;
+    }
+
+}
+
+</style>
+
 <div class="py-6 px-6">
 
     <div class="flex justify-between items-center mb-6">
@@ -90,7 +149,7 @@
     <div class="bg-white shadow rounded mb-6 p-4">
         <h3 class="font-semibold mb-4">Detail Per Toko</h3>
         <table class="w-full border">
-            <thead class="bg-gray-100">
+            <thead class="bg-blue-50">
                 <tr>
                     <th class="p-2 text-left">Nama Toko</th>
                     <th class="p-2 text-right">Total Penjualan</th>
@@ -311,7 +370,7 @@
                         Rp {{ number_format($settlement->actual_amount,0,',','.') }}
                     </td>
                 </tr>
-                <tr class="font-bold">
+                <tr class="font-bold {{ $difference < 0 ? 'status-minus' : 'status-ok' }}">
                     <td class="p-2">Selisih</td>
                     <td class="p-2 text-right">
                         Rp {{ number_format($difference,0,',','.') }}

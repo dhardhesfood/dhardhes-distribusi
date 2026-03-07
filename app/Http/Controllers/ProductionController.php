@@ -17,7 +17,12 @@ class ProductionController extends Controller
     {
         $products = Product::where('is_active', true)->get();
 
-        return view('productions.create', compact('products'));
+        $productions = ProductionBatch::with('product')
+                ->orderBy('production_date','desc')
+                ->orderBy('id','desc')
+                ->get();
+
+        return view('productions.create', compact('products','productions'));
     }
 
     /**

@@ -91,11 +91,28 @@ class StoreController extends Controller
     $store->total_stock_qty = $totalQty;
 }
 
-        $areas = Area::withCount('stores')
+        // ==============================
+        // HITUNG STATUS KUNJUNGAN TOKO
+        // ==============================
+
+        $lateCount = $stores->where('visit_status', 'late')->count();
+
+        $heavyLateCount = $stores->where('visit_status', 'heavy')->count();
+
+        $withdrawCount = $stores->where('visit_status', 'withdraw')->count();
+
+            $areas = Area::withCount('stores')
             ->orderBy('name')
             ->get();
 
-        return view('stores.index', compact('stores', 'areas', 'allStores'));
+        return view('stores.index', compact(
+    'stores',
+    'areas',
+    'allStores',
+    'lateCount',
+    'heavyLateCount',
+    'withdrawCount'
+    ));
     }
 
     public function create()

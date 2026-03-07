@@ -10,6 +10,39 @@ class SalesFeeController extends Controller
 {
     public function index()
     {
+
+        $filter = request('filter') ?? 'daily';
+
+$date  = request('date') ?? Carbon::today()->toDateString();
+$month = request('month');
+$from  = request('from');
+$to    = request('to');
+
+if ($filter === 'weekly') {
+
+    $startDate = Carbon::parse($date)->startOfWeek();
+    $endDate   = Carbon::parse($date)->endOfWeek();
+
+}
+elseif ($filter === 'monthly') {
+
+    $startDate = Carbon::parse($month ?? $date)->startOfMonth();
+    $endDate   = Carbon::parse($month ?? $date)->endOfMonth();
+
+}
+elseif ($filter === 'custom') {
+
+    $startDate = Carbon::parse($from);
+    $endDate   = Carbon::parse($to);
+
+}
+else {
+
+    $startDate = Carbon::parse($date);
+    $endDate   = Carbon::parse($date);
+
+}
+
         $query = DB::table('users as u')
             ->leftJoin('sales_transactions as st', 'st.user_id', '=', 'u.id')
             ->where('u.role', 'sales');
@@ -69,6 +102,38 @@ class SalesFeeController extends Controller
                 'is_minus' => $netFee < 0 ? true : false,
             ];
         }
+        $dailyFee = DB::table('users as u')
+    ->leftJoin('sales_transactions as st', function($join) use ($startDate,$endDate) {
+        $join->on('st.user_id','=','u.id')
+             ->whereBetween('st.transaction_date',[$startDate,$endDate]);
+    })
+
+    ->leftJoin('cash_sales as cs', function($join) use ($startDate,$endDate) {
+        $join->on('cs.user_id','=','u.id')
+             ->whereBetween('cs.sale_date',[$startDate,$endDate])
+             ->where('cs.status','locked');
+    })
+
+    ->where('u.role','sales')
+
+    ->select(
+        'u.id',
+        'u.name',
+
+        DB::raw('COALESCE(SUM(st.total_fee),0) as fee_konsinyasi'),
+        DB::raw('COALESCE(SUM(cs.fee_total),0) as fee_tunai')
+    )
+
+    ->groupBy('u.id','u.name')
+
+    ->get()
+
+    ->map(function($row){
+
+        $row->total_fee = $row->fee_konsinyasi + $row->fee_tunai;
+
+        return $row;
+    });
 
         /*
         |--------------------------------------------------------------------------
@@ -93,9 +158,16 @@ class SalesFeeController extends Controller
             ->groupBy('user_id');
 
         return view('sales-fees.index', [
-            'sales' => $finalData,
-            'monthlySettlements' => $monthlySettlements
-        ]);
+    'sales' => $finalData,
+    'monthlySettlements' => $monthlySettlements,
+    'dailyFee' => $dailyFee,
+
+    'selectedDate' => $date,
+    'filter' => $filter,
+    'month' => $month,
+    'from' => $from,
+    'to' => $to
+     ]);
     }
 
     public function pay(Request $request)

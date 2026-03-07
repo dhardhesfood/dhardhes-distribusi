@@ -73,6 +73,67 @@
 
                 </form>
 
+                <hr class="my-6">
+
+<h3 class="text-lg font-semibold mb-3">Laporan Produksi</h3>
+
+<table class="w-full border border-gray-300">
+    <thead class="bg-gray-100">
+        <tr>
+            <th class="border px-3 py-2 text-left">Tanggal</th>
+            <th class="border px-3 py-2 text-left">Produk</th>
+            <th class="border px-3 py-2 text-right">Jumlah</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+    @php
+$lastDate = null;
+@endphp
+
+@forelse($productions as $production)
+
+@if($lastDate != $production->production_date)
+
+<tr style="background:#f3f4f6;font-weight:bold;">
+<td colspan="3" class="px-3 py-2">
+Tanggal Produksi:
+{{ \Carbon\Carbon::parse($production->production_date)->format('d M Y') }}
+</td>
+</tr>
+
+@php
+$lastDate = $production->production_date;
+@endphp
+
+@endif
+
+<tr>
+<td class="border px-3 py-2"></td>
+
+<td class="border px-3 py-2">
+{{ $production->product->name ?? '-' }}
+</td>
+
+<td class="border px-3 py-2 text-right">
+{{ number_format($production->quantity) }}
+</td>
+</tr>
+
+@empty
+
+<tr>
+<td colspan="3" class="text-center py-4">
+Belum ada data produksi
+</td>
+</tr>
+
+@endforelse
+
+    </tbody>
+</table>
+
             </div>
         </div>
     </div>

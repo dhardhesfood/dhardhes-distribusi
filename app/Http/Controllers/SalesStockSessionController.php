@@ -137,7 +137,7 @@ if ($qty > $warehouseStock) {
         $session = SalesStockSession::with('user','items.product')
             ->findOrFail($id);
 
-        $movements = StockMovement::with('product')
+        $movements = StockMovement::with(['product','visit.store'])
             ->where('session_id', $session->id)
             ->orderBy('created_at')
             ->get();

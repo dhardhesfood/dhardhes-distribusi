@@ -14,6 +14,106 @@
                 </div>
             @endif
 
+            <div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
+
+<div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
+
+<form method="GET" class="flex flex-wrap items-center gap-3">
+
+<label class="text-sm font-medium">
+Filter
+</label>
+
+<select name="filter" class="border rounded px-2 py-1">
+
+<option value="daily" {{ $filter=='daily'?'selected':'' }}>
+Tanggal
+</option>
+
+<option value="custom" {{ $filter=='custom'?'selected':'' }}>
+Custom Range
+</option>
+
+</select>
+
+<input
+type="date"
+name="date"
+value="{{ $selectedDate }}"
+class="border rounded px-2 py-1">
+
+<input
+type="date"
+name="from"
+value="{{ $from }}"
+class="border rounded px-2 py-1">
+
+<input
+type="date"
+name="to"
+value="{{ $to }}"
+class="border rounded px-2 py-1">
+
+<button
+type="submit"
+class="bg-blue-600 text-white px-3 py-1 rounded text-sm">
+
+Tampilkan
+
+</button>
+
+</form>
+
+</div>
+
+<div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
+
+<h3 class="font-semibold mb-3">
+@if($filter == 'custom')
+
+Fee Sales
+{{ \Carbon\Carbon::parse($from)->format('d-m-Y') }}
+-
+{{ \Carbon\Carbon::parse($to)->format('d-m-Y') }}
+
+@else
+
+Fee Sales Tanggal
+{{ \Carbon\Carbon::parse($selectedDate)->format('d-m-Y') }}
+
+@endif
+</h3>
+
+<table class="min-w-full text-sm border">
+
+<thead class="bg-gray-100">
+<tr>
+<th class="p-2 border text-left">Sales</th>
+<th class="p-2 border text-right">Fee</th>
+</tr>
+</thead>
+
+<tbody>
+
+@foreach($dailyFee as $row)
+
+<tr>
+<td class="p-2 border">{{ $row->name }}</td>
+
+<td class="p-2 border text-right font-semibold">
+Rp {{ number_format($row->total_fee,0,',','.') }}
+</td>
+
+</tr>
+
+@endforeach
+
+</tbody>
+
+</table>
+
+</div>
+
             {{-- ======================== TABEL FEE ======================== --}}
             <div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
 

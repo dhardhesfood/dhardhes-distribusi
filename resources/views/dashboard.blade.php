@@ -28,7 +28,7 @@
 
 @endif
 
-    @if(isset($pendingVisits) && $pendingVisits > 0)
+    @if(auth()->user()->role === 'admin' && isset($pendingVisits) && $pendingVisits > 0)
 
 <div class="mb-5 bg-red-100 border border-red-300 text-red-800 px-5 py-4 rounded-xl shadow">
 

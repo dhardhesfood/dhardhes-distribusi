@@ -22,7 +22,7 @@ class VisitController extends Controller
     {
         $this->visitService = $visitService;
     }
-    public function index()
+    public function index(Request $request)
     {
         // 🔹 AUTO CLEANUP VISIT DRAFT KOSONG (KHUSUS SALES)
         if (auth()->user()->role === 'sales') {
@@ -44,15 +44,48 @@ class VisitController extends Controller
                 }
             }
         }
+        $date = $request->date ?? now()->toDateString();
+
+        $range = $request->range ?? 'today';
+
+if ($range === 'today') {
+    $startDate = now()->toDateString();
+    $endDate = now()->toDateString();
+}
+
+elseif ($range === 'yesterday') {
+    $startDate = now()->subDay()->toDateString();
+    $endDate = $startDate;
+}
+
+elseif ($range === '7days') {
+    $startDate = now()->subDays(6)->toDateString();
+    $endDate = now()->toDateString();
+}
+
+elseif ($range === '30days') {
+    $startDate = now()->subDays(29)->toDateString();
+    $endDate = now()->toDateString();
+}
+
+else {
+    $startDate = $date;
+    $endDate = $date;
+}
+        
         if (auth()->user()->role === 'admin') {
-            $visits = Visit::with('store')->latest()->get();
+            $visits = Visit::with('store')
+            ->whereBetween('visit_date', [$startDate, $endDate])
+            ->latest()
+            ->get();
         } else {
             $visits = Visit::with('store')
-                ->where('user_id', auth()->id())
-                ->latest()
-                ->get();
+            ->where('user_id', auth()->id())
+            ->whereBetween('visit_date', [$startDate, $endDate])
+            ->latest()
+            ->get();
         }
-        return view('visits.index', compact('visits'));
+        return view('visits.index', compact('visits','date','range'));
     }
     public function chooseSales()
     {
@@ -81,6 +114,7 @@ class VisitController extends Controller
         }
         $session = SalesStockSession::where('user_id', $targetUserId)
             ->where('status', 'open')
+            ->whereDate('start_date', now()->toDateString())
             ->first();
         if (!$session) {
             abort(403, 'Anda belum memulai session stok.');
@@ -193,6 +227,7 @@ class VisitController extends Controller
     }
     public function submit(Request $request, $visitId)
     {
+
         $visit = Visit::with(['items', 'bonuses'])
             ->where('id', $visitId)
             ->firstOrFail();
@@ -215,27 +250,34 @@ class VisitController extends Controller
             'bonus_qty.*'        => 'nullable|numeric|min:1',
         ]);
         foreach ($visit->items as $item) {
-            $returnQty    = (int) $request->input("return_qty.{$item->id}", 0);
-            $newQty       = (int) $request->input("new_delivery_qty.{$item->id}", 0);
-            $reductionQty = (int) $request->input("stock_reduction_qty.{$item->id}", 0);
-            $physicalStock = (int) $request->input("physical_stock.{$item->id}", 0);
-            if ($returnQty < 0 || $newQty < 0 || $reductionQty < 0) {
-                abort(422, "Nilai tidak boleh negatif.");
-            }
-            if ($returnQty > $item->initial_stock) {
-                abort(422, "Sisa stok tidak boleh lebih besar dari stok awal.");
-            }
-            if ($reductionQty > $returnQty) {
-                abort(422, "Pengurangan stok tidak boleh lebih besar dari sisa stok.");
-            }
-            $item->update([
-                'return_qty'          => $returnQty,
-                'new_delivery_qty'    => $newQty,
-                'stock_reduction_qty' => $reductionQty,
-                'physical_stock'      => $physicalStock,
-                'sold_qty'            => 0,
-            ]);
-        }
+
+    $remaining    = (int) ($request->return_qty[$item->id] ?? 0);
+    $newQty       = (int) ($request->new_delivery_qty[$item->id] ?? 0);
+    $reductionQty = (int) ($request->stock_reduction_qty[$item->id] ?? 0);
+
+    $maxPossible = $item->initial_stock + $newQty;
+
+    if ($remaining > $maxPossible) {
+        abort(422, "Sisa stok tidak boleh melebihi stok tersedia.");
+    }
+
+    if ($remaining < 0 || $newQty < 0 || $reductionQty < 0) {
+        abort(422, "Nilai tidak boleh negatif.");
+    }
+
+    $finalStock = $remaining - $reductionQty + $newQty;
+
+    if ($finalStock < 0) {
+        abort(422, "Stok toko tidak boleh minus.");
+    }
+
+    $item->update([
+        'remaining_stock'     => $remaining,
+        'new_delivery_qty'    => $newQty,
+        'stock_reduction_qty' => $reductionQty,
+        'sold_qty'            => 0,
+    ]);
+}
         $visit->bonuses()->delete();
         if (!empty($validated['bonus_product_id'])) {
             foreach ($validated['bonus_product_id'] as $index => $productId) {

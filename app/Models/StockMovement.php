@@ -34,6 +34,11 @@ class StockMovement extends Model
         return $this->belongsTo(Product::class);
     }
 
+    public function visit()
+    {
+    return $this->belongsTo(\App\Models\Visit::class, 'reference_id');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | HELPER: GET SALES STOCK (STOK MOBIL SALES)

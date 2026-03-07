@@ -170,7 +170,6 @@
                     <tr>
                         <th class="border p-2 text-left">Tanggal</th>
                         <th class="border p-2 text-left">Produk</th>
-                        <th class="border p-2 text-center">Tipe</th>
                         <th class="border p-2 text-center">Qty</th>
                         <th class="border p-2 text-center">Saldo</th>
                         <th class="border p-2 text-left">Keterangan</th>
@@ -185,9 +184,6 @@
                         <td class="border p-2 text-left">
                             {{ $movement->product->name ?? '-' }}
                         </td>
-                        <td class="border p-2">
-                            {{ $movement->type }}
-                        </td>
                         <td class="border p-2 
                             {{ $movement->quantity < 0 ? 'text-red-600' : 'text-green-600' }}">
                             {{ $movement->quantity }}
@@ -196,8 +192,17 @@
                             {{ $movement->running_balance }}
                         </td>
                         <td class="border p-2 text-left">
-                            {{ $movement->notes }}
-                        </td>
+
+                        {{ $movement->notes }}
+
+                        @if(isset($movement->visit) && $movement->visit->store)
+                       <br>
+                       <span class="text-gray-500 text-xs">
+                        Toko: {{ $movement->visit->store->name }}
+                      </span>
+                       @endif
+
+                      </td>
                     </tr>
                     @endforeach
                 </tbody>

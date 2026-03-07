@@ -3,6 +3,44 @@
 
         <h2 class="text-xl font-bold mb-4">Daftar Kunjungan</h2>
 
+        <div class="mb-4 flex gap-2">
+
+    <a href="{{ route('visits.index', ['range'=>'today']) }}"
+       class="px-3 py-1 rounded text-sm {{ $range=='today' ? 'bg-blue-600 text-white' : 'bg-gray-200' }}">
+        Hari Ini
+    </a>
+
+    <a href="{{ route('visits.index', ['range'=>'yesterday']) }}"
+       class="px-3 py-1 rounded text-sm {{ $range=='yesterday' ? 'bg-blue-600 text-white' : 'bg-gray-200' }}">
+        Kemarin
+    </a>
+
+    <a href="{{ route('visits.index', ['range'=>'7days']) }}"
+       class="px-3 py-1 rounded text-sm {{ $range=='7days' ? 'bg-blue-600 text-white' : 'bg-gray-200' }}">
+        7 Hari
+    </a>
+
+    <a href="{{ route('visits.index', ['range'=>'30days']) }}"
+       class="px-3 py-1 rounded text-sm {{ $range=='30days' ? 'bg-blue-600 text-white' : 'bg-gray-200' }}">
+        30 Hari
+    </a>
+
+</div>
+
+        <form method="GET" class="mb-4 flex items-center gap-2">
+
+    <input type="date"
+           name="date"
+           value="{{ $date }}"
+           class="border p-2 rounded">
+
+    <button type="submit"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm">
+        Filter
+    </button>
+
+</form>
+
         <table class="w-full border text-sm">
             <thead class="bg-gray-100">
                 <tr>

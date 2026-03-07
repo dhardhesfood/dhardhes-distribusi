@@ -93,6 +93,7 @@ class VisitService
 
             $session = SalesStockSession::where('user_id', $visit->user_id)
                 ->where('status', 'open')
+                ->whereDate('start_date', $visit->visit_date)
                 ->first();
 
             if (!$session) {
@@ -120,12 +121,21 @@ class VisitService
 
             foreach ($visit->items as $item) {
 
-    $soldQty      = (int) $item->initial_stock - (int) $item->return_qty;
+                $initialStock = (int) $item->initial_stock;
+                $remaining    = (int) $item->remaining_stock;
                 $reductionQty = (int) $item->stock_reduction_qty;
                 $newQty       = (int) $item->new_delivery_qty;
 
+                $finalStock = $remaining - $reductionQty + $newQty;
+
+                if ($finalStock < 0) {
+                throw new \Exception("Stok toko tidak boleh minus.");
+                }
+
+                $soldQty = $initialStock - $remaining;
+
                 if ($soldQty < 0) {
-                    $soldQty = 0;
+                $soldQty = 0;
                 }
 
                 $item->update([

@@ -47,7 +47,7 @@
             <tr class="text-center">
                <td class="border p-2 text-left"> {{ $item->product->name }} </td>
                <td class="border p-2"> {{ $item->initial_stock }} </td>
-               <td class="border p-2"> {{ $item->return_qty }} </td>
+               <td class="border p-2"> {{ $item->remaining_stock }} </td>
                <td class="border p-2 font-semibold text-purple-600"> {{ $item->physical_stock ?? '-' }} </td>
                <td class="border p-2 font-semibold text-blue-600"> {{ $item->sold_qty }} </td>
                <td class="border p-2 text-green-600"> {{ $item->new_delivery_qty }} </td>

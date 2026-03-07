@@ -2,20 +2,22 @@
 
 @php
 
-$today = \Carbon\Carbon::today();
 $lateStoresCount = 0;
+$heavyStoresCount = 0;
+$withdrawStoresCount = 0;
 
 foreach ($stores as $s) {
 
-    if ($s->last_visit_date) {
+    if ($s->visit_status === 'late') {
+        $lateStoresCount++;
+    }
 
-        $next = \Carbon\Carbon::parse($s->last_visit_date)
-            ->addDays($s->visit_interval_days);
+    if ($s->visit_status === 'heavy') {
+        $heavyStoresCount++;
+    }
 
-        if ($today->gt($next)) {
-            $lateStoresCount++;
-        }
-
+    if ($s->visit_status === 'withdraw') {
+        $withdrawStoresCount++;
     }
 
 }
@@ -62,7 +64,7 @@ class="inline-flex justify-center items-center w-full sm:w-auto px-4 py-2 bg-red
 
                 <a href="{{ route('stores.index', array_merge(request()->all(), ['heavy' => 1])) }}"
 class="inline-flex justify-center items-center w-full sm:w-auto px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-lg shadow-md transition transform hover:scale-105 hover:shadow-lg active:scale-95">
-🟠 Terlambat Berat
+🟠 Terlambat Berat ({{ $heavyStoresCount }})
 </a>
 
                 <a href="{{ route('stores.index', array_merge(request()->all(), ['withdraw' => 1])) }}"
@@ -70,7 +72,7 @@ class="inline-flex justify-center items-center w-full sm:w-auto px-4 py-2 text-w
 style="background-color:black;"
 onmouseover="this.style.backgroundColor='#333'"
 onmouseout="this.style.backgroundColor='black'">
-⚫ Pertimbangkan Ditarik
+⚫ Pertimbangkan Ditarik ({{ $withdrawStoresCount }})
 </a>
 
                 <a href="{{ route('stores.create') }}"

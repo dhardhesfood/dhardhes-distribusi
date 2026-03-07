@@ -8,6 +8,7 @@ use App\Models\Kasbon;
 use App\Models\Receivable;
 use App\Models\Store;
 use App\Models\Visit;
+use App\Models\Notification;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -43,7 +44,12 @@ class DashboardController extends Controller
             ->get();
 
         // Visit menunggu approval admin
-        $pendingVisits = Visit::where('status', 'completed')->count();    
+        $pendingVisits = Visit::where('status', 'completed')->count();
+
+        // Notifikasi belum dibaca
+        $notificationsCount = Notification::where('user_id', auth()->id())
+            ->where('is_read', false)
+            ->count();    
 
         return view('dashboard', compact(
             'totalSettlementToday',
@@ -52,7 +58,8 @@ class DashboardController extends Controller
             'totalKasbonActive',
             'totalPiutang',
             'stores',
-            'pendingVisits'
+            'pendingVisits',
+            'notificationsCount'
         ));
     }
 }

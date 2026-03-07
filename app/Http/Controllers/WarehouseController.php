@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\WarehouseNote;
+use App\Models\User;
+use App\Models\Notification;
 use Illuminate\Support\Facades\DB;
 
 class WarehouseController extends Controller
@@ -15,6 +17,10 @@ class WarehouseController extends Controller
      */
     public function index()
     {
+        Notification::where('user_id', auth()->id())
+        ->where('type', 'warehouse_note')
+        ->update(['is_read' => true]);
+
         $stocks = DB::table('stock_movements')
             ->select(
                 'products.id',
@@ -106,10 +112,25 @@ class WarehouseController extends Controller
         'message' => 'required|string|max:1000'
     ]);
 
-    \App\Models\WarehouseNote::create([
+    $note = WarehouseNote::create([
         'user_id' => auth()->id(),
         'message' => $request->message
     ]);
+
+    // BUAT NOTIFIKASI
+    $users = User::where('id','!=',auth()->id())->select('id')->get();
+
+    foreach ($users as $user) {
+
+        Notification::create([
+            'user_id' => $user->id,
+            'type' => 'warehouse_note',
+            'title' => 'Catatan Gudang',
+            'message' => auth()->user()->name.' mengirim catatan gudang',
+            'link' => route('warehouse.index')
+        ]);
+
+    }
 
     return redirect()->route('warehouse.index');
 }

@@ -7,6 +7,27 @@
 
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
+    @if(isset($notificationsCount) && $notificationsCount > 0)
+
+<div class="mb-5 bg-blue-100 border border-blue-300 text-blue-900 px-5 py-4 rounded-xl shadow">
+
+    <div class="flex items-center justify-between">
+
+        <div class="font-semibold">
+            🔔 {{ $notificationsCount }} Notifikasi baru
+        </div>
+
+        <a href="{{ route('warehouse.index') }}"
+           class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm">
+            Lihat Pesan
+        </a>
+
+    </div>
+
+</div>
+
+@endif
+
     @if(isset($pendingVisits) && $pendingVisits > 0)
 
 <div class="mb-5 bg-red-100 border border-red-300 text-red-800 px-5 py-4 rounded-xl shadow">

@@ -18,49 +18,41 @@
 
 <div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
 
-<form method="GET" class="flex flex-wrap items-center gap-3">
+<form method="GET" class="mb-4 flex gap-2 items-center">
 
-<label class="text-sm font-medium">
-Filter
-</label>
+<select name="month"
+class="border rounded px-3 py-1"
+onchange="this.form.submit()">
 
-<select name="filter" class="border rounded px-2 py-1">
+@foreach(range(1,12) as $m)
 
-<option value="daily" {{ $filter=='daily'?'selected':'' }}>
-Tanggal
+<option value="{{ $m }}"
+{{ request('month', now()->month) == $m ? 'selected' : '' }}>
+
+{{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+
 </option>
 
-<option value="custom" {{ $filter=='custom'?'selected':'' }}>
-Custom Range
-</option>
+@endforeach
 
 </select>
 
-<input
-type="date"
-name="date"
-value="{{ $selectedDate }}"
-class="border rounded px-2 py-1">
+<select name="year"
+class="border rounded px-3 py-1"
+onchange="this.form.submit()">
 
-<input
-type="date"
-name="from"
-value="{{ $from }}"
-class="border rounded px-2 py-1">
+@foreach(range(now()->year-2, now()->year+1) as $y)
 
-<input
-type="date"
-name="to"
-value="{{ $to }}"
-class="border rounded px-2 py-1">
+<option value="{{ $y }}"
+{{ request('year', now()->year) == $y ? 'selected' : '' }}>
 
-<button
-type="submit"
-class="bg-blue-600 text-white px-3 py-1 rounded text-sm">
+{{ $y }}
 
-Tampilkan
+</option>
 
-</button>
+@endforeach
+
+</select>
 
 </form>
 
@@ -69,27 +61,19 @@ Tampilkan
 <div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
 
 <h3 class="font-semibold mb-3">
-@if($filter == 'custom')
-
-Fee Sales
-{{ \Carbon\Carbon::parse($from)->format('d-m-Y') }}
--
-{{ \Carbon\Carbon::parse($to)->format('d-m-Y') }}
-
-@else
-
-Fee Sales Tanggal
-{{ \Carbon\Carbon::parse($selectedDate)->format('d-m-Y') }}
-
-@endif
+Fee Sales Bulan
+{{ \Carbon\Carbon::create($year,$month,1)->translatedFormat('F Y') }}
 </h3>
 
 <table class="min-w-full text-sm border">
 
 <thead class="bg-gray-100">
 <tr>
+<th class="p-2 border text-left">Tanggal</th>
 <th class="p-2 border text-left">Sales</th>
-<th class="p-2 border text-right">Fee</th>
+<th class="p-2 border text-right">Fee Konsinyasi</th>
+<th class="p-2 border text-right">Fee Tunai</th>
+<th class="p-2 border text-right">Total Fee</th>
 </tr>
 </thead>
 
@@ -98,7 +82,22 @@ Fee Sales Tanggal
 @foreach($dailyFee as $row)
 
 <tr>
-<td class="p-2 border">{{ $row->name }}</td>
+
+<td class="p-2 border">
+{{ $row->transaction_date ? \Carbon\Carbon::parse($row->transaction_date)->format('d-m-Y') : '-' }}
+</td>
+
+<td class="p-2 border">
+{{ $row->name }}
+</td>
+
+<td class="p-2 border text-right">
+Rp {{ number_format($row->fee_konsinyasi,0,',','.') }}
+</td>
+
+<td class="p-2 border text-right">
+Rp {{ number_format($row->fee_tunai,0,',','.') }}
+</td>
 
 <td class="p-2 border text-right font-semibold">
 Rp {{ number_format($row->total_fee,0,',','.') }}

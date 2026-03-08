@@ -40,19 +40,43 @@
                <th class="border p-2">Penambahan</th>
                <th class="border p-2">Pengurangan</th>
                <th class="border p-2">Bonus</th>
+               <th class="border p-2">Stok Akhir</th>
             </tr>
          </thead>
          <tbody>
             @forelse($visit->items as $item) 
             <tr class="text-center">
-               <td class="border p-2 text-left"> {{ $item->product->name }} </td>
-               <td class="border p-2"> {{ $item->initial_stock }} </td>
-               <td class="border p-2"> {{ $item->remaining_stock }} </td>
-               <td class="border p-2 font-semibold text-purple-600"> {{ $item->physical_stock ?? '-' }} </td>
-               <td class="border p-2 font-semibold text-blue-600"> {{ $item->sold_qty }} </td>
-               <td class="border p-2 text-green-600"> {{ $item->new_delivery_qty }} </td>
-               <td class="border p-2 text-red-600"> {{ $item->stock_reduction_qty }} </td>
-               <td class="border p-2"> {{ optional($visit->bonuses) ->where('product_id', $item->product_id) ->sum('qty') }} </td>
+               <td class="border p-2 text-left"> 
+                  {{ $item->product->name }} 
+               </td>
+               <td class="border p-2"> 
+                  {{ $item->initial_stock }} 
+               </td>
+               <td class="border p-2"> 
+                  {{ $item->remaining_stock }} 
+               </td>
+               <td class="border p-2 font-semibold text-purple-600"> 
+                  {{ $item->physical_stock ?? '-' }} 
+               </td>
+               <td class="border p-2 font-semibold text-blue-600"> 
+                  {{ $item->sold_qty }} 
+               </td>
+               <td class="border p-2 text-green-600"> 
+                  {{ $item->new_delivery_qty }} 
+               </td>
+               <td class="border p-2 text-red-600"> 
+                  {{ $item->stock_reduction_qty }} 
+               </td>
+               <td class="border p-2"> 
+                  {{ optional($visit->bonuses)
+                  ->where('product_id', $item->product_id) 
+                  ->sum('qty') }} 
+               </td>
+               <td class="border p-2 font-semibold text-gray-700">
+                  {{ \App\Models\StoreStockMovement::getStoreProductStock($visit
+                  ->store_id, $item
+                  ->product_id) }}
+               </td>
             </tr>
             @empty 
             <tr>
@@ -101,7 +125,9 @@
 </div>
 
 </div>
+
       </div>
+
       {{-- ================= HISTORY MOVEMENT ================= --}} 
       <hr class="my-8">
       <h3 class="text-lg font-bold mb-4">History Pergerakan Stok</h3>
@@ -113,7 +139,7 @@
                <thead class="bg-gray-100">
                   <tr>
                      <th class="border p-2 text-left">Produk</th>
-                     <th class="border p-2">Tipe</th>
+                     <th class="border p-2">Keterangan</th>
                      <th class="border p-2">Qty</th>
                      <th class="border p-2">Waktu</th>
                   </tr>
@@ -122,7 +148,7 @@
                   @forelse($visit->storeMovements as $movement) 
                   <tr class="text-center">
                      <td class="border p-2 text-left"> {{ $movement->product->name ?? '-' }} </td>
-                     <td class="border p-2"> {{ $movement->type }} </td>
+                     <td class="border p-2"> {{ $movement->notes }} </td>
                      <td class="border p-2"> {{ $movement->quantity }} </td>
                      <td class="border p-2"> {{ $movement->created_at }} </td>
                   </tr>
@@ -141,7 +167,7 @@
                <thead class="bg-gray-100">
                   <tr>
                      <th class="border p-2 text-left">Produk</th>
-                     <th class="border p-2">Tipe</th>
+                     <th class="border p-2">Keterangan</th>
                      <th class="border p-2">Qty</th>
                      <th class="border p-2">Waktu</th>
                   </tr>
@@ -150,7 +176,7 @@
                   @forelse($visit->salesMovements as $movement) 
                   <tr class="text-center">
                      <td class="border p-2 text-left"> {{ $movement->product->name ?? '-' }} </td>
-                     <td class="border p-2"> {{ $movement->type }} </td>
+                     <td class="border p-2"> {{ $movement->notes }} </td>
                      <td class="border p-2"> {{ $movement->quantity }} </td>
                      <td class="border p-2"> {{ $movement->created_at }} </td>
                   </tr>

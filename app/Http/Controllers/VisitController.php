@@ -45,8 +45,7 @@ class VisitController extends Controller
             }
         }
         $date = $request->date ?? now()->toDateString();
-
-        $range = $request->range ?? 'today';
+        $range = $request->range ?? null;
 
 if ($range === 'today') {
     $startDate = now()->toDateString();

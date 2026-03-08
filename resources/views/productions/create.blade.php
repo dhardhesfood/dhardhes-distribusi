@@ -75,6 +75,28 @@
 
                 <hr class="my-6">
 
+                <form method="GET" class="mt-6 mb-3 flex gap-2 items-center">
+
+<select name="month" class="border rounded p-2" onchange="this.form.submit()">
+@foreach(range(1,12) as $m)
+<option value="{{ $m }}"
+{{ request('month', now()->month) == $m ? 'selected' : '' }}>
+{{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+</option>
+@endforeach
+</select>
+
+<select name="year" class="border rounded p-2" onchange="this.form.submit()">
+@foreach(range(now()->year-2, now()->year+1) as $y)
+<option value="{{ $y }}"
+{{ request('year', now()->year) == $y ? 'selected' : '' }}>
+{{ $y }}
+</option>
+@endforeach
+</select>
+
+</form>
+
 <h3 class="text-lg font-semibold mb-3">Laporan Produksi</h3>
 
 <table class="w-full border border-gray-300">

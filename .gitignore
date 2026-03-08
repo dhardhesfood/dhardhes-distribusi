@@ -26,3 +26,4 @@ Thumbs.db
 'er = AppModelsUser::where('role','admin_gudang')->first();'
 'er->password = bcrypt('123456');'
 er*
+public/bbfs

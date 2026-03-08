@@ -11,37 +11,11 @@ class SalesFeeController extends Controller
     public function index()
     {
 
-        $filter = request('filter') ?? 'daily';
+        $month = request('month') ?? Carbon::now()->month;
+$year  = request('year') ?? Carbon::now()->year;
 
-$date  = request('date') ?? Carbon::today()->toDateString();
-$month = request('month');
-$from  = request('from');
-$to    = request('to');
-
-if ($filter === 'weekly') {
-
-    $startDate = Carbon::parse($date)->startOfWeek();
-    $endDate   = Carbon::parse($date)->endOfWeek();
-
-}
-elseif ($filter === 'monthly') {
-
-    $startDate = Carbon::parse($month ?? $date)->startOfMonth();
-    $endDate   = Carbon::parse($month ?? $date)->endOfMonth();
-
-}
-elseif ($filter === 'custom') {
-
-    $startDate = Carbon::parse($from);
-    $endDate   = Carbon::parse($to);
-
-}
-else {
-
-    $startDate = Carbon::parse($date);
-    $endDate   = Carbon::parse($date);
-
-}
+$startDate = Carbon::create($year,$month,1)->startOfMonth();
+$endDate   = Carbon::create($year,$month,1)->endOfMonth();
 
         $query = DB::table('users as u')
             ->leftJoin('sales_transactions as st', 'st.user_id', '=', 'u.id')
@@ -117,14 +91,15 @@ else {
     ->where('u.role','sales')
 
     ->select(
-        'u.id',
-        'u.name',
+           'u.id',
+           'u.name',
+           'st.transaction_date',
 
-        DB::raw('COALESCE(SUM(st.total_fee),0) as fee_konsinyasi'),
-        DB::raw('COALESCE(SUM(cs.fee_total),0) as fee_tunai')
-    )
+           DB::raw('COALESCE(SUM(st.total_fee),0) as fee_konsinyasi'),
+           DB::raw('COALESCE(SUM(cs.fee_total),0) as fee_tunai')
+            )
 
-    ->groupBy('u.id','u.name')
+    ->groupBy('u.id','u.name','st.transaction_date')
 
     ->get()
 
@@ -162,11 +137,8 @@ else {
     'monthlySettlements' => $monthlySettlements,
     'dailyFee' => $dailyFee,
 
-    'selectedDate' => $date,
-    'filter' => $filter,
     'month' => $month,
-    'from' => $from,
-    'to' => $to
+    'year'  => $year
      ]);
     }
 

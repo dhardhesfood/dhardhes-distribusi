@@ -13,16 +13,20 @@ class ProductionController extends Controller
     /**
      * Form input produksi
      */
-    public function create()
+    public function create(Request $request)
     {
         $products = Product::where('is_active', true)->get();
 
-        $productions = ProductionBatch::with('product')
-                ->orderBy('production_date','desc')
-                ->orderBy('id','desc')
-                ->get();
+        $month = $request->month ?? now()->month;
+        $year  = $request->year ?? now()->year;
 
-        return view('productions.create', compact('products','productions'));
+        $productions = ProductionBatch::with('product')
+    ->whereMonth('production_date', $month)
+    ->whereYear('production_date', $year)
+    ->orderBy('production_date','desc')
+    ->get();
+
+        return view('productions.create', compact('products','productions','month','year'));
     }
 
     /**

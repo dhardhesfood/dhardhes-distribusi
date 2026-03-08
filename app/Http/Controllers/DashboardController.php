@@ -43,6 +43,42 @@ class DashboardController extends Controller
             ->where('is_active',1)
             ->get();
 
+            // ================= STATUS TOKO =================
+
+$totalStores = $stores->count();
+
+$lateCount = 0;
+$heavyCount = 0;
+$withdrawCount = 0;
+
+foreach($stores as $store){
+
+    $lastVisit = $store->last_visit_date
+        ? Carbon::parse($store->last_visit_date)
+        : null;
+
+    if(!$lastVisit) continue;
+
+    $nextVisit = $lastVisit->copy()->addDays($store->visit_interval_days);
+
+    $diff = $today->diffInDays($nextVisit, false) * -1;
+
+    if($diff > 135){
+        $withdrawCount++;
+    }
+    elseif($diff > 100){
+        $heavyCount++;
+    }
+    elseif($diff > 0){
+        $lateCount++;
+    }
+
+}
+
+$lateRate = $totalStores ? round(($lateCount/$totalStores)*100,1) : 0;
+$heavyRate = $totalStores ? round(($heavyCount/$totalStores)*100,1) : 0;
+$withdrawRate = $totalStores ? round(($withdrawCount/$totalStores)*100,1) : 0;
+
         // Visit menunggu approval admin
         $pendingVisits = Visit::where('status', 'completed')->count();
 
@@ -59,7 +95,14 @@ class DashboardController extends Controller
             'totalPiutang',
             'stores',
             'pendingVisits',
-            'notificationsCount'
+            'notificationsCount',
+            'lateCount',
+            'heavyCount',
+            'withdrawCount',
+            'lateRate',
+            'heavyRate',
+            'withdrawRate'
+
         ));
     }
 }

@@ -1,11 +1,35 @@
 <x-app-layout>
 <x-slot name="header">
-    <h2 class="text-xl font-semibold text-gray-800 leading-tight">
-        Dashboard Distribusi
-    </h2>
+    <div class="ticker-stars mb-6 overflow-hidden rounded-2xl shadow bg-red-600 text-white py-6">
+
+<div class="ticker-track px-10 py-2 text-lg font-bold">
+
+<span style="color:#fde047" class="px-32 status-glow-yellow">
+🚨 Pertimbangkan ditarik: {{ $withdrawCount }} toko ({{ $withdrawRate }}%)
+</span>
+
+<span>|</span>
+
+<span style="color:#4ade80" class="px-32 status-glow-green">
+⚠ Terlambat berat: {{ $heavyCount }} toko ({{ $heavyRate }}%)
+</span>
+
+<span>|</span>
+
+<span style="color:#ffffff" class="px-32 status-glow-white">
+⏰ Terlambat: {{ $lateCount }} toko ({{ $lateRate }}%)
+</span>
+
+</div>
+
+<div class="shooting-star star1"></div>
+<div class="shooting-star star2"></div>
+<div class="shooting-star star3"></div>
+
+</div>
 </x-slot>
 
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-yellow-200 rounded-xl">
 
     @if(isset($notificationsCount) && $notificationsCount > 0)
 
@@ -183,5 +207,215 @@
     </div>
 
 </div>
+
+<style>
+
+/* ===== CONTAINER TICKER ===== */
+
+.ticker-stars{
+position:relative;
+overflow:hidden;
+padding-top:20px;
+padding-bottom:20px;
+box-shadow:0 0 20px rgba(255,0,0,0.4);
+}
+
+/* ===== ANIMASI TICKER TEXT ===== */
+
+.ticker-track{
+display:inline-block;
+white-space:nowrap;
+padding-left:100%;
+animation:tickerMove 12s linear infinite;
+}
+
+@keyframes tickerMove{
+
+0%{
+transform:translateX(0);
+}
+
+100%{
+transform:translateX(-100%);
+}
+
+}
+
+
+/* ===== GLOW TEXT ===== */
+
+.status-glow-yellow{
+text-shadow:
+0 0 6px rgba(253,224,71,0.8),
+0 0 12px rgba(253,224,71,0.6);
+}
+
+.status-glow-green{
+text-shadow:
+0 0 6px rgba(74,222,128,0.8),
+0 0 12px rgba(74,222,128,0.6);
+}
+
+.status-glow-white{
+text-shadow:
+0 0 6px rgba(255,255,255,0.8),
+0 0 12px rgba(255,255,255,0.6);
+}
+
+
+/* ===== SPARKLE STARS ===== */
+
+.ticker-stars{
+position:relative;
+overflow:hidden;
+padding:20px 0;
+}
+
+/* bintang kecil */
+.ticker-stars::before{
+content:'';
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+
+background-image:
+radial-gradient(2px 2px at 5% 20%, white, transparent),
+radial-gradient(2px 2px at 15% 80%, white, transparent),
+radial-gradient(2px 2px at 25% 40%, white, transparent),
+radial-gradient(2px 2px at 40% 60%, white, transparent),
+radial-gradient(2px 2px at 55% 30%, white, transparent),
+radial-gradient(2px 2px at 70% 75%, white, transparent),
+radial-gradient(2px 2px at 85% 45%, white, transparent),
+radial-gradient(2px 2px at 95% 20%, white, transparent);
+
+opacity:0.5;
+animation:twinkle 3s infinite alternate;
+}
+
+@keyframes twinkle{
+0%{opacity:0.2;}
+100%{opacity:0.7;}
+}
+
+
+/* ===== SHOOTING STAR BASE ===== */
+
+.shooting-star{
+
+position:absolute;
+
+width:140px;
+height:2px;
+
+background:linear-gradient(90deg, white, transparent);
+
+opacity:0.9;
+
+}
+
+/* kepala bintang */
+.shooting-star::before{
+
+content:'';
+position:absolute;
+
+right:0;
+top:-3px;
+
+width:8px;
+height:8px;
+
+background:white;
+border-radius:50%;
+
+box-shadow:
+0 0 6px white,
+0 0 12px white,
+0 0 18px white;
+
+}
+
+
+/* ===== STAR 1 ===== */
+
+.star1{
+top:20%;
+left:-200px;
+transform:rotate(25deg);
+animation:shoot1 7s linear infinite;
+}
+
+@keyframes shoot1{
+
+0%{
+transform:translateX(-300px) translateY(-40px) rotate(25deg);
+opacity:0;
+}
+
+10%{opacity:1;}
+
+100%{
+transform:translateX(1200px) translateY(80px) rotate(25deg);
+opacity:0;
+}
+
+}
+
+
+/* ===== STAR 2 ===== */
+
+.star2{
+top:60%;
+left:-200px;
+transform:rotate(-20deg);
+animation:shoot2 9s linear infinite;
+}
+
+@keyframes shoot2{
+
+0%{
+transform:translateX(-300px) translateY(60px) rotate(-20deg);
+opacity:0;
+}
+
+10%{opacity:1;}
+
+100%{
+transform:translateX(1200px) translateY(-60px) rotate(-20deg);
+opacity:0;
+}
+
+}
+
+
+/* ===== STAR 3 ===== */
+
+.star3{
+top:40%;
+left:-200px;
+transform:rotate(15deg);
+animation:shoot3 11s linear infinite;
+}
+
+@keyframes shoot3{
+
+0%{
+transform:translateX(-300px) translateY(-20px) rotate(15deg);
+opacity:0;
+}
+
+10%{opacity:1;}
+
+100%{
+transform:translateX(1200px) translateY(40px) rotate(15deg);
+opacity:0;
+}
+
+}
+
+</style>
+
 
 </x-app-layout>

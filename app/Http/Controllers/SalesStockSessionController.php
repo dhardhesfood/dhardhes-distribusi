@@ -156,6 +156,13 @@ Notification::create([
 
     public function show($id)
     {
+
+        Notification::where('link','/sales-stock-sessions/'.$id)
+        ->where('user_id',auth()->id())
+        ->update([
+            'is_read' => 1
+        ]);
+
         $session = SalesStockSession::with('user','items.product')
             ->findOrFail($id);
 

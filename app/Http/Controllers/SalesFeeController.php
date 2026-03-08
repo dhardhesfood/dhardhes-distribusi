@@ -76,39 +76,55 @@ $endDate   = Carbon::create($year,$month,1)->endOfMonth();
                 'is_minus' => $netFee < 0 ? true : false,
             ];
         }
-        $dailyFee = DB::table('users as u')
-    ->leftJoin('sales_transactions as st', function($join) use ($startDate,$endDate) {
-        $join->on('st.user_id','=','u.id')
-             ->whereBetween('st.transaction_date',[$startDate,$endDate]);
-    })
+        $dailyFee = DB::table(DB::raw("
 
-    ->leftJoin('cash_sales as cs', function($join) use ($startDate,$endDate) {
-        $join->on('cs.user_id','=','u.id')
-             ->whereBetween('cs.sale_date',[$startDate,$endDate])
-             ->where('cs.status','locked');
-    })
+(
+    SELECT
+        st.user_id,
+        st.transaction_date as tanggal,
+        st.total_fee as fee_konsinyasi,
+        0 as fee_tunai
+    FROM sales_transactions st
+    WHERE st.transaction_date BETWEEN '{$startDate}' AND '{$endDate}'
 
-    ->where('u.role','sales')
+    UNION ALL
 
-    ->select(
-           'u.id',
-           'u.name',
-           'st.transaction_date',
+    SELECT
+        cs.user_id,
+        cs.sale_date as tanggal,
+        0 as fee_konsinyasi,
+        cs.fee_total as fee_tunai
+    FROM cash_sales cs
+    WHERE cs.sale_date BETWEEN '{$startDate}' AND '{$endDate}'
+    AND cs.status = 'locked'
+)
 
-           DB::raw('COALESCE(SUM(st.total_fee),0) as fee_konsinyasi'),
-           DB::raw('COALESCE(SUM(cs.fee_total),0) as fee_tunai')
-            )
+as fees
+"))
 
-    ->groupBy('u.id','u.name','st.transaction_date')
+->join('users as u','u.id','=','fees.user_id')
 
-    ->get()
+->select(
+    'u.name',
+    'fees.tanggal',
 
-    ->map(function($row){
+    DB::raw('SUM(fees.fee_konsinyasi) as fee_konsinyasi'),
+    DB::raw('SUM(fees.fee_tunai) as fee_tunai'),
+    DB::raw('SUM(fees.fee_konsinyasi + fees.fee_tunai) as total_fee')
+)
 
-        $row->total_fee = $row->fee_konsinyasi + $row->fee_tunai;
+->groupBy('u.name','fees.tanggal')
 
-        return $row;
-    });
+->orderBy('fees.tanggal','desc')
+
+->get()
+
+->map(function($row){
+
+    $row->total_fee = $row->fee_konsinyasi + $row->fee_tunai;
+
+    return $row;
+});
 
         /*
         |--------------------------------------------------------------------------

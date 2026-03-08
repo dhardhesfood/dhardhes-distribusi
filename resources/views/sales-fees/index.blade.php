@@ -84,7 +84,7 @@ Fee Sales Bulan
 <tr>
 
 <td class="p-2 border">
-{{ $row->transaction_date ? \Carbon\Carbon::parse($row->transaction_date)->format('d-m-Y') : '-' }}
+{{ $row->tanggal ? \Carbon\Carbon::parse($row->tanggal)->format('d-m-Y') : '-' }}
 </td>
 
 <td class="p-2 border">

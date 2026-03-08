@@ -14,8 +14,6 @@
                 </div>
             @endif
 
-            <div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
-
 <div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
 
 <form method="GET" class="mb-4 flex gap-2 items-center">
@@ -59,6 +57,125 @@ onchange="this.form.submit()">
 </div>
 
 <div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
+
+<div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-sm">
+
+<div class="font-semibold text-blue-800 mb-2">
+Aturan Reward Sales
+</div>
+
+<ul class="list-disc pl-5 space-y-1 text-gray-700">
+
+<li>
+Fee ≥ <b>Rp 500.000</b> → Reward <b>5%</b>
+</li>
+
+<li>
+Fee ≥ <b>Rp 1.500.000</b> → Reward <b>7%</b>
+</li>
+
+<li>
+Fee ≥ <b>Rp 3.000.000</b> → Reward <b>10%</b>
+</li>
+
+<li>
+Fee ≥ <b>Rp 5.000.000</b> → Reward <b>12%</b>
+</li>
+
+</ul>
+
+<div class="mt-3 font-semibold text-blue-800">
+Syarat Kesehatan Toko
+</div>
+
+<ul class="list-disc pl-5 space-y-1 text-gray-700">
+
+<li>
+Jika toko <b>Pertimbangkan Ditarik &gt; 5%</b> → Reward <b>GUGUR</b>
+</li>
+
+<li>
+Jika toko <b>Terlambat Berat &gt; 10%</b> → Reward <b>GUGUR</b>
+</li>
+
+<li>
+Jika toko <b>Terlambat &gt; 20%</b> → Reward <b>dipotong 30%</b>
+</li>
+
+</ul>
+
+</div>
+
+<div class="mt-5 mb-6 p-3 rounded-md bg-green-50 border border-green-200 text-green-700 text-sm font-medium">
+💡 Semakin sehat kondisi toko yang dikelola, semakin besar peluang reward yang didapat.
+</div>
+
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6 text-center text-sm">
+
+<div class="p-3 rounded-lg bg-green-50 border border-green-200">
+<div class="font-semibold text-green-700">Aman</div>
+<div class="text-lg font-bold text-green-800">
+{{ round(($storeStatusStats->safe / $storeStatusStats->total) * 100) }}%
+</div>
+</div>
+
+<div class="p-3 rounded-lg bg-yellow-50 border border-yellow-200">
+<div class="font-semibold text-yellow-700">Hari Ini</div>
+<div class="text-lg font-bold text-yellow-800">
+{{ round(($storeStatusStats->today / $storeStatusStats->total) * 100) }}%
+</div>
+</div>
+
+<div class="p-3 rounded-lg bg-red-50 border border-red-200">
+<div class="font-semibold text-red-700">Terlambat</div>
+<div class="text-lg font-bold text-red-800">
+{{ round(($storeStatusStats->late / $storeStatusStats->total) * 100) }}%
+</div>
+</div>
+
+<div class="p-3 rounded-lg bg-orange-50 border border-orange-200">
+<div class="font-semibold text-orange-700">Terlambat Berat</div>
+<div class="text-lg font-bold text-orange-800">
+{{ round(($storeStatusStats->heavy / $storeStatusStats->total) * 100) }}%
+</div>
+</div>
+
+<div class="p-3 rounded-lg bg-gray-100 border border-gray-300">
+<div class="font-semibold text-gray-700">Pertimbangkan Ditarik</div>
+<div class="text-lg font-bold text-gray-800">
+{{ round(($storeStatusStats->withdraw / $storeStatusStats->total) * 100) }}%
+</div>
+</div>
+
+</div>
+
+<div class="mb-6 p-4 rounded-lg border text-center
+@if($riskColor=='green') bg-green-50 border-green-200 text-green-800
+@elseif($riskColor=='yellow') bg-yellow-50 border-yellow-200 text-yellow-800
+@else bg-red-50 border-red-200 text-red-800
+@endif">
+
+<div class="text-sm font-semibold mb-1">
+Status Reward Area
+</div>
+
+<div class="text-xl font-bold">
+@if($riskStatus=='AMAN')
+🟢 REWARD AMAN
+@elseif($riskStatus=='WASPADA')
+🟡 REWARD WASPADA
+@else
+🔴 REWARD TERANCAM
+@endif
+</div>
+
+<div class="text-xs mt-1 opacity-80">
+Kondisi toko mempengaruhi kelayakan reward sales.
+</div>
+
+</div>
+
+</div>
 
 <h3 class="font-semibold mb-3">
 Fee Sales Bulan
@@ -113,6 +230,9 @@ Rp {{ number_format($row->total_fee,0,',','.') }}
 
 </div>
 
+<h3 class="font-semibold mt-8 mb-3 text-gray-700">
+Rekap Fee Sales
+</h3>
             {{-- ======================== TABEL FEE ======================== --}}
             <div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
 
@@ -207,6 +327,158 @@ Rp {{ number_format($row->total_fee,0,',','.') }}
                 </div>
 
             </div>
+
+<h3 class="font-semibold mt-10 mb-3 text-gray-700">
+Reward Sales Bulan
+{{ \Carbon\Carbon::create($year,$month,1)->translatedFormat('F Y') }}
+</h3>
+
+@if(auth()->user()->role === 'admin')
+
+    @if(!$rewardLocked)
+
+        <form method="POST" action="{{ route('sales-rewards.lock') }}" class="mb-4">
+        @csrf
+
+        <input type="hidden" name="month" value="{{ $month }}">
+        <input type="hidden" name="year" value="{{ $year }}">
+
+        <button
+        onclick="return confirm('LOCK reward bulan ini? Setelah dikunci tidak bisa diubah.')"
+        class="px-4 py-2 bg-red-600 text-white rounded">
+
+        LOCK REWARD BULAN INI
+
+        </button>
+
+        </form>
+
+    @else
+
+        <div class="mb-4 px-4 py-2 bg-green-100 text-green-700 rounded text-sm inline-block">
+        Reward bulan ini sudah dikunci
+        </div>
+
+    @endif
+
+@endif
+
+<div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
+
+<div class="overflow-x-auto">
+
+<table class="min-w-full text-xs sm:text-sm border">
+
+<thead class="bg-gray-100">
+
+<tr>
+
+<th class="p-2 border text-left">Nama Sales</th>
+
+<th class="p-2 border text-right">Reward</th>
+
+<th class="p-2 border text-right">Reward Dibayar</th>
+
+<th class="p-2 border text-right">Sisa Reward</th>
+
+<th class="p-2 border text-center">Status</th>
+
+<th class="p-2 border text-center">Bayar Reward</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+@foreach($sales as $row)
+
+<tr>
+
+<td class="p-2 border">
+{{ $row['name'] }}
+</td>
+
+<td class="p-2 border text-right text-green-700 font-semibold">
+Rp {{ number_format($row['reward_amount'],0,',','.') }}
+</td>
+
+<td class="p-2 border text-right">
+Rp {{ number_format($row['reward_paid'],0,',','.') }}
+</td>
+
+<td class="p-2 border text-right text-blue-700 font-semibold">
+Rp {{ number_format($row['reward_remaining'],0,',','.') }}
+</td>
+
+<td class="p-2 border text-center">
+
+@if($row['reward_status'] === 'gugur')
+
+<span class="text-red-600 font-semibold">
+GUGUR
+</span>
+
+@else
+
+<span class="text-green-600 font-semibold">
+LOLOS
+</span>
+
+@endif
+
+</td>
+
+<td class="p-2 border text-center">
+
+@if($row['reward_remaining'] > 0)
+
+<form method="POST" action="{{ route('sales-rewards.pay') }}">
+
+@csrf
+
+<input type="hidden" name="user_id" value="{{ $row['user_id'] }}">
+
+<input type="number"
+name="amount"
+min="1"
+max="{{ $row['reward_remaining'] }}"
+required
+class="w-20 border rounded text-xs">
+
+<button
+class="px-3 py-1 bg-purple-600 text-white text-xs rounded">
+
+Bayar
+
+</button>
+
+</form>
+
+@else
+
+<button
+class="px-3 py-1 bg-gray-400 text-white text-xs rounded"
+disabled>
+
+Lunas
+
+</button>
+
+@endif
+
+</td>
+
+</tr>
+
+@endforeach
+
+</tbody>
+
+</table>
+
+</div>
+</div>
 
             {{-- ======================== RINCIAN SETTLEMENT BULAN INI ======================== --}}
             <div class="bg-white shadow sm:rounded-lg p-4 sm:p-6">

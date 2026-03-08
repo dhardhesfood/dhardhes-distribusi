@@ -290,6 +290,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/sales-fees/pay', [SalesFeeController::class, 'pay'])
         ->name('sales-fees.pay');
 
+        Route::post('/sales-rewards/pay', [SalesFeeController::class, 'payReward'])
+    ->name('sales-rewards.pay');
+
+    Route::post('/sales-rewards/lock', [SalesFeeController::class, 'lockReward'])
+    ->name('sales-rewards.lock');
+
     Route::post('/sales-settlements/{settlement}/reopen', [SalesSettlementController::class, 'reopen'])
     ->name('sales-settlements.reopen');
 

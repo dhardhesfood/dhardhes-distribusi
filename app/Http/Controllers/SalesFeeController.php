@@ -31,20 +31,35 @@ $endDate   = Carbon::create($year,$month,1)->endOfMonth();
                 'u.id',
                 'u.name',
 
-                DB::raw('COALESCE(SUM(st.total_fee),0) as total_konsinyasi'),
+                DB::raw("
+                     COALESCE(SUM(
+                     CASE
+                     WHEN st.transaction_date BETWEEN '{$startDate}' AND '{$endDate}'
+                     THEN st.total_fee
+                     ELSE 0
+                     END
+                     ),0) as total_konsinyasi
+                     "),
 
-                DB::raw('(
+                     DB::raw("(
                     SELECT COALESCE(SUM(cs.fee_total),0)
                     FROM cash_sales cs
                     WHERE cs.user_id = u.id
-                      AND cs.status = "locked"
-                ) as total_tunai'),
+                    AND cs.status = 'locked'
+                    AND cs.sale_date BETWEEN '{$startDate}' AND '{$endDate}'
+                    ) as total_tunai"),
 
                 DB::raw('(
                     SELECT COALESCE(SUM(sfp.amount_paid),0)
                     FROM sales_fee_payments sfp
                     WHERE sfp.user_id = u.id
                 ) as total_fee_paid'),
+
+                DB::raw('(
+                   SELECT COALESCE(SUM(rp.amount_paid),0)
+                   FROM sales_reward_payments rp
+                   WHERE rp.user_id = u.id
+                ) as total_reward_paid'),
 
                 DB::raw('(
                     SELECT COALESCE(SUM(k.amount_total - k.amount_paid),0)
@@ -58,11 +73,171 @@ $endDate   = Carbon::create($year,$month,1)->endOfMonth();
 
         $finalData = [];
 
+        $storeStats = DB::table('stores')
+    ->select(
+
+        DB::raw('COUNT(*) as total_stores'),
+
+        DB::raw("
+        SUM(
+            CASE
+            WHEN DATEDIFF(CURDATE(), DATE_ADD(last_visit_date, INTERVAL visit_interval_days DAY)) > 135
+            THEN 1 ELSE 0 END
+        ) as withdraw_count
+        "),
+
+        DB::raw("
+        SUM(
+            CASE
+            WHEN DATEDIFF(CURDATE(), DATE_ADD(last_visit_date, INTERVAL visit_interval_days DAY)) > 100
+            AND DATEDIFF(CURDATE(), DATE_ADD(last_visit_date, INTERVAL visit_interval_days DAY)) <= 135
+            THEN 1 ELSE 0 END
+        ) as heavy_count
+        "),
+
+        DB::raw("
+        SUM(
+            CASE
+            WHEN DATEDIFF(CURDATE(), DATE_ADD(last_visit_date, INTERVAL visit_interval_days DAY)) > 0
+            AND DATEDIFF(CURDATE(), DATE_ADD(last_visit_date, INTERVAL visit_interval_days DAY)) <= 100
+            THEN 1 ELSE 0 END
+        ) as late_count
+        ")
+
+    )
+    ->first();
+
+    $storeStatusStats = DB::table('stores')
+    ->select(
+
+        DB::raw('COUNT(*) as total'),
+
+        DB::raw("
+        SUM(
+        CASE
+        WHEN DATEDIFF(CURDATE(), DATE_ADD(last_visit_date, INTERVAL visit_interval_days DAY)) < 0
+        THEN 1 ELSE 0 END
+        ) as safe
+        "),
+
+        DB::raw("
+        SUM(
+        CASE
+        WHEN DATEDIFF(CURDATE(), DATE_ADD(last_visit_date, INTERVAL visit_interval_days DAY)) = 0
+        THEN 1 ELSE 0 END
+        ) as today
+        "),
+
+        DB::raw("
+        SUM(
+        CASE
+        WHEN DATEDIFF(CURDATE(), DATE_ADD(last_visit_date, INTERVAL visit_interval_days DAY)) > 0
+        AND DATEDIFF(CURDATE(), DATE_ADD(last_visit_date, INTERVAL visit_interval_days DAY)) <= 100
+        THEN 1 ELSE 0 END
+        ) as late
+        "),
+
+        DB::raw("
+        SUM(
+        CASE
+        WHEN DATEDIFF(CURDATE(), DATE_ADD(last_visit_date, INTERVAL visit_interval_days DAY)) > 100
+        AND DATEDIFF(CURDATE(), DATE_ADD(last_visit_date, INTERVAL visit_interval_days DAY)) <= 135
+        THEN 1 ELSE 0 END
+        ) as heavy
+        "),
+
+        DB::raw("
+        SUM(
+        CASE
+        WHEN DATEDIFF(CURDATE(), DATE_ADD(last_visit_date, INTERVAL visit_interval_days DAY)) > 135
+        THEN 1 ELSE 0 END
+        ) as withdraw
+        ")
+
+    )
+    ->first();
+
+    $totalStores = $storeStats->total_stores ?: 1;
+
+$withdrawRate = ($storeStats->withdraw_count / $totalStores) * 100;
+$heavyRate = ($storeStats->heavy_count / $totalStores) * 100;
+$lateRate = ($storeStats->late_count / $totalStores) * 100;
+
+$riskStatus = 'AMAN';
+$riskColor  = 'green';
+
+if ($withdrawRate > 5 || $heavyRate > 10) {
+    $riskStatus = 'TERANCAM';
+    $riskColor  = 'red';
+} elseif ($lateRate > 20) {
+    $riskStatus = 'WASPADA';
+    $riskColor  = 'yellow';
+}
+
         foreach ($salesData as $row) {
 
             $totalGenerated = (float)$row->total_konsinyasi + (float)$row->total_tunai;
             $totalPaid      = (float)$row->total_fee_paid;
             $kasbon         = (float)$row->kasbon_remaining;
+            $rewardPaid     = (float)$row->total_reward_paid;
+            $rewardPercent = 0;
+
+if ($totalGenerated >= 5000000) {
+    $rewardPercent = 12;
+} elseif ($totalGenerated >= 3000000) {
+    $rewardPercent = 10;
+} elseif ($totalGenerated >= 1500000) {
+    $rewardPercent = 7;
+} elseif ($totalGenerated >= 500000) {
+    $rewardPercent = 5;
+}
+
+$rewardStatus = 'valid';
+$rewardNote = '';
+
+if ($withdrawRate > 5) {
+    $rewardStatus = 'gugur';
+    $rewardNote = 'Toko withdraw > 5%';
+}
+
+if ($heavyRate > 10) {
+    $rewardStatus = 'gugur';
+    $rewardNote = 'Toko terlambat berat > 10%';
+}
+
+if ($lateRate > 20) {
+    $rewardPercent *= 0.7;
+    $rewardNote = 'Terlambat tinggi';
+}
+
+$rewardAmount = $rewardStatus === 'gugur'
+    ? 0
+    : ($totalGenerated * $rewardPercent / 100);
+
+/*
+|--------------------------------------------------------------------------
+| CEK APAKAH REWARD BULAN INI SUDAH DI LOCK
+|--------------------------------------------------------------------------
+*/
+
+$lockedReward = DB::table('sales_reward_months')
+    ->where('user_id', $row->id)
+    ->where('month', $month)
+    ->where('year', $year)
+    ->first();
+
+if ($lockedReward) {
+
+    // jika sudah di lock gunakan nilai dari tabel
+    $rewardAmount = $lockedReward->reward_amount;
+
+}
+
+$rewardRemaining = $rewardAmount - $rewardPaid;
+
+if ($rewardRemaining < 0) {
+    $rewardRemaining = 0;
+}
 
             $netFee = $totalGenerated - $totalPaid - $kasbon;
 
@@ -74,6 +249,12 @@ $endDate   = Carbon::create($year,$month,1)->endOfMonth();
                 'kasbon_remaining' => $kasbon,
                 'net_fee' => $netFee,
                 'is_minus' => $netFee < 0 ? true : false,
+                'reward_percent' => $rewardPercent,
+                'reward_amount' => $rewardAmount,
+                'reward_paid' => $rewardPaid,
+                'reward_remaining' => $rewardRemaining,
+                'reward_status' => $rewardStatus,
+                'reward_note' => $rewardNote,
             ];
         }
         $dailyFee = DB::table(DB::raw("
@@ -148,14 +329,22 @@ as fees
         $monthlySettlements = $settlementQuery->get()
             ->groupBy('user_id');
 
+            $rewardLocked = DB::table('sales_reward_months')
+            ->where('month',$month)
+            ->where('year',$year)
+            ->exists();
+
         return view('sales-fees.index', [
     'sales' => $finalData,
     'monthlySettlements' => $monthlySettlements,
     'dailyFee' => $dailyFee,
-
+    'storeStatusStats' => $storeStatusStats,
+    'riskStatus' => $riskStatus,
+    'riskColor' => $riskColor,
     'month' => $month,
-    'year'  => $year
-     ]);
+    'year'  => $year,
+    'rewardLocked' => $rewardLocked,
+    ]);
     }
 
     public function pay(Request $request)
@@ -180,5 +369,121 @@ as fees
         return redirect()
             ->route('sales-fees.index')
             ->with('success', 'Pembayaran fee berhasil disimpan.');
+            
+}
+
+public function payReward(Request $request)
+{
+    if (auth()->user()->role !== 'admin') {
+        abort(403);
     }
+
+    $request->validate([
+        'user_id' => 'required|exists:users,id',
+        'amount'  => 'required|numeric|min:1',
+    ]);
+
+    $month = request('month') ?? now()->month;
+    $year  = request('year') ?? now()->year;
+
+    // ambil reward yang sudah di lock
+    $lockedReward = DB::table('sales_reward_months')
+        ->where('user_id',$request->user_id)
+        ->where('month',$month)
+        ->where('year',$year)
+        ->first();
+
+    if (!$lockedReward) {
+        return back()->with('error','Reward bulan ini belum di LOCK.');
+    }
+
+    $rewardAmount = $lockedReward->reward_amount;
+
+    $rewardPaid = DB::table('sales_reward_payments')
+        ->where('user_id',$request->user_id)
+        ->sum('amount_paid');
+
+    $rewardRemaining = $rewardAmount - $rewardPaid;
+
+    if ($request->amount > $rewardRemaining) {
+        return back()->with('error','Nominal melebihi sisa reward.');
+    }
+
+    DB::table('sales_reward_payments')->insert([
+        'user_id' => $request->user_id,
+        'amount_paid' => $request->amount,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    return redirect()
+        ->route('sales-fees.index')
+        ->with('success','Pembayaran reward berhasil disimpan.');
+}
+
+public function lockReward(Request $request)
+{
+    if (auth()->user()->role !== 'admin') {
+        abort(403);
+    }
+
+    $month = $request->month ?? Carbon::now()->month;
+    $year  = $request->year ?? Carbon::now()->year;
+
+    $startDate = Carbon::create($year,$month,1)->startOfMonth();
+    $endDate   = Carbon::create($year,$month,1)->endOfMonth();
+
+    $sales = DB::table('users')
+        ->where('role','sales')
+        ->get();
+
+    foreach ($sales as $s) {
+
+        $konsinyasi = DB::table('sales_transactions')
+            ->where('user_id',$s->id)
+            ->whereBetween('transaction_date',[$startDate,$endDate])
+            ->sum('total_fee');
+
+        $tunai = DB::table('cash_sales')
+            ->where('user_id',$s->id)
+            ->where('status','locked')
+            ->whereBetween('sale_date',[$startDate,$endDate])
+            ->sum('fee_total');
+
+        $totalGenerated = $konsinyasi + $tunai;
+
+        $rewardPercent = 0;
+
+        if ($totalGenerated >= 5000000) {
+            $rewardPercent = 12;
+        } elseif ($totalGenerated >= 3000000) {
+            $rewardPercent = 10;
+        } elseif ($totalGenerated >= 1500000) {
+            $rewardPercent = 7;
+        } elseif ($totalGenerated >= 500000) {
+            $rewardPercent = 5;
+        }
+
+        $rewardAmount = $totalGenerated * $rewardPercent / 100;
+
+        DB::table('sales_reward_months')->updateOrInsert(
+            [
+                'user_id' => $s->id,
+                'month'   => $month,
+                'year'    => $year
+            ],
+            [
+                'reward_amount' => $rewardAmount,
+                'locked_at'     => now(),
+                'updated_at'    => now(),
+                'created_at'    => now()
+            ]
+        );
+    }
+
+    return redirect()
+        ->route('sales-fees.index')
+        ->with('success','Reward bulan ini berhasil di LOCK.');
+}
+
 }

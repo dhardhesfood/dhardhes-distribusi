@@ -58,17 +58,17 @@ foreach ($stores as $s) {
                 </button>
 
                 <a href="{{ route('stores.index', array_merge(request()->all(), ['late' => 1])) }}"
-class="inline-flex justify-center items-center w-full sm:w-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-md transition transform hover:scale-105 hover:shadow-lg active:scale-95">
+class="alert-late inline-flex justify-center items-center w-full sm:w-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-md transition transform hover:scale-105 hover:shadow-lg active:scale-95">
 🔴 Terlambat ({{ $lateStoresCount }})
 </a>
 
                 <a href="{{ route('stores.index', array_merge(request()->all(), ['heavy' => 1])) }}"
-class="inline-flex justify-center items-center w-full sm:w-auto px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-lg shadow-md transition transform hover:scale-105 hover:shadow-lg active:scale-95">
+class="alert-heavy inline-flex justify-center items-center w-full sm:w-auto px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-lg shadow-md transition transform hover:scale-105 hover:shadow-lg active:scale-95">
 🟠 Terlambat Berat ({{ $heavyStoresCount }})
 </a>
 
                 <a href="{{ route('stores.index', array_merge(request()->all(), ['withdraw' => 1])) }}"
-class="inline-flex justify-center items-center w-full sm:w-auto px-4 py-2 text-white text-sm font-semibold rounded-lg shadow-md"
+class="alert-withdraw inline-flex justify-center items-center w-full sm:w-auto px-4 py-2 text-white text-sm font-semibold rounded-lg shadow-md"
 style="background-color:black;"
 onmouseover="this.style.backgroundColor='#333'"
 onmouseout="this.style.backgroundColor='black'">
@@ -155,7 +155,16 @@ onmouseout="this.style.backgroundColor='black'">
                     </div>
                 @endif
 
-                @forelse($stores as $store)
+                @forelse($stores->sortBy(function($s){
+    return match($s->visit_status){
+        'withdraw' => 1,
+        'heavy' => 2,
+        'late' => 3,
+        'today' => 4,
+        'safe' => 5,
+        default => 6
+    };
+}) as $store)
 
                 @php
 
@@ -219,22 +228,26 @@ $nextVisit = $lastVisit
     Status Kunjungan:
 
     @if($store->visit_status === 'safe')
-        <span class="text-green-600 font-semibold">🟢 Aman</span>
+<span class="text-green-600 font-semibold">🟢 Aman</span>
 
-    @elseif($store->visit_status === 'today')
-        <span class="text-yellow-600 font-semibold">🟡 Hari Ini</span>
+@elseif($store->visit_status === 'today')
+<span class="text-yellow-600 font-semibold">🟡 Hari Ini</span>
 
-    @elseif($store->visit_status === 'late')
-        <span class="text-red-600 font-semibold">🔴 Terlambat</span>
+@elseif($store->visit_status === 'late')
+<span class="visit-alert-late text-red-600 font-semibold">
+🔴 Terlambat
+</span>
 
-    @elseif($store->visit_status === 'heavy')
-        <span class="text-orange-600 font-semibold">🟠 Terlambat Berat</span>
+@elseif($store->visit_status === 'heavy')
+<span class="visit-alert-heavy text-orange-600 font-semibold">
+🟠 Terlambat Berat
+</span>
 
-    @elseif($store->visit_status === 'withdraw')
-        <span class="text-gray-800 font-semibold">⚫ Pertimbangkan Ditarik</span>
+@elseif($store->visit_status === 'withdraw')
+<span class="visit-alert-withdraw text-gray-800 font-semibold">
+⚫ Pertimbangkan Ditarik
+</span>
 
-    @else
-        <span class="text-gray-400">-</span>
 @endif
 
 </div>
@@ -458,5 +471,88 @@ document.addEventListener('keydown',function(e){
 });
 
 </script>
+
+<style>
+
+/* ========================= */
+/* ANIMASI STATUS KUNJUNGAN */
+/* ========================= */
+
+@keyframes visitBlink {
+0%,100% { opacity:1 }
+50% { opacity:0.35 }
+}
+
+@keyframes visitPulse {
+0% { transform:scale(1) }
+50% { transform:scale(1.08) }
+100% { transform:scale(1) }
+}
+
+@keyframes visitShake {
+0% { transform:translateX(0) }
+25% { transform:translateX(-2px) }
+50% { transform:translateX(2px) }
+75% { transform:translateX(-2px) }
+100% { transform:translateX(0) }
+}
+
+/* ========================= */
+/* STATUS TERLAMBAT */
+/* ========================= */
+
+.visit-alert-late{
+display:inline-block;
+animation: visitPulse 1.6s infinite !important;
+}
+
+/* ========================= */
+/* TERLAMBAT BERAT */
+/* ========================= */
+
+.visit-alert-heavy{
+display:inline-block;
+animation: visitPulse 1.2s infinite, visitShake 0.6s infinite !important;
+}
+
+/* ========================= */
+/* PERTIMBANGKAN DITARIK */
+/* ========================= */
+
+.visit-alert-withdraw{
+display:inline-block;
+animation: visitBlink 1s infinite, visitPulse 2s infinite !important;
+}
+
+@keyframes alertPulse {
+0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.7); }
+70% { transform: scale(1.06); box-shadow: 0 0 0 12px rgba(239,68,68,0); }
+100% { transform: scale(1); }
+}
+
+@keyframes alertShake {
+0% { transform: translateX(0); }
+25% { transform: translateX(-2px); }
+50% { transform: translateX(2px); }
+75% { transform: translateX(-2px); }
+100% { transform: translateX(0); }
+}
+
+/* terlambat ringan */
+.alert-late {
+animation: alertPulse 2s infinite;
+}
+
+/* terlambat berat */
+.alert-heavy {
+animation: alertPulse 1.4s infinite, alertShake 0.8s infinite;
+}
+
+/* pertimbangkan ditarik */
+.alert-withdraw {
+animation: alertPulse 2.6s infinite;
+}
+
+</style>
 
 </x-app-layout>

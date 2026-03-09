@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
@@ -35,6 +36,16 @@ Route::get('/', function () {
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
+
+    Route::get('/notifications/read', function(){
+
+    \App\Models\Notification::where('user_id', auth()->id())
+        ->where('is_read',0)
+        ->update(['is_read'=>1]);
+
+    return redirect()->route('warehouse.index');
+
+})->middleware('auth')->name('notifications.read');
 
 /*
 |--------------------------------------------------------------------------
@@ -229,6 +240,16 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/receivables/{receivable}/pay', [ReceivableController::class, 'pay'])
         ->name('receivables.pay');
 
+         Route::get('/stores/search', function(Request $request){
+
+        $q = $request->q;
+
+        return \App\Models\Store::where('name','like',"%$q%")
+        ->limit(10)
+        ->get(['id','name']);
+
+        });
+
     /*
     |--------------------------------------------------------------------------
     | VISIT FLOW
@@ -354,6 +375,13 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/reports/kpi', [ReportMarginController::class, 'kpi'])
         ->name('reports.kpi');
+
+        Route::get('/receivables/create', [ReceivableController::class, 'create'])
+        ->name('receivables.create');
+
+    Route::post('/receivables', [ReceivableController::class, 'store'])
+        ->name('receivables.store');
+
         /*
 |--------------------------------------------------------------------------
 | STOCK OPNAME (ADMIN ONLY)

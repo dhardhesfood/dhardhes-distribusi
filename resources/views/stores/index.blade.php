@@ -325,16 +325,18 @@ $lastPhysicalStocks = \App\Models\VisitItem::whereHas('visit', function($q) use 
 
                             @if(request('sales_id'))
                                 <a href="{{ route('visits.create', [
-                                    'store' => $store->id,
-                                    'sales_id' => request('sales_id')
-                                ]) }}"
+                                        'store' => $store->id,
+                                         'sales_id' => request('sales_id')
+                                          ]) }}"
+                                   onclick="return checkReceivable({{ $store->receivable_amount }})"
                                    class="inline-flex justify-center items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium rounded-md shadow-md transition whitespace-nowrap">
-                                    Kunjungan
+                                   Kunjungan
                                 </a>
                             @else
                                 <a href="{{ route('visits.create', $store->id) }}"
-                                   class="inline-flex justify-center items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium rounded-md shadow-md transition whitespace-nowrap">
-                                    Kunjungan
+                                 onclick="return checkReceivable({{ $store->receivable_amount }})"
+                                 class="inline-flex justify-center items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium rounded-md shadow-md transition whitespace-nowrap">
+                                 Kunjungan
                                 </a>
                             @endif
 
@@ -554,5 +556,26 @@ animation: alertPulse 2.6s infinite;
 }
 
 </style>
+
+<script>
+
+function checkReceivable(amount){
+
+    if(amount > 0){
+
+        let formatted = new Intl.NumberFormat('id-ID').format(amount);
+
+        return confirm(
+"Toko ini memiliki piutang Rp " + formatted +
+"\n\nApakah tetap ingin melanjutkan kunjungan?"
+        );
+
+    }
+
+    return true;
+
+}
+
+</script>
 
 </x-app-layout>

@@ -83,9 +83,13 @@ $withdrawRate = $totalStores ? round(($withdrawCount/$totalStores)*100,1) : 0;
         $pendingVisits = Visit::where('status', 'completed')->count();
 
         // Notifikasi belum dibaca
-        $notificationsCount = Notification::where('user_id', auth()->id())
-            ->where('is_read', false)
-            ->count();    
+        $notifications = Notification::where('user_id', auth()->id())
+                    ->where('is_read',0)
+                    ->latest()
+                    ->take(5)
+                    ->get();
+
+        $notificationsCount = $notifications->count();    
 
         return view('dashboard', compact(
             'totalSettlementToday',
@@ -95,6 +99,7 @@ $withdrawRate = $totalStores ? round(($withdrawCount/$totalStores)*100,1) : 0;
             'totalPiutang',
             'stores',
             'pendingVisits',
+            'notifications',
             'notificationsCount',
             'lateCount',
             'heavyCount',

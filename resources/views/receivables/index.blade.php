@@ -20,6 +20,17 @@
                 </div>
             @endif
 
+            <div class="mb-4 flex justify-between">
+
+            @if(auth()->user()->role === 'admin')
+            <a href="{{ route('receivables.create') }}"
+            class="bg-green-600 text-white px-4 py-2 rounded">
+            Tambah Piutang Manual
+            </a>
+            @endif
+
+           </div>
+
             {{-- FILTER STATUS --}}
             <div class="mb-6 flex justify-end">
                 <form method="GET" action="{{ route('receivables.index') }}">
@@ -58,7 +69,7 @@
                         <div class="flex justify-between items-start mb-4">
                             <div>
                                 <h3 class="text-lg font-semibold">
-                                    {{ $r->transaction->store->name ?? '-' }}
+                                    {{ $r->transaction->store->name ?? $r->store->name ?? '-' }}
                                 </h3>
 
                                 <div class="text-sm text-gray-500">

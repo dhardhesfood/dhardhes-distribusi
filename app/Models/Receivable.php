@@ -21,6 +21,11 @@ class Receivable extends Model
         return $this->belongsTo(SalesTransaction::class, 'sales_transaction_id');
     }
 
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
+    }
+
     public function payments()
     {
         return $this->hasMany(ReceivablePayment::class);

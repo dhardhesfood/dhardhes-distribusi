@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Receivable;
 use App\Models\ReceivablePayment;
 use App\Models\SalesSettlement;
+use App\Models\Store;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -47,8 +48,8 @@ class ReceivableController extends Controller
                 // =========================================
                 // TAMBAHAN INFO ASAL PIUTANG
                 // =========================================
-                $item->visit_id = optional($item->transaction->visit)->id;
-                $item->visit_date = optional($item->transaction->visit)->visit_date;
+                $item->visit_id = optional(optional($item->transaction)->visit)->id;
+                $item->visit_date = optional(optional($item->transaction)->visit)->visit_date;
                 $item->transaction_id = $item->sales_transaction_id;
 
                 $item->aging_days = $aging;
@@ -61,7 +62,37 @@ class ReceivableController extends Controller
             'receivables'   => $receivables,
             'currentStatus' => $request->status ?? 'all'
         ]);
-    }
+
+        }
+
+        public function create()
+{
+    return view('receivables.create');
+}
+      
+         public function store(Request $request)
+{
+    $request->validate([
+        'store_id' => 'required|exists:stores,id',
+        'amount' => 'required|numeric|min:1',
+        'due_date' => 'nullable|date',
+        'notes' => 'nullable|string'
+    ]);
+
+    Receivable::create([
+        'sales_transaction_id' => null,
+        'store_id' => $request->store_id,
+        'total_amount' => $request->amount,
+        'paid_amount' => 0,
+        'remaining_amount' => $request->amount,
+        'status' => 'unpaid',
+        'due_date' => $request->due_date
+    ]);
+
+    return redirect()
+        ->route('receivables.index')
+        ->with('success','Piutang manual berhasil dibuat.');
+}
 
     public function pay(Request $request, Receivable $receivable)
     {

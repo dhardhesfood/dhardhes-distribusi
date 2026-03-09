@@ -129,23 +129,21 @@ if ($qty > $warehouseStock) {
 
             $link = '/sales-stock-sessions/'.$session->id;
 
-/* NOTIFIKASI KE SALES */
-Notification::create([
-    'user_id' => $session->user_id,
-    'type' => 'stock_session',
-    'title' => 'Session Stok Dimulai',
-    'message' => 'Gudang telah menyiapkan stok penjualan Anda.',
-    'link' => $link,
-]);
+/* NOTIFIKASI KE SEMUA USER */
 
-/* NOTIFIKASI KE ADMIN */
-Notification::create([
-    'user_id' => auth()->id(),
-    'type' => 'stock_session',
-    'title' => 'Session Stok Dibuat',
-    'message' => 'Session stok sales berhasil dibuat.',
-    'link' => $link,
-]);
+$users = User::all();
+
+foreach($users as $user){
+
+    Notification::create([
+        'user_id' => $user->id,
+        'type' => 'stock_session',
+        'title' => 'Session Stok Dimulai',
+        'message' => 'Session stok sales baru telah dibuat.',
+        'link' => $link,
+    ]);
+
+}
 
         });
 
@@ -370,23 +368,21 @@ Notification::create([
 
         $link = '/sales-stock-sessions/'.$session->id;
 
-/* NOTIFIKASI KE SALES */
-Notification::create([
-    'user_id' => $session->user_id,
-    'type' => 'stock_session_close',
-    'title' => 'Session Stok Ditutup',
-    'message' => 'Session stok penjualan Anda telah ditutup.',
-    'link' => $link,
-]);
+/* NOTIFIKASI KE SEMUA USER */
 
-/* NOTIFIKASI KE ADMIN */
-Notification::create([
-    'user_id' => auth()->id(),
-    'type' => 'stock_session_close',
-    'title' => 'Session Stok Ditutup',
-    'message' => 'Session stok sales berhasil ditutup.',
-    'link' => $link,
-]);
+$users = User::all();
+
+foreach($users as $user){
+
+    Notification::create([
+        'user_id' => $user->id,
+        'type' => 'stock_session_close',
+        'title' => 'Session Stok Ditutup',
+        'message' => 'Session stok sales telah ditutup.',
+        'link' => $link,
+    ]);
+
+}
 
     });
 

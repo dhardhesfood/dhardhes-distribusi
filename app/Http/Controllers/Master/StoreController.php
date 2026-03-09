@@ -34,6 +34,23 @@ class StoreController extends Controller
         $stores = $query->orderBy('name')->get();
 
         // ==============================
+        // HITUNG PIUTANG TOKO
+        // ==============================
+
+        $receivables = DB::table('receivables')
+                ->select('store_id', DB::raw('SUM(remaining_amount) as total_receivable'))
+                ->whereIn('status', ['unpaid','partial'])
+                ->groupBy('store_id')
+                ->get()
+                ->keyBy('store_id');
+
+            foreach ($stores as $store) {
+
+        $store->receivable_amount = $receivables[$store->id]->total_receivable ?? 0;
+
+    }
+
+        // ==============================
         // LIST SEMUA TOKO (UNTUK SEARCH DROPDOWN)
         // ==============================
         $allStores = Store::select('name')

@@ -38,10 +38,25 @@
     <div class="flex items-center justify-between">
 
         <div class="font-semibold">
-            🔔 {{ $notificationsCount }} Notifikasi baru
+            @foreach($notifications as $notif)
+
+<div class="flex justify-between items-center py-1">
+
+<div>
+{{ $notif->title }}
+</div>
+
+<a href="{{ $notif->link ?? route('warehouse.index') }}"
+class="text-blue-600 text-sm">
+Buka
+</a>
+
+</div>
+
+@endforeach
         </div>
 
-        <a href="{{ route('warehouse.index') }}"
+        <a href="{{ route('notifications.read') }}"
            class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm">
             Lihat Pesan
         </a>

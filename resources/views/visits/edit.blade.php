@@ -83,7 +83,7 @@
                 <div>
                     <label>Sisa</label>
                     <input type="number"
-                           name="return_qty[{{ $item->id }}]"
+                           name="remaining_stock[{{ $item->id }}]"
                            value="{{ $item->initial_stock }}"
                            min="0"
                            max="{{ $item->initial_stock }}"

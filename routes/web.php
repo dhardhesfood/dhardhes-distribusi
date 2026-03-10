@@ -204,6 +204,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/sales-stock-sessions/{id}/close', [SalesStockSessionController::class, 'close'])
         ->name('sales-stock-sessions.close');
 
+    Route::post('/sales-stock-sessions/{id}/reopen', [SalesStockSessionController::class, 'reopen'])
+        ->name('sales-stock-sessions.reopen');
+
     /*
     |--------------------------------------------------------------------------
     | SALES SETTLEMENT

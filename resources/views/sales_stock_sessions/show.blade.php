@@ -35,11 +35,33 @@
                     Tutup Session
                 </a>
             @else
-                <a href="{{ route('sales-stock-sessions.edit', $session->id) }}"
-                   class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs sm:text-sm">
-                    Edit
-                </a>
-            @endif
+
+@if(auth()->user()->role === 'admin')
+
+<form method="POST" action="{{ route('sales-stock-sessions.reopen',$session->id) }}"
+      onsubmit="return confirm('Yakin ingin membuka kembali session ini?')">
+
+@csrf
+
+<button type="submit"
+style="background:#f59e0b;color:white"
+class="px-3 py-2 rounded text-xs sm:text-sm hover:opacity-90">
+
+
+REOPEN SESSION
+
+</button>
+
+</form>
+
+@endif
+
+<a href="{{ route('sales-stock-sessions.edit', $session->id) }}"
+   class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs sm:text-sm">
+    Edit
+</a>
+
+@endif
         </div>
         @endif
     </div>

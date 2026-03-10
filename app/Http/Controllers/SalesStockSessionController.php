@@ -391,4 +391,92 @@ foreach($users as $user){
         ->with('success','Session berhasil ditutup & saldo direset.');
 }
 
+public function reopen($id)
+{
+    if (auth()->user()->role !== 'admin') {
+        abort(403);
+    }
+
+    $session = SalesStockSession::with('items.product')
+        ->whereIn('status',['done','minus'])
+        ->findOrFail($id);
+
+    DB::transaction(function () use ($session) {
+
+        /*
+        -----------------------------------------
+        1. HAPUS KASBON SESSION
+        -----------------------------------------
+        */
+
+        Kasbon::where('reference_id',$session->id)
+            ->where('reference_type','sales_stock_session')
+            ->delete();
+
+        /*
+        -----------------------------------------
+        2. HAPUS MOVEMENT CLOSING
+        -----------------------------------------
+        */
+
+        StockMovement::where('session_id',$session->id)
+            ->where('reference_type','sales_stock_session_close')
+            ->delete();
+
+        /*
+        -----------------------------------------
+        3. RESET DATA ITEM SESSION
+        -----------------------------------------
+        */
+
+        foreach($session->items as $item){
+
+            $item->update([
+                'system_remaining_qty'   => null,
+                'physical_remaining_qty' => null,
+                'difference_qty'         => null,
+            ]);
+
+        }
+
+        /*
+        -----------------------------------------
+        4. RESET SESSION
+        -----------------------------------------
+        */
+
+        $session->update([
+            'status'   => 'open',
+            'end_date' => null
+        ]);
+
+        /*
+        -----------------------------------------
+        5. NOTIFIKASI
+        -----------------------------------------
+        */
+
+        $link = '/sales-stock-sessions/'.$session->id;
+
+        $users = User::all();
+
+        foreach($users as $user){
+
+            Notification::create([
+                'user_id' => $user->id,
+                'type' => 'stock_session_reopen',
+                'title' => 'Session Stok Dibuka Kembali',
+                'message' => 'Session stok sales telah dibuka kembali.',
+                'link' => $link,
+            ]);
+
+        }
+
+    });
+
+    return redirect()
+        ->route('sales-stock-sessions.show',$session->id)
+        ->with('success','Session berhasil dibuka kembali.');
+}
+
 }

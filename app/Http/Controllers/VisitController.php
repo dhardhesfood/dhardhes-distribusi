@@ -250,7 +250,8 @@ else {
         ]);
         foreach ($visit->items as $item) {
 
-    $remaining    = (int) ($request->return_qty[$item->id] ?? 0);
+    $remaining = (int) ($request->remaining_stock[$item->id] ?? $item->initial_stock);
+    $physicalStock = (int) ($request->physical_stock[$item->id] ?? 0);
     $newQty       = (int) ($request->new_delivery_qty[$item->id] ?? 0);
     $reductionQty = (int) ($request->stock_reduction_qty[$item->id] ?? 0);
 
@@ -271,12 +272,13 @@ else {
     }
 
     $item->update([
-        'remaining_stock'     => $remaining,
-        'new_delivery_qty'    => $newQty,
-        'stock_reduction_qty' => $reductionQty,
-        'sold_qty'            => 0,
+    'remaining_stock'     => $remaining,
+    'physical_stock'      => $physicalStock,
+    'new_delivery_qty'    => $newQty,
+    'stock_reduction_qty' => $reductionQty,
+    'sold_qty'            => 0,
     ]);
-}
+   }
         $visit->bonuses()->delete();
         if (!empty($validated['bonus_product_id'])) {
             foreach ($validated['bonus_product_id'] as $index => $productId) {

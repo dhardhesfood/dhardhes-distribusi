@@ -336,7 +336,7 @@
             <tbody class="divide-y">
                 <tr>
                     <td class="p-2 font-medium">Penjualan Tunai (Visit/Kunjungan)</td>
-                    <td class="p-2 text-right">Rp {{ number_format($cashSales,0,',','.') }}</td>
+                    <td class="p-2 text-right">Rp {{ number_format($cashVisitGross,0,',','.') }}</td>
                 </tr>
                 <tr>
                     <td class="p-2 font-medium">Penjualan Tunai Langsung</td>
@@ -352,9 +352,16 @@
                 </tr>
                 <tr>
                     <td class="p-2 font-medium">Total Biaya Admin</td>
-                    <td class="p-2 text-right">Rp {{ number_format($adminFee,0,',','.') }}</td>
+                    <td class="p-2 text-right">
+                    Rp {{ number_format($adminFee,0,',','.') }}
+                </td>
                 </tr>
-                <tr>
+                <tr class="font-semibold">
+                    <td class="p-2">Cash Bersih Visit</td>
+                    <td class="p-2 text-right">
+                     Rp {{ number_format($cashSales,0,',','.') }}
+                    </td>
+                   </tr>
                     <td class="p-2 font-medium">Total Biaya Operasional</td>
                     <td class="p-2 text-right">Rp {{ number_format($totalCost,0,',','.') }}</td>
                 </tr>

@@ -93,7 +93,7 @@ class VisitService
 
             $session = SalesStockSession::where('user_id', $visit->user_id)
                 ->where('status', 'open')
-                ->whereDate('start_date', $visit->visit_date)
+                ->latest('id')
                 ->first();
 
             if (!$session) {

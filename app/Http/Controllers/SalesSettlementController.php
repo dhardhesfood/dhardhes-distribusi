@@ -120,6 +120,7 @@ class SalesSettlementController extends Controller
             ->sum('total');
 
         $adminFee = $visits->sum('admin_fee');
+        $cashVisitGross = $cashSales + $adminFee;
 
         $settlement = SalesSettlement::firstOrCreate(
             [
@@ -139,7 +140,6 @@ class SalesSettlementController extends Controller
         $expected = $cashSales
             + $cashSaleDirect
             + $receivablePayments
-            - $adminFee
             - $totalCost;
 
         $difference = $settlement->actual_amount - $expected;
@@ -210,6 +210,7 @@ class SalesSettlementController extends Controller
         return view('sales_settlements.show', compact(
             'settlement',
             'cashSales',
+            'cashVisitGross',
             'cashSaleDirect',
             'consignmentSales',
             'receivablePayments',
@@ -278,6 +279,7 @@ class SalesSettlementController extends Controller
                 ->sum('total');
 
             $adminFee = $visits->sum('admin_fee');
+            $cashVisitGross = $cashSales + $adminFee;
 
             $totalCost = SalesSettlementCostDetail::where('sales_settlement_id', $settlement->id)
                 ->sum('nominal');
@@ -285,7 +287,6 @@ class SalesSettlementController extends Controller
             $expected = $cashSales
                 + $cashSaleDirect
                 + $receivablePayments
-                - $adminFee
                 - $totalCost;
 
             $difference = $request->actual_amount - $expected;

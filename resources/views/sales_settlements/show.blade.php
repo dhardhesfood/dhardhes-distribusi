@@ -175,7 +175,7 @@
                         @endif
                     </td>
                     <td class="p-2 text-right">Rp {{ number_format($store->total_penjualan,0,',','.') }}</td>
-                    <td class="p-2 text-right">Rp {{ number_format($store->admin_fee,0,',','.') }}</td>
+                    <td class="p-2 text-right">Rp {{ number_format($store->admin_fee ?? 0,0,',','.') }}</td>
                     <td class="p-2 text-right">Rp {{ number_format($store->total_cash,0,',','.') }}</td>
                     <td class="p-2 text-right">Rp {{ number_format($store->total_consignment,0,',','.') }}</td>
                     <td class="p-2 text-right">Rp {{ number_format($store->total_fee,0,',','.') }}</td>
@@ -251,22 +251,61 @@
                     <th class="p-2 text-left">Jenis</th>
                     <th class="p-2 text-left">Keterangan</th>
                     <th class="p-2 text-right">Nominal</th>
+                    <th class="p-2 text-center">Aksi</th>
                 </tr>
             </thead>
+
             <tbody class="divide-y">
-                @foreach($costDetails as $cost)
-                    <tr>
-                        <td class="p-2 capitalize">{{ $cost->jenis_biaya }}</td>
-                        <td class="p-2">{{ $cost->keterangan ?? '-' }}</td>
-                        <td class="p-2 text-right">
-                            Rp {{ number_format($cost->nominal,0,',','.') }}
-                        </td>
-                    </tr>
-                @endforeach
+            @foreach($costDetails as $cost)
+
+<tr>
+
+<td class="p-2 capitalize">
+{{ $cost->jenis_biaya }}
+</td>
+
+<td class="p-2">
+{{ $cost->keterangan ?? '-' }}
+</td>
+
+<td class="p-2 text-right">
+Rp {{ number_format($cost->nominal,0,',','.') }}
+</td>
+
+<td class="p-2 text-center">
+
+@if($settlement->status === 'draft')
+
+<form method="POST"
+action="{{ route('sales.settlements.costs.destroy',$cost->id) }}"
+class="inline"
+onsubmit="return confirm('Hapus biaya ini?')">
+
+@csrf
+@method('DELETE')
+
+<button class="bg-red-600 text-white px-2 py-1 rounded text-xs">
+Hapus
+</button>
+
+</form>
+
+@else
+
+<span class="text-gray-400 text-xs">
+Locked
+</span>
+
+@endif
+
+</td>
+
+</tr>
+
+@endforeach
             </tbody>
         </table>
     @endif
-
 
     {{-- FORM INPUT --}}
     @php
@@ -359,12 +398,16 @@
                 <tr class="font-semibold">
                     <td class="p-2">Cash Bersih Visit</td>
                     <td class="p-2 text-right">
-                     Rp {{ number_format($cashSales,0,',','.') }}
+                    Rp {{ number_format($cashSales,0,',','.') }}
                     </td>
-                   </tr>
+                    </tr>
+
+                    <tr>
                     <td class="p-2 font-medium">Total Biaya Operasional</td>
-                    <td class="p-2 text-right">Rp {{ number_format($totalCost,0,',','.') }}</td>
-                </tr>
+                    <td class="p-2 text-right">
+                    Rp {{ number_format($totalCost,0,',','.') }}
+                    </td>
+                    </tr>
                 <tr class="bg-blue-50 font-semibold">
                     <td class="p-2">Total Seharusnya Setor</td>
                     <td class="p-2 text-right">

@@ -10,6 +10,7 @@ use App\Models\Store;
 use App\Models\Visit;
 use App\Models\Notification;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -89,7 +90,13 @@ $withdrawRate = $totalStores ? round(($withdrawCount/$totalStores)*100,1) : 0;
                     ->take(5)
                     ->get();
 
-        $notificationsCount = $notifications->count();    
+        $notificationsCount = $notifications->count();
+        
+        // Status backup distribusi
+        $backupStatus = DB::table('backup_logs')
+                   ->where('system','distribusi')
+                   ->latest()
+                   ->first();
 
         return view('dashboard', compact(
             'totalSettlementToday',
@@ -106,7 +113,8 @@ $withdrawRate = $totalStores ? round(($withdrawCount/$totalStores)*100,1) : 0;
             'withdrawCount',
             'lateRate',
             'heavyRate',
-            'withdrawRate'
+            'withdrawRate',
+            'backupStatus'
 
         ));
     }

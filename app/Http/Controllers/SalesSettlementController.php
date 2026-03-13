@@ -357,4 +357,43 @@ class SalesSettlementController extends Controller
 
         return back()->with('success', 'Settlement berhasil dibuka kembali.');
     }
+
+    public function updateCost(Request $request, \App\Models\SalesSettlementCostDetail $cost)
+{
+    $settlement = $cost->settlement;
+
+    // rule: tidak boleh edit jika settlement sudah close
+    if ($settlement->status === 'closed') {
+        abort(403,'Settlement sudah ditutup.');
+    }
+
+    $request->validate([
+        'jenis_biaya'=>'required',
+        'nominal'=>'required|numeric|min:0',
+        'keterangan'=>'nullable'
+    ]);
+
+    $cost->update([
+        'jenis_biaya'=>$request->jenis_biaya,
+        'nominal'=>$request->nominal,
+        'keterangan'=>$request->keterangan
+    ]);
+
+    return back()->with('success','Biaya berhasil diupdate');
+}
+
+public function destroyCost(\App\Models\SalesSettlementCostDetail $cost)
+{
+    $settlement = $cost->settlement;
+
+    // rule: tidak boleh hapus jika settlement sudah close
+    if ($settlement->status === 'closed') {
+        abort(403,'Settlement sudah ditutup.');
+    }
+
+    $cost->delete();
+
+    return back()->with('success','Biaya berhasil dihapus');
+}
+
 }

@@ -224,6 +224,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/sales-settlements/{settlement}/costs', [SalesSettlementController::class, 'storeCost'])
         ->name('sales.settlements.costs.store');
 
+    Route::put('/sales-settlement-costs/{cost}', [SalesSettlementController::class,'updateCost'])
+        ->name('sales.settlements.costs.update');            
+        
+    Route::delete('/sales-settlement-costs/{cost}', [SalesSettlementController::class,'destroyCost'])   
+        ->name('sales.settlements.costs.destroy');
+
     /*
     |--------------------------------------------------------------------------
     | KASBON

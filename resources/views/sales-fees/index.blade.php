@@ -433,7 +433,8 @@ LOLOS
 
 @if($row['reward_remaining'] > 0)
 
-<form method="POST" action="{{ route('sales-rewards.pay') }}">
+<form method="POST" action="{{ route('sales-rewards.pay') }}"
+class="flex flex-col sm:flex-row items-center justify-center gap-2">        
 
 @csrf
 
@@ -444,10 +445,10 @@ name="amount"
 min="1"
 max="{{ $row['reward_remaining'] }}"
 required
-class="w-20 border rounded text-xs">
+class="w-20 sm:w-24 px-2 py-1 border rounded text-xs text-center">
 
 <button
-class="px-3 py-1 bg-purple-600 text-white text-xs rounded">
+class="px-3 py-1 mt-1 sm:mt-0 bg-blue-600 text-white text-xs rounded hover:bg-blue-700">
 
 Bayar
 

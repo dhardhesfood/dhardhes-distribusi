@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseBackup extends Command
 {
@@ -21,6 +22,13 @@ class DatabaseBackup extends Command
 
         if (!is_dir($backupPath)) {
             $this->error('Backup directory not found.');
+
+            DB::table('backup_logs')->insert([
+                'system' => 'distribusi',
+                'status' => 'failed',
+                'message' => 'Backup directory not found'
+            ]);
+
             return 1;
         }
 
@@ -29,16 +37,6 @@ class DatabaseBackup extends Command
         $fullPath = "{$backupPath}/{$fileName}";
 
         $this->info("Starting backup...");
-
-        /*
-         |--------------------------------------------------------------------------
-         | FIXED VERSION
-         |--------------------------------------------------------------------------
-         | 1. Use MYSQL_PWD to avoid CLI password warning
-         | 2. Add --no-tablespaces (required for MySQL 8 non-root user)
-         | 3. Do NOT use 2>&1 to avoid corrupting SQL file
-         |--------------------------------------------------------------------------
-        */
 
         $command = sprintf(
             'MYSQL_PWD=%s mysqldump --no-tablespaces -h %s -u %s %s > %s',
@@ -53,11 +51,44 @@ class DatabaseBackup extends Command
 
         if ($resultCode !== 0) {
             $this->error('Backup failed.');
+
+            DB::table('backup_logs')->insert([
+                'system' => 'distribusi',
+                'status' => 'failed',
+                'message' => 'mysqldump failed'
+            ]);
+
             return 1;
         }
 
         $this->info("Backup completed successfully.");
         $this->info("File saved to: {$fullPath}");
+
+        // Upload backup ke Google Drive
+        $uploadCommand = "rclone copy {$fullPath} gdrive:dhardhes-backups/distribusi --tpslimit 2 --tpslimit-burst 2";
+
+        exec($uploadCommand, $uploadOutput, $uploadResult);
+
+        if ($uploadResult === 0) {
+
+            $this->info("Upload ke Google Drive berhasil.");
+
+            DB::table('backup_logs')->insert([
+                'system' => 'distribusi',
+                'status' => 'success',
+                'message' => 'Backup dan upload berhasil'
+            ]);
+
+        } else {
+
+            $this->error("Upload ke Google Drive gagal.");
+
+            DB::table('backup_logs')->insert([
+                'system' => 'distribusi',
+                'status' => 'failed',
+                'message' => 'Upload Google Drive gagal'
+            ]);
+        }
 
         // Auto cleanup: keep last 7 backups
         $files = glob($backupPath . '/dhardhes_*.sql');

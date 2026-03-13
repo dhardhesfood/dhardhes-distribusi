@@ -31,6 +31,54 @@
 
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-yellow-200 rounded-xl">
 
+<a class="group flex items-center justify-between px-5 py-3 rounded-2xl shadow-sm mb-4 transition duration-200 text-white
+@if(isset($backupStatus) && $backupStatus->status === 'success')
+bg-green-600 hover:bg-green-700
+@elseif(isset($backupStatus) && $backupStatus->status === 'failed')
+bg-red-600 hover:bg-red-700
+@else
+bg-gray-600 hover:bg-gray-700
+@endif
+">
+
+<div class="flex items-center gap-3">
+
+<div class="text-lg">
+💾
+</div>
+
+<div>
+
+<div class="text-xs uppercase font-semibold opacity-80">
+SYSTEM
+</div>
+
+<div class="text-sm font-semibold">
+Status Backup Database
+</div>
+
+@if(isset($backupStatus))
+<div class="text-xs opacity-70">
+{{ $backupStatus->created_at }}
+</div>
+@endif
+
+</div>
+
+</div>
+
+<div class="opacity-80 text-sm">
+@if(isset($backupStatus) && $backupStatus->status === 'success')
+✔
+@elseif(isset($backupStatus) && $backupStatus->status === 'failed')
+✖
+@else
+?
+@endif
+</div>
+
+</a>
+
     @if(isset($notificationsCount) && $notificationsCount > 0)
 
 <div class="mb-5 bg-blue-100 border border-blue-300 text-blue-900 px-5 py-4 rounded-xl shadow">

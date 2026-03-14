@@ -11,37 +11,83 @@
 
         <div class="bg-white shadow-sm sm:rounded-lg p-6">
 
-            {{-- TOMBOL PENYESUAIAN STOK (HANYA ADMIN) --}}
-            @if(auth()->user()->role === 'admin')
-                <div class="mb-4">
-                    <a href="{{ route('warehouse.adjustment.create') }}"
-                       class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded shadow-sm">
-                        Penyesuaian Stok
-                    </a>
-                </div>
-            @endif
+         @if(session('success'))
+         <div class="mb-4 bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded">
+           {{ session('success') }}
+         </div>
+         @endif
+
+            <div class="mb-4 flex gap-2">
+
+    <a href="{{ route('dashboard') }}"
+       class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded shadow-sm">
+        ← Kembali ke Dashboard
+    </a>
+
+    @if(auth()->user()->role === 'admin')
+        <a href="{{ route('warehouse.adjustment.create') }}"
+           class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded shadow-sm">
+            Penyesuaian Stok
+        </a>
+    @endif
+
+   </div>
 
             <table class="w-full border">
                 <thead>
                     <tr class="bg-gray-100">
                         <th class="p-2 border text-left">Produk</th>
                         <th class="p-2 border text-right">Stok Gudang</th>
+                        <th class="p-2 border text-center">Ready Pack</th>
                     </tr>
                 </thead>
 
-                <tbody>
-                    @foreach($stocks as $stock)
-                        <tr>
-                            <td class="p-2 border">
-                                {{ $stock->name }}
-                            </td>
+                <form method="POST" action="{{ route('warehouse.ready_packs.update') }}">
+@csrf
 
-                            <td class="p-2 border text-right font-semibold">
-                                {{ $stock->stock }}
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
+<tbody>
+
+@foreach($stocks as $stock)
+
+<tr>
+
+<td class="p-2 border">
+{{ $stock->name }}
+</td>
+
+<td class="p-2 border text-right font-semibold">
+{{ $stock->stock }}
+</td>
+
+<td class="p-2 border text-center">
+
+<input
+type="number"
+name="ready_packs[{{ $stock->id }}]"
+value="{{ $stock->ready_pack ?? 0 }}"
+class="border rounded p-1 w-24 text-center">
+
+</td>
+
+</tr>
+
+@endforeach
+
+</tbody>
+</table>
+
+<div class="mt-4">
+<button
+type="submit"
+class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow-sm">
+
+Update Ready Pack
+
+</button>
+</div>
+
+</form>
+
             </table>
 
                 <div class="mt-6 space-y-3">

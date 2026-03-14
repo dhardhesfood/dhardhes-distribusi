@@ -152,6 +152,16 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/productions', [ProductionController::class, 'store'])
         ->name('productions.store');
 
+
+    Route::get('/stock-requests/create', [\App\Http\Controllers\StockRequestController::class, 'create'])
+    ->name('stock.requests.create');
+
+    Route::post('/stock-requests', [\App\Http\Controllers\StockRequestController::class, 'store'])
+    ->name('stock.requests.store');
+
+    Route::delete('/stock-requests/{id}', [\App\Http\Controllers\StockRequestController::class, 'destroy'])
+    ->name('stock.requests.destroy');
+
     /*
     |--------------------------------------------------------------------------
     | WAREHOUSE (STOK GUDANG)
@@ -163,6 +173,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/warehouse/note', [App\Http\Controllers\WarehouseController::class, 'storeNote'])
     ->name('warehouse.note.store');
+
+    Route::post('/warehouse/ready-packs', 
+    [\App\Http\Controllers\WarehouseController::class, 'updateReadyPacks'])
+    ->name('warehouse.ready_packs.update');
     
     /*
     |--------------------------------------------------------------------------

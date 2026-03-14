@@ -25,6 +25,7 @@ class WarehouseController extends Controller
             ->select(
                 'products.id',
                 'products.name',
+                'warehouse_ready_packs.ready_pack',
                 DB::raw("
                     SUM(
                         CASE
@@ -37,12 +38,13 @@ class WarehouseController extends Controller
                 ")
             )
             ->join('products', 'products.id', '=', 'stock_movements.product_id')
+            ->leftJoin('warehouse_ready_packs', 'products.id', '=', 'warehouse_ready_packs.product_id')
             ->whereIn('stock_movements.type', [
                 'warehouse_in',
                 'warehouse_out',
                 'adjustment'
             ])
-            ->groupBy('products.id', 'products.name')
+            ->groupBy('products.id', 'products.name', 'warehouse_ready_packs.ready_pack')
             ->orderBy('products.name')
             ->get();
 
@@ -133,5 +135,23 @@ class WarehouseController extends Controller
     }
 
     return redirect()->route('warehouse.index');
+}
+
+public function updateReadyPacks(Request $request)
+{
+    foreach ($request->ready_packs as $productId => $pack) {
+
+        DB::table('warehouse_ready_packs')
+            ->where('product_id', $productId)
+            ->update([
+                'ready_pack' => $pack ?? 0,
+                'updated_by' => auth()->id(),
+                'updated_at' => now()
+            ]);
+    }
+
+    return redirect()
+        ->route('warehouse.index')
+        ->with('success', 'Stok ready pack berhasil diperbarui.');
 }
 }

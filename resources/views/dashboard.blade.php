@@ -210,6 +210,14 @@ Buka
 ],
 
 [
+    'route'=>'stock.requests.create',
+    'label'=>'Request Stok Sales',
+    'tag'=>'Gudang',
+    'color'=>'bg-red-600 hover:bg-red-700',
+    'emoji'=>'📋'
+],
+
+[
     'route'=>'warehouse.index',
     'label'=>'Stok Gudang',
     'tag'=>'Gudang',
@@ -225,6 +233,7 @@ Buka
             return in_array($menu['route'], [
                 'sales-stock-sessions.index',
                 'productions.create',
+                'stock.requests.create',
                 'warehouse.index'
             ]);
         })->values()->toArray();

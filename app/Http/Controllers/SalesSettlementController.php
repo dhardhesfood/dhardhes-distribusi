@@ -13,6 +13,7 @@ use App\Models\Kasbon;
 use App\Models\CashSale;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Services\MissionService;
 
 class SalesSettlementController extends Controller
 {
@@ -257,6 +258,9 @@ class SalesSettlementController extends Controller
                 'status'        => 'closed'
             ]);
 
+            // jalankan mission omzet
+            MissionService::handleSalesOmzet($request->user_id);
+
             $date = Carbon::parse($request->settlement_date)->format('Y-m-d');
 
             $visits = Visit::where('user_id', $request->user_id)
@@ -306,6 +310,10 @@ class SalesSettlementController extends Controller
                     'description'    => 'Kurang setor tanggal '.$date,
                 ]);
             }
+
+            // update progress mission omzet
+        MissionService::handleSalesOmzet($request->user_id);
+
         });
 
         return back()->with('success','Setoran berhasil disimpan.');

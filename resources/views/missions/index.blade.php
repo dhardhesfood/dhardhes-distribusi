@@ -34,6 +34,7 @@
                             <th class="p-2 border">Reward</th>
                             <th class="p-2 border">Periode</th>
                             <th class="p-2 border">Status</th>
+                            <th class="p-2 border">Aksi</th>
                         </tr>
                     </thead>
 
@@ -64,12 +65,39 @@
                                         <span class="text-gray-500">Nonaktif</span>
                                     @endif
                                 </td>
+
+                                <td class="border p-2">
+
+    <div class="flex gap-2">
+
+        <a href="{{ route('missions.edit', $mission->id) }}"
+           class="bg-yellow-500 text-white px-3 py-1 rounded text-sm">
+            Edit
+        </a>
+
+        <form action="{{ route('missions.destroy', $mission->id) }}"
+              method="POST"
+              onsubmit="return confirm('Yakin ingin menghapus misi ini?')">
+
+            @csrf
+            @method('DELETE')
+
+            <button class="bg-red-600 text-white px-3 py-1 rounded text-sm">
+                Hapus
+            </button>
+
+        </form>
+
+    </div>
+
+</td>
+
                             </tr>
 
                         @empty
 
                             <tr>
-                                <td colspan="7" class="text-center p-4">
+                                <td colspan="8" class="text-center p-4">
                                     Belum ada misi
                                 </td>
                             </tr>

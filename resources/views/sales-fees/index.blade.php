@@ -507,7 +507,9 @@ Total Reward (KPI + Misi)
 <th class="p-2 border text-right">Total Reward</th>
 <th class="p-2 border text-right">Reward Dibayar</th>
 <th class="p-2 border text-right">Sisa Reward</th>
+@if(auth()->user()->role === 'admin')
 <th class="p-2 border text-center">Bayar</th>
+@endif
 </tr>
 
 </thead>
@@ -541,7 +543,7 @@ Rp {{ number_format($t['reward_paid'],0,',','.') }}
 <td class="p-2 border text-right text-blue-700 font-semibold">
 Rp {{ number_format($t['reward_remaining'],0,',','.') }}
 </td>
-
+@if(auth()->user()->role === 'admin')
 <td class="p-2 border text-center">
 
 @if($t['reward_remaining'] > 0)
@@ -583,12 +585,14 @@ Lunas
 
 </td>
 
+@endif
+
 </tr>
 
 @empty
 
 <tr>
-<td colspan="5" class="p-3 text-center text-gray-500">
+<td colspan="{{ auth()->user()->role === 'admin' ? 7 : 6 }}" class="p-3 text-center text-gray-500">
 Belum ada data total reward
 </td>
 </tr>

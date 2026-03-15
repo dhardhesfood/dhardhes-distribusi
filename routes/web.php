@@ -436,6 +436,15 @@ Route::get('/missions/create', [MissionController::class, 'create'])
 Route::post('/missions', [MissionController::class, 'store'])
     ->name('missions.store');
 
+Route::get('/missions/{id}/edit', [MissionController::class, 'edit'])
+    ->name('missions.edit');
+
+Route::put('/missions/{id}', [MissionController::class, 'update'])
+    ->name('missions.update');
+
+Route::delete('/missions/{id}', [MissionController::class, 'destroy'])
+    ->name('missions.destroy');
+
     /*
     |--------------------------------------------------------------------------
     | SYSTEM BACKUP

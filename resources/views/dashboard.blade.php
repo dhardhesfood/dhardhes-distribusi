@@ -196,7 +196,8 @@ Buka
             'label'=>'Misi Sales',
             'tag'=>'Performance',
             'color'=>'bg-amber-600 hover:bg-amber-700',
-            'emoji'=>'🎯'
+            'emoji'=>'🎯',
+            'roles'=>['admin']
         ],
 
         // ================= STOK =================
@@ -287,7 +288,11 @@ Mulai: {{ \Carbon\Carbon::parse($mission->start_date)->format('d M Y') }}
 Berakhir: {{ \Carbon\Carbon::parse($mission->end_date)->format('d M Y') }}
 <br>
 
+@if($mission->type === 'revenue')
+Target: Rp {{ number_format($mission->target,0,',','.') }}
+@else
 Target: {{ $mission->target }} toko
+@endif
 <br>
 
 @php
@@ -307,13 +312,29 @@ if($now < $mission->start_date){
 elseif($progress >= $target){
 
     $status = 'Selamat misi tercapai 🎉';
-    $message = 'Kamu berhak mendapatkan reward — cek halaman Fee Sales untuk melihat reward kamu';
+
+    if($mission->type === 'revenue'){
+        $reward = $mission->reward_amount ?? 0;
+        $rewardText = 'Rp '.number_format($reward,0,',','.');
+    }else{
+        $reward = $mission->reward_amount ?? 0;
+        $rewardText = number_format($reward,0,',','.');
+    }
+
+    $message = 'Dapatkan reward '.$rewardText.' karena misi ini berhasil dicapai';
 
 }
 elseif($now >= $mission->start_date && $now <= $mission->end_date){
 
     $status = 'Berjalan';
-    $message = 'Target belum tercapai';
+
+    if($mission->type === 'revenue'){
+        $rewardText = 'Rp '.number_format($mission->reward_amount,0,',','.');
+    }else{
+        $rewardText = number_format($mission->reward_amount,0,',','.');
+    }
+
+    $message = 'Capai target untuk mendapatkan reward '.$rewardText;
 
 }
 elseif($now > $mission->end_date){
@@ -336,7 +357,17 @@ Status: <span class="font-semibold">{{ $status }}</span>
 <br>
 
 <span class="font-semibold text-gray-700">
-Progress: {{ $progress }} / {{ $target }}
+
+@if($mission->type === 'revenue')
+
+Progress: Rp {{ number_format($progress,0,',','.') }} / Rp {{ number_format($target,0,',','.') }}
+
+@else
+
+Progress: {{ $progress }} / {{ $target }} toko
+
+@endif
+
 </span>
 
 </div>

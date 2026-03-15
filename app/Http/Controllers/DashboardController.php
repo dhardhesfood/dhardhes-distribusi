@@ -112,6 +112,7 @@ if(auth()->user()->role === 'admin'){
             'm.type',
             'm.start_date',
             'm.end_date',
+            'm.reward_amount',
             'u.name as sales_name',
             'mp.progress',
             'mp.completed'
@@ -134,6 +135,7 @@ if(auth()->user()->role === 'admin'){
             'm.type',
             'm.start_date',
             'm.end_date',
+            'm.reward_amount',
             'mp.progress',
             'mp.completed'
         )

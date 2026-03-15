@@ -189,6 +189,16 @@ Buka
             'emoji'=>'📈'
         ],
 
+        // ================= AI =================
+[
+    'route'=>'ai.index',
+    'label'=>'AI Dhardhes',
+    'tag'=>'AI Intelligence',
+    'color'=>'bg-emerald-600 hover:bg-emerald-700',
+    'emoji'=>'🤖',
+    'roles'=>['admin']
+],
+
         // ================= MISION SALES =================
 
         [

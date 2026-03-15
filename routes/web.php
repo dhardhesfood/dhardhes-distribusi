@@ -23,6 +23,7 @@ use App\Http\Controllers\Master\AreaController;
 use App\Http\Controllers\SystemBackupController;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\MissionController;
+use App\Http\Controllers\AIController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -444,6 +445,18 @@ Route::put('/missions/{id}', [MissionController::class, 'update'])
 
 Route::delete('/missions/{id}', [MissionController::class, 'destroy'])
     ->name('missions.destroy');
+
+/*
+|--------------------------------------------------------------------------
+| AI DHARDHES
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/ai', [AIController::class, 'index'])
+    ->name('ai.index');
+
+Route::get('/ai/business-analysis', [AIController::class, 'businessAnalysis'])
+    ->name('ai.business');
 
     /*
     |--------------------------------------------------------------------------

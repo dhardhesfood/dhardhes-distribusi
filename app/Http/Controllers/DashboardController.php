@@ -98,6 +98,52 @@ $withdrawRate = $totalStores ? round(($withdrawCount/$totalStores)*100,1) : 0;
                    ->latest()
                    ->first();
 
+        // ================= MISI SALES =================
+
+if(auth()->user()->role === 'admin'){
+
+    $missions = DB::table('missions as m')
+        ->leftJoin('mission_progress as mp','mp.mission_id','=','m.id')
+        ->leftJoin('users as u','u.id','=','mp.user_id')
+        ->select(
+            'm.id',
+            'm.title',
+            'm.target',
+            'm.type',
+            'm.start_date',
+            'm.end_date',
+            'u.name as sales_name',
+            'mp.progress',
+            'mp.completed'
+        )
+        ->where('m.active',1)
+        ->orderBy('m.id','desc')
+        ->get();
+
+}else{
+
+    $missions = DB::table('missions as m')
+        ->leftJoin('mission_progress as mp', function ($join) {
+            $join->on('mp.mission_id','=','m.id')
+                 ->where('mp.user_id',auth()->id());
+        })
+        ->select(
+            'm.id',
+            'm.title',
+            'm.target',
+            'm.type',
+            'm.start_date',
+            'm.end_date',
+            'mp.progress',
+            'mp.completed'
+        )
+        ->where('m.active',1)
+        ->whereDate('m.start_date','<=',now())
+        ->whereDate('m.end_date','>=',now())
+        ->get();
+
+}          
+
         return view('dashboard', compact(
             'totalSettlementToday',
             'totalShortageToday',
@@ -114,7 +160,8 @@ $withdrawRate = $totalStores ? round(($withdrawCount/$totalStores)*100,1) : 0;
             'lateRate',
             'heavyRate',
             'withdrawRate',
-            'backupStatus'
+            'backupStatus',
+            'missions'
 
         ));
     }

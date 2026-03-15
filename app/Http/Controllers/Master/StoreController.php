@@ -9,6 +9,7 @@ use App\Models\Store;
 use App\Models\Area;
 use App\Models\Product;
 use App\Models\StorePrice;
+use App\Services\MissionService;
 
 class StoreController extends Controller
 {
@@ -162,6 +163,7 @@ class StoreController extends Controller
                 'owner_name'          => $request->owner_name,
                 'phone'               => $request->phone,
                 'address'             => $request->address,
+                'created_by'          => auth()->id(),   // ← TAMBAHAN
                 'city'                => $request->city,
                 'visit_interval_days' => $request->visit_interval_days,
                 'last_visit_date'     => null,
@@ -178,6 +180,8 @@ class StoreController extends Controller
                 ]);
             }
         });
+
+        MissionService::handleNewStore(auth()->id());
 
         return redirect()
             ->route('stores.index')

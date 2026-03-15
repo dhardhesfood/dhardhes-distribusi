@@ -22,6 +22,7 @@ use App\Http\Controllers\Master\StoreController;
 use App\Http\Controllers\Master\AreaController;
 use App\Http\Controllers\SystemBackupController;
 use App\Http\Controllers\ProductionController;
+use App\Http\Controllers\MissionController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -419,6 +420,21 @@ Route::post('/stores/{store}/stock-opname', [\App\Http\Controllers\StockOpnameCo
 
 Route::get('/stock-opnames/{stockOpname}', [\App\Http\Controllers\StockOpnameController::class, 'show'])
     ->name('stock-opnames.show');
+
+/*
+|--------------------------------------------------------------------------
+| SALES MISSIONS
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/missions', [MissionController::class, 'index'])
+    ->name('missions.index');
+
+Route::get('/missions/create', [MissionController::class, 'create'])
+    ->name('missions.create');
+
+Route::post('/missions', [MissionController::class, 'store'])
+    ->name('missions.store');
 
     /*
     |--------------------------------------------------------------------------

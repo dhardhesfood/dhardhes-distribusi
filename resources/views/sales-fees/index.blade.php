@@ -375,15 +375,9 @@ Reward Sales Bulan
 
 <th class="p-2 border text-left">Nama Sales</th>
 
-<th class="p-2 border text-right">Reward</th>
-
-<th class="p-2 border text-right">Reward Dibayar</th>
-
-<th class="p-2 border text-right">Sisa Reward</th>
+<th class="p-2 border text-right">Reward KPI</th>
 
 <th class="p-2 border text-center">Status</th>
-
-<th class="p-2 border text-center">Bayar Reward</th>
 
 </tr>
 
@@ -401,14 +395,6 @@ Reward Sales Bulan
 
 <td class="p-2 border text-right text-green-700 font-semibold">
 Rp {{ number_format($row['reward_amount'],0,',','.') }}
-</td>
-
-<td class="p-2 border text-right">
-Rp {{ number_format($row['reward_paid'],0,',','.') }}
-</td>
-
-<td class="p-2 border text-right text-blue-700 font-semibold">
-Rp {{ number_format($row['reward_remaining'],0,',','.') }}
 </td>
 
 <td class="p-2 border text-center">
@@ -429,21 +415,148 @@ LOLOS
 
 </td>
 
+</tr>
+
+@endforeach
+
+</tbody>
+
+</table>
+
+</div>
+</div>
+
+<h3 class="font-semibold mt-10 mb-3 text-gray-700">
+Reward Misi
+</h3>
+
+<div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
+
+<div class="overflow-x-auto">
+
+<table class="min-w-full text-xs sm:text-sm border">
+
+<thead class="bg-gray-100">
+
+<tr>
+<th class="p-2 border text-left">Sales</th>
+<th class="p-2 border text-center">Mission</th>
+<th class="p-2 border text-right">Reward</th>
+<th class="p-2 border text-center">Tanggal</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+@forelse($missionRewards as $m)
+
+<tr>
+
+<td class="p-2 border">
+{{ $m->name }}
+</td>
+
+<td class="p-2 border text-center">
+{{ $m->mission_id }}
+</td>
+
+<td class="p-2 border text-right text-green-700 font-semibold">
+Rp {{ number_format($m->reward_amount,0,',','.') }}
+</td>
+
+<td class="p-2 border text-center">
+{{ \Carbon\Carbon::parse($m->reward_date)->format('d-m-Y') }}
+</td>
+
+</tr>
+
+@empty
+
+<tr>
+<td colspan="4" class="p-3 text-center text-gray-500">
+Belum ada reward misi
+</td>
+</tr>
+
+@endforelse
+
+</tbody>
+
+</table>
+
+</div>
+</div>
+
+<h3 class="font-semibold mt-10 mb-3 text-gray-700">
+Total Reward (KPI + Misi)
+</h3>
+
+<div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
+
+<div class="overflow-x-auto">
+
+<table class="min-w-full text-xs sm:text-sm border">
+
+<thead class="bg-gray-100">
+
+<tr>
+<th class="p-2 border text-left">Sales</th>
+<th class="p-2 border text-right">Reward KPI</th>
+<th class="p-2 border text-right">Reward Misi</th>
+<th class="p-2 border text-right">Total Reward</th>
+<th class="p-2 border text-right">Reward Dibayar</th>
+<th class="p-2 border text-right">Sisa Reward</th>
+<th class="p-2 border text-center">Bayar</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+@forelse($totalRewards as $t)
+
+<tr>
+
+<td class="p-2 border">
+{{ $t['name'] }}
+</td>
+
+<td class="p-2 border text-right">
+Rp {{ number_format($t['kpi_reward'],0,',','.') }}
+</td>
+
+<td class="p-2 border text-right">
+Rp {{ number_format($t['mission_reward'],0,',','.') }}
+</td>
+
+<td class="p-2 border text-right font-semibold text-green-700">
+Rp {{ number_format($t['total_reward'],0,',','.') }}
+</td>
+
+<td class="p-2 border text-right">
+Rp {{ number_format($t['reward_paid'],0,',','.') }}
+</td>
+
+<td class="p-2 border text-right text-blue-700 font-semibold">
+Rp {{ number_format($t['reward_remaining'],0,',','.') }}
+</td>
+
 <td class="p-2 border text-center">
 
-@if($row['reward_remaining'] > 0)
+@if($t['reward_remaining'] > 0)
 
 <form method="POST" action="{{ route('sales-rewards.pay') }}"
-class="flex flex-col sm:flex-row items-center justify-center gap-2">        
+class="flex flex-col sm:flex-row items-center justify-center gap-2">
 
 @csrf
 
-<input type="hidden" name="user_id" value="{{ $row['user_id'] }}">
+<input type="hidden" name="user_id" value="{{ $t['user_id'] }}">
 
 <input type="number"
 name="amount"
 min="1"
-max="{{ $row['reward_remaining'] }}"
+max="{{ $t['reward_remaining'] }}"
 required
 class="w-20 sm:w-24 px-2 py-1 border rounded text-xs text-center">
 
@@ -472,7 +585,15 @@ Lunas
 
 </tr>
 
-@endforeach
+@empty
+
+<tr>
+<td colspan="5" class="p-3 text-center text-gray-500">
+Belum ada data total reward
+</td>
+</tr>
+
+@endforelse
 
 </tbody>
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Services\RewardService;
 
 class SalesFeeController extends Controller
 {
@@ -55,11 +56,13 @@ $endDate   = Carbon::create($year,$month,1)->endOfMonth();
                     WHERE sfp.user_id = u.id
                 ) as total_fee_paid'),
 
-                DB::raw('(
-                   SELECT COALESCE(SUM(rp.amount_paid),0)
-                   FROM sales_reward_payments rp
-                   WHERE rp.user_id = u.id
-                ) as total_reward_paid'),
+                DB::raw("(
+                    SELECT COALESCE(SUM(rp.amount_paid),0)
+                    FROM sales_reward_payments rp
+                    WHERE rp.user_id = u.id
+                    AND rp.month = {$month}
+                    AND rp.year = {$year}
+                    ) as total_reward_paid"),
 
                 DB::raw('(
                     SELECT COALESCE(SUM(k.amount_total - k.amount_paid),0)
@@ -318,8 +321,8 @@ as fees
 
         $settlementQuery = DB::table('sales_settlements')
             ->where('status', 'closed')
-            ->whereMonth('settlement_date', Carbon::now()->month)
-            ->whereYear('settlement_date', Carbon::now()->year)
+            ->whereMonth('settlement_date', $month)
+            ->whereYear('settlement_date', $year)
             ->orderByDesc('settlement_date');
 
         if (auth()->user()->role === 'sales') {
@@ -334,6 +337,57 @@ as fees
             ->where('year',$year)
             ->exists();
 
+            $missionRewards = DB::table('mission_rewards as mr')
+    ->join('users as u','u.id','=','mr.user_id')
+    ->select(
+        'u.name',
+        'mr.mission_id',
+        'mr.reward_amount',
+        'mr.reward_date'
+    )
+    ->whereMonth('mr.reward_date',$month)
+    ->whereYear('mr.reward_date',$year)
+    ->orderByDesc('mr.reward_date')
+    ->get();
+
+    $totalRewards = collect($finalData)->map(function ($row) use ($month,$year) {
+
+    // hitung reward dari misi
+    $missionReward = DB::table('mission_rewards')
+        ->where('user_id', $row['user_id'])
+        ->whereMonth('reward_date', $month)
+        ->whereYear('reward_date', $year)
+        ->sum('reward_amount');
+
+    // total reward KPI + misi
+    $totalReward = $row['reward_amount'] + $missionReward;
+
+    // hitung reward yang sudah dibayar
+    $rewardPaid = DB::table('sales_reward_payments')
+        ->where('user_id', $row['user_id'])
+        ->where('month', $month)
+        ->where('year', $year)
+        ->sum('amount_paid');
+
+    // hitung sisa reward
+    $rewardRemaining = $totalReward - $rewardPaid;
+
+    if ($rewardRemaining < 0) {
+        $rewardRemaining = 0;
+    }
+
+    return [
+        'user_id' => $row['user_id'],
+        'name' => $row['name'],
+        'kpi_reward' => $row['reward_amount'],
+        'mission_reward' => $missionReward,
+        'total_reward' => $totalReward,
+        'reward_paid' => $rewardPaid,
+        'reward_remaining' => $rewardRemaining
+    ];
+
+})->values();
+
         return view('sales-fees.index', [
     'sales' => $finalData,
     'monthlySettlements' => $monthlySettlements,
@@ -344,6 +398,8 @@ as fees
     'month' => $month,
     'year'  => $year,
     'rewardLocked' => $rewardLocked,
+    'missionRewards' => $missionRewards,
+    'totalRewards' => $totalRewards,
     ]);
     }
 
@@ -400,8 +456,10 @@ public function payReward(Request $request)
     $rewardAmount = $lockedReward->reward_amount;
 
     $rewardPaid = DB::table('sales_reward_payments')
-        ->where('user_id',$request->user_id)
-        ->sum('amount_paid');
+    ->where('user_id',$request->user_id)
+    ->where('month',$month)
+    ->where('year',$year)
+    ->sum('amount_paid');
 
     $rewardRemaining = $rewardAmount - $rewardPaid;
 
@@ -410,11 +468,13 @@ public function payReward(Request $request)
     }
 
     DB::table('sales_reward_payments')->insert([
-        'user_id' => $request->user_id,
-        'amount_paid' => $request->amount,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    'user_id' => $request->user_id,
+    'month' => $month,
+    'year' => $year,
+    'amount_paid' => $request->amount,
+    'created_at' => now(),
+    'updated_at' => now(),
+]);
 
     return redirect()
         ->route('sales-fees.index')

@@ -61,6 +61,13 @@ Status Backup Database
 <div class="text-xs opacity-70">
 {{ $backupStatus->created_at }}
 </div>
+
+@endif
+
+@if(isset($backupStatus))
+<div class="text-xs opacity-80">
+{{ $backupStatus->message }}
+</div>
 @endif
 
 </div>
@@ -182,6 +189,16 @@ Buka
             'emoji'=>'📈'
         ],
 
+        // ================= MISION SALES =================
+
+        [
+            'route'=>'missions.index',
+            'label'=>'Misi Sales',
+            'tag'=>'Performance',
+            'color'=>'bg-amber-600 hover:bg-amber-700',
+            'emoji'=>'🎯'
+        ],
+
         // ================= STOK =================
         [
             'route'=>'sales.stock',
@@ -239,6 +256,102 @@ Buka
         })->values()->toArray();
     }
     @endphp
+
+    @if(isset($missions) && $missions->count() > 0)
+
+<div class="mb-6 bg-white shadow rounded-xl p-5">
+
+<div class="font-semibold text-lg mb-3">
+🎯 Misi Sales
+</div>
+
+@foreach($missions as $mission)
+
+@php
+$progress = $mission->progress ?? 0;
+$target = $mission->target;
+$percent = $target > 0 ? min(100, ($progress / $target) * 100) : 0;
+@endphp
+
+<div class="mb-4">
+
+<div class="font-semibold">
+{{ $mission->title }}
+</div>
+
+<div class="text-xs text-gray-500">
+
+Mulai: {{ \Carbon\Carbon::parse($mission->start_date)->format('d M Y') }}
+<br>
+
+Berakhir: {{ \Carbon\Carbon::parse($mission->end_date)->format('d M Y') }}
+<br>
+
+Target: {{ $mission->target }} toko
+<br>
+
+@php
+
+$now = now();
+$progress = $mission->progress ?? 0;
+$target = $mission->target;
+
+$status = '';
+$message = '';
+
+if($now < $mission->start_date){
+
+    $status = 'Belum dimulai';
+
+}
+elseif($progress >= $target){
+
+    $status = 'Selamat misi tercapai 🎉';
+    $message = 'Kamu berhak mendapatkan reward — cek halaman Fee Sales untuk melihat reward kamu';
+
+}
+elseif($now >= $mission->start_date && $now <= $mission->end_date){
+
+    $status = 'Berjalan';
+    $message = 'Target belum tercapai';
+
+}
+elseif($now > $mission->end_date){
+
+    $status = 'Misi berakhir';
+    $message = 'Target belum tercapai';
+
+}
+
+@endphp
+
+Status: <span class="font-semibold">{{ $status }}</span>
+
+@if($message)
+<br>
+<span class="text-xs text-gray-600">
+{{ $message }}
+</span>
+@endif
+<br>
+
+<span class="font-semibold text-gray-700">
+Progress: {{ $progress }} / {{ $target }}
+</span>
+
+</div>
+
+<div class="w-full bg-gray-200 rounded h-3 overflow-hidden mt-2">
+<div class="bg-green-500 h-3" style="width: {{ $percent }}%"></div>
+</div>
+
+</div>
+
+@endforeach
+
+</div>
+
+@endif
 
     <div class="flex flex-col gap-3">
 

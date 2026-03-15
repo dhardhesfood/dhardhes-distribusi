@@ -26,7 +26,8 @@ class DatabaseBackup extends Command
             DB::table('backup_logs')->insert([
                 'system' => 'distribusi',
                 'status' => 'failed',
-                'message' => 'Backup directory not found'
+                'message' => 'Backup directory not found',
+                'created_at' => now()
             ]);
 
             return 1;
@@ -55,7 +56,8 @@ class DatabaseBackup extends Command
             DB::table('backup_logs')->insert([
                 'system' => 'distribusi',
                 'status' => 'failed',
-                'message' => 'mysqldump failed'
+                'message' => 'mysqldump failed',
+                'created_at' => now()
             ]);
 
             return 1;
@@ -76,7 +78,8 @@ class DatabaseBackup extends Command
             DB::table('backup_logs')->insert([
                 'system' => 'distribusi',
                 'status' => 'success',
-                'message' => 'Backup dan upload berhasil'
+                'message' => 'Backup dan upload berhasil',
+                'created_at' => now()
             ]);
 
         } else {
@@ -86,7 +89,8 @@ class DatabaseBackup extends Command
             DB::table('backup_logs')->insert([
                 'system' => 'distribusi',
                 'status' => 'failed',
-                'message' => 'Upload Google Drive gagal'
+                'message' => 'Upload Google Drive gagal',
+                'created_at' => now()
             ]);
         }
 

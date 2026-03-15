@@ -33,6 +33,7 @@
                             <th class="p-2 border">Target</th>
                             <th class="p-2 border">Reward</th>
                             <th class="p-2 border">Periode</th>
+                            <th class="p-2 border">Pencapaian</th>
                             <th class="p-2 border">Status</th>
                             <th class="p-2 border">Aksi</th>
                         </tr>
@@ -42,11 +43,44 @@
 
                         @forelse($missions as $mission)
 
+                        @php
+$progress = $mission->progress ?? 0;
+$target = $mission->target;
+
+$percent = $target > 0 ? round(($progress / $target) * 100,1) : 0;
+
+$now = now();
+
+$status = '';
+
+if($now < $mission->start_date){
+    $status = 'Akan Dimulai';
+}
+elseif($progress >= $target && $now <= $mission->end_date){
+    $status = 'Tercapai (dalam periode)';
+}
+elseif($progress >= $target && $now > $mission->end_date){
+    $status = 'Berakhir – Target Tercapai';
+}
+elseif($progress < $target && $now > $mission->end_date){
+    $status = 'Berakhir – Target Tidak Tercapai';
+}
+else{
+    $status = 'Sedang Berjalan';
+}
+@endphp
+
                             <tr>
                                 <td class="border p-2">{{ $mission->id }}</td>
                                 <td class="border p-2">{{ $mission->title }}</td>
                                 <td class="border p-2">{{ $mission->type }}</td>
-                                <td class="border p-2">{{ $mission->target }}</td>
+                                <td class="border p-2">
+                                           @if($mission->type === 'revenue')
+                                           Rp {{ number_format($mission->target) }}
+                                           @else
+                                           {{ $mission->target }}
+                                           @endif
+                                           </td>
 
                                 <td class="border p-2">
                                     Rp {{ number_format($mission->reward_amount) }}
@@ -58,12 +92,12 @@
                                     {{ $mission->end_date }}
                                 </td>
 
-                                <td class="border p-2">
-                                    @if($mission->active)
-                                        <span class="text-green-600 font-bold">Aktif</span>
-                                    @else
-                                        <span class="text-gray-500">Nonaktif</span>
-                                    @endif
+                                <td class="border p-2 text-center">
+                                    {{ $percent }}%
+                                </td>
+
+                                <td class="border p-2 font-semibold">
+                                    {{ $status }}
                                 </td>
 
                                 <td class="border p-2">

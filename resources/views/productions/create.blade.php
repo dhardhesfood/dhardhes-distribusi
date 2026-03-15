@@ -102,7 +102,6 @@
 <table class="w-full border border-gray-300">
     <thead class="bg-gray-100">
         <tr>
-            <th class="border px-3 py-2 text-left">Tanggal</th>
             <th class="border px-3 py-2 text-left">Produk</th>
             <th class="border px-3 py-2 text-right">Jumlah</th>
         </tr>
@@ -119,7 +118,7 @@ $lastDate = null;
 @if($lastDate != $production->production_date)
 
 <tr style="background:#f3f4f6;font-weight:bold;">
-<td colspan="3" class="px-3 py-2">
+<td colspan="2" class="px-3 py-2">
 Tanggal Produksi:
 {{ \Carbon\Carbon::parse($production->production_date)->format('d M Y') }}
 </td>
@@ -132,7 +131,6 @@ $lastDate = $production->production_date;
 @endif
 
 <tr>
-<td class="border px-3 py-2"></td>
 
 <td class="border px-3 py-2">
 {{ $production->product->name ?? '-' }}
@@ -146,7 +144,7 @@ $lastDate = $production->production_date;
 @empty
 
 <tr>
-<td colspan="3" class="text-center py-4">
+<td colspan="2" class="text-center py-4">
 Belum ada data produksi
 </td>
 </tr>

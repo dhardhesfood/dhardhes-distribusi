@@ -258,7 +258,7 @@ Buka
     }
     @endphp
 
-    @if(isset($missions) && $missions->count() > 0)
+    @if(isset($missions) && $missions->count() > 0 && in_array(auth()->user()->role, ['admin','sales']))
 
 <div class="mb-6 bg-white shadow rounded-xl p-5">
 
@@ -267,6 +267,12 @@ Buka
 </div>
 
 @foreach($missions as $mission)
+
+@php
+if(now() > $mission->end_date){
+    continue;
+}
+@endphp
 
 @php
 $progress = $mission->progress ?? 0;

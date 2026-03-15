@@ -12,13 +12,31 @@ class MissionController extends Controller
      * Menampilkan daftar misi
      */
     public function index()
-    {
-        $missions = DB::table('missions')
-            ->orderBy('created_at', 'desc')
-            ->get();
+{
+    $missions = DB::table('missions')
+        ->leftJoin('mission_progress', 'missions.id', '=', 'mission_progress.mission_id')
+        ->select(
+            'missions.*',
+            DB::raw('COALESCE(MAX(mission_progress.progress),0) as progress')
+        )
+        ->groupBy(
+            'missions.id',
+            'missions.title',
+            'missions.type',
+            'missions.product_id',
+            'missions.target',
+            'missions.reward_amount',
+            'missions.start_date',
+            'missions.end_date',
+            'missions.active',
+            'missions.created_at',
+            'missions.updated_at'
+        )
+        ->orderBy('missions.created_at','desc')
+        ->get();
 
-        return view('missions.index', compact('missions'));
-    }
+    return view('missions.index', compact('missions'));
+}
 
     /**
      * Form tambah misi

@@ -182,6 +182,44 @@ Fee Sales Bulan
 {{ \Carbon\Carbon::create($year,$month,1)->translatedFormat('F Y') }}
 </h3>
 
+<form method="GET" class="mb-3 flex gap-2 items-center">
+
+<select name="month"
+class="border rounded px-3 py-1"
+onchange="this.form.submit()">
+
+@foreach(range(1,12) as $m)
+
+<option value="{{ $m }}"
+{{ request('month',$month) == $m ? 'selected' : '' }}>
+
+{{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+
+</option>
+
+@endforeach
+
+</select>
+
+<select name="year"
+class="border rounded px-3 py-1"
+onchange="this.form.submit()">
+
+@foreach(range(now()->year-2, now()->year+1) as $y)
+
+<option value="{{ $y }}"
+{{ request('year',$year) == $y ? 'selected' : '' }}>
+
+{{ $y }}
+
+</option>
+
+@endforeach
+
+</select>
+
+</form>
+
 <table class="min-w-full text-sm border">
 
 <thead class="bg-gray-100">

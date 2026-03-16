@@ -22,6 +22,25 @@ Request Stok Sales
 @csrf
 
 <div class="mb-4">
+<label class="block text-sm font-medium mb-1">Area</label>
+
+<select name="area_id"
+class="border rounded w-full p-2"
+required>
+
+<option value="">-- pilih area --</option>
+
+@foreach($areas as $area)
+<option value="{{ $area->id }}">
+{{ $area->name }}
+</option>
+@endforeach
+
+</select>
+
+</div>
+
+<div class="mb-4">
 <label class="block text-sm font-medium mb-1">Tanggal Request</label>
 <input type="date"
 name="request_date"
@@ -108,19 +127,46 @@ Tambah Produk Lagi
 <tbody>
 
 @php
+$lastArea = null;
 $lastDate = null;
 @endphp
 
 @foreach($requests as $req)
 
-@if($lastDate !== null && $lastDate != $req->request_date)
+{{-- HEADER AREA --}}
+@if($lastArea !== $req->area_name)
 
-<tr>
-<td colspan="4" class="h-4 border-0"></td>
+<tr class="bg-gray-200">
+<td colspan="4" class="p-2 font-semibold">
+Area : {{ $req->area_name }}
+</td>
 </tr>
+
+@php
+$lastArea = $req->area_name;
+$lastDate = null;
+@endphp
 
 @endif
 
+
+{{-- HEADER TANGGAL --}}
+@if($lastDate !== $req->request_date)
+
+<tr class="bg-gray-100">
+<td colspan="4" class="p-2 font-semibold">
+Tanggal : {{ $req->request_date }}
+</td>
+</tr>
+
+@php
+$lastDate = $req->request_date;
+@endphp
+
+@endif
+
+
+{{-- DATA PRODUK --}}
 <tr>
 
 <td class="p-2 border">
@@ -148,9 +194,7 @@ onsubmit="return confirm('Hapus request ini?')">
 
 <button
 class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm">
-
 Hapus
-
 </button>
 
 </form>
@@ -160,10 +204,6 @@ Hapus
 </td>
 
 </tr>
-
-@php
-$lastDate = $req->request_date;
-@endphp
 
 @endforeach
 

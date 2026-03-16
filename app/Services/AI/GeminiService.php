@@ -16,7 +16,7 @@ class GeminiService
             'x-goog-api-key' => $apiKey,
             'Content-Type' => 'application/json'
         ])->post(
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=".$apiKey,
             [
                 "contents" => [
                     [

@@ -22,6 +22,10 @@ public function create()
         ->orderBy('name')
         ->get();
 
+    $areas = DB::table('areas')
+    ->orderBy('name')
+    ->get();
+
 
     /*
     =========================
@@ -31,14 +35,16 @@ public function create()
     */
 
     $requests = DB::table('sales_stock_request_items')
-        ->join('sales_stock_requests','sales_stock_requests.id','=','sales_stock_request_items.request_id')
-        ->join('products','products.id','=','sales_stock_request_items.product_id')
+    ->join('sales_stock_requests','sales_stock_requests.id','=','sales_stock_request_items.request_id')
+    ->join('products','products.id','=','sales_stock_request_items.product_id')
+    ->join('areas','areas.id','=','sales_stock_requests.area_id')
         ->select(
-                 'sales_stock_request_items.id',
-                 'sales_stock_requests.request_date',
-                 'products.name as product_name',
-                 'sales_stock_request_items.qty_pack'
-                )
+    'sales_stock_request_items.id',
+    'sales_stock_requests.request_date',
+    'areas.name as area_name',
+    'products.name as product_name',
+    'sales_stock_request_items.qty_pack'
+)
         ->orderBy('sales_stock_requests.request_date','asc')
         ->get();
 
@@ -141,6 +147,7 @@ public function create()
         'stock_requests.create',
         compact(
             'products',
+            'areas',
             'requests',
             'fifo',
             'shortage'
@@ -155,21 +162,23 @@ public function store(Request $request)
 {
 
     $request->validate([
-        'request_date' => 'required|date',
-        'product_id' => 'required|exists:products,id',
-        'qty_pack' => 'required|integer|min:1'
+    'area_id' => 'required|exists:areas,id',
+    'request_date' => 'required|date',
+    'product_id' => 'required|exists:products,id',
+    'qty_pack' => 'required|integer|min:1'
     ]);
 
 
     DB::transaction(function () use ($request) {
 
         $requestId = DB::table('sales_stock_requests')
-            ->insertGetId([
-                'user_id' => auth()->id(),
-                'request_date' => $request->request_date,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+        ->insertGetId([
+        'user_id' => auth()->id(),
+        'area_id' => $request->area_id,
+        'request_date' => $request->request_date,
+        'created_at' => now(),
+        'updated_at' => now()
+    ]);
 
 
         DB::table('sales_stock_request_items')

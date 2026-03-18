@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Services\RewardService;
+use App\Services\AI\AISalesPerformanceService;
+use App\Services\AI\AIInsightService;
 
 class SalesFeeController extends Controller
 {
@@ -388,6 +390,65 @@ as fees
 
 })->values();
 
+$performance = AISalesPerformanceService::getPerformanceSummary(    
+    1, // paksa ambil data Heri adi
+    $month,
+    $year
+
+);
+
+$insights = AISalesPerformanceService::generateInsights($performance);
+// ==============================
+// PRIORITY STORE BERDASARKAN KUNJUNGAN + POTENSI
+// ==============================
+
+$storesData = \DB::table('stores as s')
+    ->leftJoin('sales_transactions as st','st.store_id','=','s.id')
+    ->select(
+        's.id',
+        's.name',
+        's.last_visit_date',
+        \DB::raw('COALESCE(SUM(st.total_fee),0) as total_fee')
+    )
+    ->where('s.is_active',1)
+    ->groupBy('s.id','s.name','s.last_visit_date')
+    ->get();
+
+$priorityHigh = [];
+$priorityMedium = [];
+
+foreach ($storesData as $store) {
+
+    // hitung hari sejak kunjungan terakhir
+    if ($store->last_visit_date) {
+        $days = \Carbon\Carbon::parse($store->last_visit_date)->diffInDays(now());
+    } else {
+        $days = 999; // belum pernah dikunjungi
+    }
+
+    // hanya ambil toko overdue (>= 27 hari)
+    if ($days >= 27 && $days <= 60) {
+
+        // klasifikasi potensi
+        if ($store->total_fee >= 300000) {
+            $priorityHigh[] = $store->name;
+        } else {
+            $priorityMedium[] = $store->name;
+        }
+
+    }
+}
+
+// batasi jumlah
+$priorityHigh = array_slice($priorityHigh,0,5);
+$priorityMedium = array_slice($priorityMedium,0,5);
+
+// kirim ke AI
+$performance['priority_high'] = $priorityHigh;
+$performance['priority_medium'] = $priorityMedium;
+
+$aiSalesInsight = AIInsightService::generateSalesInsight($performance);
+
         return view('sales-fees.index', [
     'sales' => $finalData,
     'monthlySettlements' => $monthlySettlements,
@@ -400,6 +461,9 @@ as fees
     'rewardLocked' => $rewardLocked,
     'missionRewards' => $missionRewards,
     'totalRewards' => $totalRewards,
+    'performance' => $performance,
+    'insights' => $insights,
+    'aiSalesInsight' => $aiSalesInsight,
     ]);
     }
 

@@ -17,13 +17,11 @@
         <style>
             @media print {
 
-                /* Hide navigation & header */
                 nav,
                 header {
                     display: none !important;
                 }
 
-                /* Custom print helpers */
                 .no-print {
                     display: none !important;
                 }
@@ -32,7 +30,6 @@
                     display: block !important;
                 }
 
-                /* Force white background */
                 body {
                     background: #ffffff !important;
                 }
@@ -42,9 +39,37 @@
                 }
             }
 
-            /* Default behavior (screen) */
             .print-only {
                 display: none;
+            }
+
+            /* LOADER */
+            #pageLoader {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(255,255,255,0.85);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+                visibility: hidden;
+            }
+
+            .spinner {
+                border: 6px solid #eee;
+                border-top: 6px solid #dc2626;
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                animation: spin 0.8s linear infinite;
+            }
+
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
             }
         </style>
     </head>
@@ -54,16 +79,50 @@
 
             @isset($header)
                 <header class="bg-yellow-200 shadow">
-    <div class="w-full py-2 px-4 sm:px-6 lg:px-8">
-        {{ $header }}
-    </div>
-</header>
+                    <div class="w-full py-2 px-4 sm:px-6 lg:px-8">
+                        {{ $header }}
+                    </div>
+                </header>
             @endisset
 
             <main>
                 {{ $slot }}
             </main>
         </div>
+
+        <!-- LOADING OVERLAY -->
+        <div id="pageLoader">
+            <div style="text-align:center;">
+                <div class="spinner"></div>
+                <p style="margin-top:10px; font-weight:500;">
+                    AI lagi mikir keras… ngopi dulu ☕
+                </p>
+            </div>
+        </div>
+
+        <script>
+            // show saat pindah halaman
+            window.addEventListener("beforeunload", function () {
+                document.getElementById("pageLoader").style.visibility = "visible";
+            });
+
+            // hide saat selesai load
+            window.addEventListener("load", function () {
+                document.getElementById("pageLoader").style.visibility = "hidden";
+            });
+
+            // khusus klik menu fee sales (biar langsung muncul)
+            document.addEventListener("DOMContentLoaded", function () {
+                let feeMenu = document.querySelector('a[href*="sales-fees"]');
+
+                if (feeMenu) {
+                    feeMenu.addEventListener("click", function () {
+                        document.getElementById("pageLoader").style.visibility = "visible";
+                    });
+                }
+            });
+        </script>
+
         <script>
          if ('serviceWorker' in navigator) {
               navigator.serviceWorker.register('/service-worker.js')

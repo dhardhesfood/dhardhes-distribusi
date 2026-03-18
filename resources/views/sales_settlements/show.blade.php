@@ -375,7 +375,7 @@ Locked
             <tbody class="divide-y">
                 <tr>
                     <td class="p-2 font-medium">Penjualan Tunai (Visit/Kunjungan)</td>
-                    <td class="p-2 text-right">Rp {{ number_format($cashVisitGross,0,',','.') }}</td>
+                    <td class="p-2 text-right">Rp {{ number_format($totalPenjualanVisit,0,',','.') }}</td>
                 </tr>
                 <tr>
                     <td class="p-2 font-medium">Penjualan Tunai Langsung</td>

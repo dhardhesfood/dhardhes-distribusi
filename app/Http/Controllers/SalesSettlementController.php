@@ -106,6 +106,9 @@ class SalesSettlementController extends Controller
         $cashSales = SalesTransaction::whereIn('visit_id', $visitIds)
             ->sum('cash_paid');
 
+        $totalPenjualanVisit = SalesTransaction::whereIn('visit_id', $visitIds)
+            ->sum('total_amount');    
+
         $consignmentSales = DB::table('sales_transactions as st')
             ->join('visits as v', 'st.visit_id', '=', 'v.id')
             ->whereIn('st.visit_id', $visitIds)
@@ -222,7 +225,8 @@ class SalesSettlementController extends Controller
             'storeDetails',
             'productDetails',
             'cashSaleProductDetails',
-            'costDetails'
+            'costDetails',
+            'totalPenjualanVisit'
         ));
     }
 

@@ -173,6 +173,206 @@ Status Reward Area
 Kondisi toko mempengaruhi kelayakan reward sales.
 </div>
 
+<div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
+
+<h3 class="text-sm font-semibold mb-3 text-gray-700">
+📊 Performa Sales (Realtime)
+</h3>
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+
+<div>
+<b>Total Fee</b><br>
+Rp {{ number_format($performance['total_fee'],0,',','.') }}
+</div>
+
+<div>
+<b>Rata-rata / hari</b><br>
+Rp {{ number_format($performance['avg_per_day'],0,',','.') }}
+</div>
+
+<div>
+<b>Estimasi akhir bulan</b><br>
+Rp {{ number_format($performance['estimated_final'],0,',','.') }}
+</div>
+
+<div>
+<b>Status Target</b><br>
+{{ $performance['status'] }}
+</div>
+
+<div>
+<b>Sisa Target</b><br>
+Rp {{ number_format($performance['gap'],0,',','.') }}
+</div>
+
+<div>
+<b>Sisa Hari</b><br>
+{{ $performance['remaining_days'] }} hari
+</div>
+
+<div>
+<b>Kebutuhan Fee</b><br>
+Rp {{ number_format($performance['need_fee'],0,',','.') }}
+</div>
+
+<div>
+<b>Estimasi Qty</b><br>
+{{ number_format($performance['need_qty'],0,',','.') }} pcs
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
+
+<h3 class="text-sm font-semibold mb-3 text-gray-700">
+🤖 AI Insight (Analisa Sistem)
+</h3>
+
+<div class="space-y-3">
+
+
+@if(!empty($aiSalesInsight))
+<div class="bg-gradient-to-r from-indigo-50 to-blue-50 border border-blue-200 shadow rounded-lg p-5 mb-6">
+
+<h3 class="text-sm font-bold mb-3 text-indigo-700 flex items-center gap-2">
+🤖 AI Insight (Real Analysis)
+</h3>
+
+@php
+$parts = explode('QUOTES HARI INI:', $aiSalesInsight);
+$mainContent = $parts[0] ?? '';
+$quotesContent = $parts[1] ?? '';
+@endphp
+
+@php
+$content = e($mainContent);
+
+// bersihkan markdown **
+$content = preg_replace('/\*\*/', '', $content);
+
+// pecah per section
+$sections = [
+    'ANALISA:' => 'bg-gray-50 border-gray-300 text-gray-800',
+    'STRATEGI:' => 'bg-green-50 border-green-300 text-green-800',
+    'PRIORITAS UTAMA:' => 'bg-red-50 border-red-300 text-red-800',
+    'PRIORITAS TAMBAHAN:' => 'bg-yellow-50 border-yellow-300 text-yellow-800',
+];
+
+$formattedSections = [];
+
+foreach ($sections as $title => $style) {
+    if (strpos($content, $title) !== false) {
+
+        $parts = explode($title, $content, 2);
+        $content = $parts[1];
+
+        // ambil sampai section berikutnya
+        $nextPos = null;
+        foreach (array_keys($sections) as $nextTitle) {
+            if ($nextTitle !== $title && strpos($content, $nextTitle) !== false) {
+                $nextPos = strpos($content, $nextTitle);
+                break;
+            }
+        }
+
+        if ($nextPos !== null) {
+            $sectionText = substr($content, 0, $nextPos);
+            $content = substr($content, $nextPos);
+        } else {
+            $sectionText = $content;
+            $content = '';
+        }
+
+        $formattedSections[] = [
+            'title' => $title,
+            'text' => trim($sectionText),
+            'style' => $style
+        ];
+    }
+}
+@endphp
+
+@foreach($formattedSections as $sec)
+<div class="p-4 rounded-lg border-l-4 mb-4 {{ $sec['style'] }} shadow-sm">
+
+    <div class="font-bold text-sm mb-2 uppercase tracking-wide">
+        {{ str_replace(':','',$sec['title']) }}
+    </div>
+
+@php
+// bersihkan **
+$text = preg_replace('/\*\*/', '', $sec['text']);
+
+// bold otomatis bagian sebelum tanda →
+$text = preg_replace('/^-\s*(.*?)\s*→/m', '- <strong>$1</strong> →', $text);
+@endphp
+
+<div class="text-sm leading-relaxed space-y-1">
+    {!! nl2br($text) !!}
+</div>
+
+</div>
+@endforeach
+
+@if(!empty(trim($quotesContent)))
+
+<div class="mt-10">
+
+    <div class="p-6 rounded-xl border-l-8 border-yellow-400 shadow-2xl 
+    bg-yellow-50 relative">
+
+        <!-- label -->
+        <div class="text-xs font-bold text-yellow-600 mb-3 uppercase tracking-widest flex items-center gap-2">
+            🔥 Quotes Hari Ini
+        </div>
+
+        <!-- isi quotes -->
+        <div class="text-lg md:text-xl font-semibold text-gray-900 italic leading-relaxed">
+            @php
+            $cleanQuotes = preg_replace('/\*\*/', '', $quotesContent);
+            @endphp
+
+            {!! nl2br(e(trim($cleanQuotes))) !!}
+        </div>
+
+    </div>
+
+</div>
+
+@endif
+
+</div>
+@endif
+
+@foreach($insights as $item)
+
+<div class="p-3 rounded border
+@if($item['type']=='success') bg-green-50 border-green-200 text-green-800
+@elseif($item['type']=='warning') bg-yellow-50 border-yellow-200 text-yellow-800
+@elseif($item['type']=='danger') bg-red-50 border-red-200 text-red-800
+@else bg-blue-50 border-blue-200 text-blue-800
+@endif
+">
+
+<div class="font-semibold text-sm">
+{{ $item['title'] }}
+</div>
+
+<div class="text-xs mt-1">
+{{ $item['desc'] }}
+</div>
+
+</div>
+
+@endforeach
+
 </div>
 
 </div>

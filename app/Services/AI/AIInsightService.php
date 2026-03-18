@@ -30,6 +30,7 @@ class AIInsightService
         // toko aktif
         $stores = DB::table('stores')
             ->where('is_active',1)
+            ->whereNull('deleted_at')
             ->count();
 
         // visit minggu ini
@@ -58,44 +59,187 @@ class AIInsightService
             ->limit(1)
             ->first();
             
-            // toko terlambat
-$lateStores = DB::table('stores')
-    ->whereRaw("DATEDIFF(CURDATE(), last_visit_date) > visit_interval_days")
-    ->count();
+        // ambil semua toko aktif
+       $storesData = \App\Models\Store::where('is_active',1)
+            ->whereNull('deleted_at')
+            ->get();
 
-// toko terlambat berat
-$heavyLateStores = DB::table('stores')
-    ->whereRaw("DATEDIFF(CURDATE(), last_visit_date) > visit_interval_days * 2")
-    ->count();
+       // hitung status berdasarkan engine Store model
+       $lateStores = $storesData->where('visit_status','late')->count();
 
-// toko pertimbangkan ditarik
-$withdrawStores = DB::table('stores')
-    ->whereRaw("DATEDIFF(CURDATE(), last_visit_date) > visit_interval_days * 3")
-    ->count();
+       $heavyLateStores = $storesData->where('visit_status','heavy')->count();
 
-        // sales terbaik
-        $topSales = DB::table('sales_transactions')
-            ->join('users','users.id','=','sales_transactions.user_id')
-            ->select('users.name', DB::raw('SUM(total_amount) as omzet'))
-            ->groupBy('users.name')
-            ->orderByDesc('omzet')
-            ->limit(1)
-            ->first();
+       $withdrawStores = $storesData->where('visit_status','withdraw')->count();
+
+        // sales aktif (sistem saat ini hanya 1 sales)
+       $topSales = DB::table('users')
+                   ->where('role','sales')
+                   ->select('name')
+                   ->first();
+
+// ==============================
+// TOTAL PRODUK & NILAI STOK TOKO
+// (LOGIKA SAMA DENGAN HALAMAN STORES)
+// ==============================
+
+$totalStoreProducts = 0;
+$totalStoreValue = 0;
+
+$storesList = \App\Models\Store::where('is_active',1)->get();
+
+foreach ($storesList as $store) {
+
+    $stockData = DB::table('store_stock_movements as ssm')
+        ->join('products as p','p.id','=','ssm.product_id')
+        ->select(
+            'ssm.product_id',
+            'p.name',
+            DB::raw("SUM(ssm.quantity) as total_qty")
+        )
+        ->where('ssm.store_id',$store->id)
+        ->groupBy('ssm.product_id','p.name')
+        ->having('total_qty','>',0)
+        ->get();
+
+    foreach ($stockData as $row) {
+
+        $storePrice = DB::table('store_prices')
+            ->where('store_id',$store->id)
+            ->where('product_id',$row->product_id)
+            ->value('price');
+
+        $qty = (int)$row->total_qty;
+        $price = (float)($storePrice ?? 0);
+
+        $totalStoreProducts += $qty;
+        $totalStoreValue += $qty * $price;
+    }
+}
+
+// ==============================
+// AMBIL STOK SEMUA TOKO (SAMA SEPERTI HALAMAN STORES)
+// ==============================
+
+$storesStockData = [];
+
+$storesList = \App\Models\Store::where('is_active',1)->get();
+
+foreach ($storesList as $store) {
+
+    $stockData = DB::table('store_stock_movements as ssm')
+        ->join('products as p', 'p.id', '=', 'ssm.product_id')
+        ->select(
+            'ssm.product_id',
+            'p.name as product_name',
+            'p.default_fee_nominal',
+            DB::raw("SUM(ssm.quantity) as total_qty")
+        )
+        ->where('ssm.store_id', $store->id)
+        ->groupBy('ssm.product_id','p.name','p.default_fee_nominal')
+        ->having('total_qty','>',0)
+        ->get();
+
+    $products = [];
+
+    foreach ($stockData as $row) {
+
+        $storePrice = DB::table('store_prices')
+            ->where('store_id',$store->id)
+            ->where('product_id',$row->product_id)
+            ->value('price');
+
+        $qty = (int)$row->total_qty;
+        $price = (float)($storePrice ?? 0);
+
+        $products[] = [
+            'product' => $row->product_name,
+            'qty' => $qty,
+            'price' => $price,
+            'subtotal' => $qty * $price
+        ];
+    }
+
+    $storesStockData[] = [
+        'store_name' => $store->name,
+        'products' => $products
+    ];
+} 
+
+// ==============================
+// HISTORY KUNJUNGAN TOKO
+// ==============================
+
+$visitHistory = DB::table('visits')
+    ->join('stores','stores.id','=','visits.store_id')
+    ->select(
+        'stores.name as store_name',
+        'visits.visit_date',
+        'visits.status'
+    )
+    ->orderByDesc('visits.visit_date')
+    ->limit(500)
+    ->get();
+
+
+// ==============================
+// HISTORY PENJUALAN TOKO
+// ==============================
+
+$salesHistory = DB::table('sales_transactions as st')
+    ->join('stores as s','s.id','=','st.store_id')
+    ->select(
+        's.name as store_name',
+        'st.transaction_date',
+        'st.total_amount',
+        'st.cash_paid',
+        'st.total_fee'
+    )
+    ->orderByDesc('st.transaction_date')
+    ->limit(500)
+    ->get();
+
+
+// ==============================
+// DETAIL PRODUK TERJUAL
+// ==============================
+
+$productSales = DB::table('sales_transaction_items as sti')
+    ->join('products as p','p.id','=','sti.product_id')
+    ->join('sales_transactions as st','st.id','=','sti.sales_transaction_id')
+    ->join('stores as s','s.id','=','st.store_id')
+    ->select(
+        's.name as store_name',
+        'p.name as product_name',
+        'sti.quantity_sold',
+        'sti.price_snapshot',
+        'sti.subtotal_amount',
+        'st.transaction_date'
+    )
+    ->orderByDesc('st.transaction_date')
+    ->limit(1000)
+    ->get();
 
         return [
 
-    'monthly_omzet'=>$monthlyOmzet,
-    'active_stores'=>$stores,
-    'visits_week'=>$visitsWeek,
-    'top_product'=>$topProduct->name ?? null,
-    'slow_product'=>$slowProduct->name ?? null,
-    'top_sales'=>$topSales->name ?? null,
+        'monthly_omzet'=>$monthlyOmzet,
+        'active_stores'=>$stores,
+        'visits_week'=>$visitsWeek,
+        'top_product'=>$topProduct->name ?? null,
+        'slow_product'=>$slowProduct->name ?? null,
+        'top_sales'=>$topSales->name ?? null,
 
-    'late_stores'=>$lateStores,
-    'heavy_late_stores'=>$heavyLateStores,
-    'withdraw_stores'=>$withdrawStores
+        'late_stores'=>$lateStores,
+        'heavy_late_stores'=>$heavyLateStores,
+        'store_products_total' => $totalStoreProducts,
+        'store_stock_value' => $totalStoreValue,
+        'stores_stock_detail' => $storesStockData,
+        'visit_history' => $visitHistory,
+        'sales_history' => $salesHistory,
+        'product_sales' => $productSales,
+        'withdraw_stores'=>$withdrawStores
+        
 
-];
+        ];
 
     }
 
@@ -132,13 +276,27 @@ Status kunjungan toko:
 - Terlambat berat: {$data['heavy_late_stores']} toko
 - Pertimbangkan ditarik: {$data['withdraw_stores']} toko
 
+Data stok konsinyasi per toko: ".json_encode($data['stores_stock_detail'])."
+
+Total produk di semua toko: {$data['store_products_total']} pcs
+Total nilai stok konsinyasi di toko: {$data['store_stock_value']} rupiah
+
+Data kunjungan terbaru:
+".json_encode($data['visit_history'])."
+
+Ringkasan transaksi terbaru:
+".json_encode($data['sales_history'])."
+
+Produk yang terjual terbaru:
+".json_encode($data['product_sales'])."
+
 Tugas kamu:
 
 1. Analisa kondisi distribusi berdasarkan data ini.
 2. Berikan saran peningkatan penjualan.
 3. Berikan saran peningkatan kunjungan sales.
 4. Gunakan bahasa singkat, jelas, dan rapi.
-5. Maksimal 6 poin saja.
+5. Maksimal 6 poin saja. dibolehkan menyebut nama toko
 
 Format jawaban:
 
@@ -149,10 +307,135 @@ ANALISA BISNIS
 SARAN PERBAIKAN
 - poin
 - poin
+
+Saran RND
+- Berikan saran produk yang lagi trend dengan singkat, produk yang relevan
+  
 ";
 
     return GeminiService::ask($prompt);
 
+}
+
+public static function generateSalesInsight(array $data)
+{
+    $prompt = "
+
+Kamu adalah analis performa sales distribusi snack.
+
+PENTING:
+- Jangan menyalahkan data
+- Gunakan data apa adanya
+- Fokus analisa & aksi
+
+Data:
+Total Fee: {$data['total_fee']}
+Rata-rata / hari: {$data['avg_per_day']}
+Target: {$data['target']}
+Sisa hari: {$data['remaining_days']}
+Kekurangan: {$data['gap']}
+Kebutuhan fee: {$data['need_fee']}
+Estimasi qty: {$data['need_qty']}
+Toko dengan kontribusi tinggi:
+".implode(', ', $data['top_stores'] ?? [])."
+Toko prioritas utama (potensi tinggi):
+".implode(', ', $data['priority_high'] ?? [])."
+Toko prioritas standar:
+".implode(', ', $data['priority_medium'] ?? [])."
+
+Tugas:
+
+1. Analisa kondisi performa (singkat)
+2. Tentukan apakah target realistis
+3. Berikan strategi teknis (aksi nyata di lapangan, bukan motivasi)
+4. Fokus ke tindakan praktis: stok, repeat order, produk, display
+
+5. PRIORITAS BESOK:
+- WAJIB sebutkan nama toko (jika ada data toko)
+- Fokus ke toko dengan potensi penjualan tinggi
+- Hindari kalimat motivasi seperti kejar target, harus capai target
+- Gunakan gaya instruksi operasional (seperti arahan lapangan)
+- Gunakan toko prioritas utama sebagai fokus utama
+- Gunakan toko prioritas standar sebagai tambahan kunjungan
+- Jangan gunakan toko di luar daftar
+- Setiap toko harus disertai tindakan spesifik
+
+FORMAT WAJIB:
+
+Gunakan ENTER setiap baris.
+
+ANALISA:
+- ...
+- ...
+
+STRATEGI:
+- ...
+- ...
+
+FORMAT PRIORITAS BESOK:
+
+- Sampaikan bahwa toko yang disebut adalah toko yang sudah mendekati jadwal kunjungan
+
+PRIORITAS UTAMA:
+- Nama toko → aksi spesifik
+
+PRIORITAS TAMBAHAN:
+- Nama toko → aksi ringan / maintenance
+
+QUOTES HARI INI:
+- Berikan 1 quotes singkat untuk memotivasi sales lapangan
+- Jika quotes menggunakan bahasa Inggris, WAJIB sertakan versi terjemahan bahasa Indonesia
+- Terjemahan TIDAK BOLEH literal kata-per-kata
+- Terjemahan harus dirangkai ulang menjadi kalimat yang natural, enak dibaca, dan terasa kuat secara makna
+- Gunakan gaya bahasa yang sederhana tapi “kena” (bukan kaku atau terlalu formal)
+- Utamakan makna dibanding terjemahan harfiah
+- WAJIB berasal dari tokoh terkenal (pengusaha, pemimpin, atau tokoh sukses dunia)
+- WAJIB sertakan nama tokoh di bawah quotes
+
+Format WAJIB:
+
+QUOTES HARI INI:
+Isi quotes
+— Nama Tokoh
+
+(Artinya: versi Indonesia yang natural, tidak kaku)
+
+Contoh:
+
+QUOTES HARI INI:
+Your most unhappy customers are your greatest source of learning.
+— Bill Gates
+
+(Artinya: Pelanggan yang paling tidak puas justru adalah sumber pembelajaran terbaik untuk berkembang.)
+
+Aturan tambahan:
+- Jangan buat quotes sendiri
+- Jangan gunakan tokoh yang tidak jelas
+- Gunakan tokoh terkenal seperti:
+  - Bill Gates
+  - Elon Musk
+  - Steve Jobs
+  - Jack Ma
+  - Warren Buffett
+  
+- Pastikan relevan dengan kerja, konsistensi, dan eksekusi lapangan sales
+- Quotes harus relevan dengan kerja sales lapangan: konsistensi, kunjungan, eksekusi
+- Hindari quotes yang terlalu umum atau tidak nyambung dengan kondisi
+
+JANGAN buat paragraf panjang.
+WAJIB pakai bullet dan baris baru.
+
+GAYA BAHASA:
+- Hindari kata yang terkesan memaksa atau menekan sales
+- Jangan gunakan kata seperti harus capai - target kejar target
+- Gunakan bahasa operasional seperti:
+  - cek stok
+  - dorong repeat order
+  - tambahkan SKU
+  - perbaiki displays
+";
+
+    return GeminiService::ask($prompt);
 }
 
 }

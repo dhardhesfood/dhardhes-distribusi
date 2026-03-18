@@ -13,38 +13,50 @@
 
 <div class="bg-white p-6 rounded shadow mb-4">
 
-<h3 class="text-lg font-semibold mb-4 text-gray-800">Ringkasan Bisnis</h3>
+<h3 class="text-lg font-semibold mb-4 text-gray-800">
+Ringkasan Bisnis
+</h3>
 
 <div class="grid grid-cols-2 gap-4 text-sm">
 
 <div>
+<b>Total produk di semua toko</b><br>
+{{ number_format($summary['store_products_total'] ?? 0,0,',','.') }} pcs
+</div>
+
+<div>
+<b>Nilai stok konsinyasi di toko</b><br>
+Rp {{ number_format($summary['store_stock_value'] ?? 0,0,',','.') }}
+</div>
+
+<div>
 <b>Omzet bulan ini</b><br>
-Rp {{ number_format($summary['monthly_omzet']) }}
+Rp {{ number_format($summary['monthly_omzet'] ?? 0,0,',','.') }}
 </div>
 
 <div>
 <b>Toko aktif</b><br>
-{{ $summary['active_stores'] }}
+{{ $summary['active_stores'] ?? 0 }}
 </div>
 
 <div>
 <b>Kunjungan minggu ini</b><br>
-{{ $summary['visits_week'] }}
+{{ $summary['visits_week'] ?? 0 }}
 </div>
 
 <div>
 <b>Produk terlaris</b><br>
-{{ $summary['top_product'] }}
+{{ $summary['top_product'] ?? '-' }}
 </div>
 
 <div>
 <b>Sales terbaik</b><br>
-{{ $summary['top_sales'] }}
+{{ $summary['top_sales'] ?? '-' }}
 </div>
 
 <div>
 <b>Produk paling lambat</b><br>
-{{ $summary['slow_product'] }}
+{{ $summary['slow_product'] ?? '-' }}
 </div>
 
 </div>
@@ -55,17 +67,17 @@ Rp {{ number_format($summary['monthly_omzet']) }}
 
 <div class="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
 <b>Terlambat</b><br>
-{{ $summary['late_stores'] }} toko
+{{ $summary['late_stores'] ?? 0 }} toko
 </div>
 
 <div class="bg-orange-50 border border-orange-200 p-3 rounded-lg">
 <b>Terlambat berat</b><br>
-{{ $summary['heavy_late_stores'] }} toko
+{{ $summary['heavy_late_stores'] ?? 0 }} toko
 </div>
 
 <div class="bg-red-50 border border-red-200 p-3 rounded-lg">
 <b>Pertimbangkan ditarik</b><br>
-{{ $summary['withdraw_stores'] }} toko
+{{ $summary['withdraw_stores'] ?? 0 }} toko
 </div>
 
 </div>
@@ -75,10 +87,12 @@ Rp {{ number_format($summary['monthly_omzet']) }}
 
 <div class="bg-white p-6 rounded shadow">
 
-<h3 class="text-lg font-semibold mb-4 text-gray-800">Analisa AI</h3>
+<h3 class="text-lg font-semibold mb-4 text-gray-800">
+Analisa AI
+</h3>
 
 <div class="ai-text">
-{!! nl2br(e(str_replace(['**'], '', $insight))) !!}
+{!! nl2br(e(str_replace(['**'], '', $insight ?? 'Belum ada analisa'))) !!}
 </div>
 
 </div>
@@ -91,7 +105,7 @@ Rp {{ number_format($summary['monthly_omzet']) }}
 <style>
 
 .ai-text{
-font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+font-family:'Inter',system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 line-height:1.7;
 font-size:15px;
 color:#374151;

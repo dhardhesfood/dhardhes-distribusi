@@ -68,7 +68,9 @@ class SalesStockSessionController extends Controller
             return back()->withErrors('Sales masih memiliki session stok yang belum ditutup.');
         }
 
-        DB::transaction(function () use ($request) {
+        try {
+
+            DB::transaction(function () use ($request) {
 
             $session = SalesStockSession::create([
                 'user_id'    => $request->user_id,
@@ -123,7 +125,7 @@ if ($qty > $warehouseStock) {
                     'reference_id'   => $session->id,
                     'reference_type' => 'sales_stock_session',
                     'session_id'     => $session->id,
-                    'notes'          => 'Stok awal session sales'
+                    'notes'          => 'Stok keluar dari gudang (ke sales)'
                 ]);
             }
 
@@ -146,6 +148,13 @@ foreach($users as $user){
 }
 
         });
+
+        } catch (\Exception $e) {
+
+    return back()
+        ->withErrors($e->getMessage())
+        ->withInput();
+}
 
         return redirect()
             ->route('sales-stock-sessions.index')
@@ -342,7 +351,7 @@ foreach($users as $user){
                     'reference_id'   => $session->id,
                     'reference_type' => 'sales_stock_session_close',
                     'session_id'     => $session->id,
-                    'notes'          => 'Barang rusak saat tutup session',
+                    'notes'          => 'Barang rusak (tidak kembali ke gudang)',
                 ]);
             }
 
@@ -356,7 +365,7 @@ foreach($users as $user){
                     'reference_id'   => $session->id,
                     'reference_type' => 'sales_stock_session_close',
                     'session_id'     => $session->id,
-                    'notes'          => 'Reset saldo saat tutup session',
+                    'notes'          => 'Stok kembali ke gudang',
                 ]);
             }
         }

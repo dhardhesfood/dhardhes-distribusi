@@ -163,7 +163,7 @@ class CashSaleController extends Controller
                 StockMovement::create([
                     'product_id' => $data['product']->id,
                     'quantity' => -$data['qty'],
-                    'type' => 'cash_sale',
+                    'type' => 'adjustment',
                     'reference_id' => $cashSale->id,
                     'reference_type' => CashSale::class,
                     'session_id' => $session->id,

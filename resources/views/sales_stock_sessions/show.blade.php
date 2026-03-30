@@ -199,6 +199,10 @@ REOPEN SESSION
                 </thead>
                 <tbody>
                     @foreach($movements as $movement)
+
+                    @if(in_array($movement->type, ['warehouse_in','damage']))
+                    @continue
+                    @endif
                     <tr class="text-center">
                         <td class="border p-2 text-left">
                             {{ $movement->created_at }}
@@ -217,7 +221,11 @@ REOPEN SESSION
 
                         {{ $movement->notes }}
 
-                        @if(isset($movement->visit) && $movement->visit->store)
+                        @if(
+                        isset($movement->visit) &&
+                        $movement->visit->store &&
+                        !in_array($movement->type, ['warehouse_out','warehouse_in','damage'])
+                        )
                        <br>
                        <span class="text-gray-500 text-xs">
                         Toko: {{ $movement->visit->store->name }}
@@ -225,6 +233,7 @@ REOPEN SESSION
                        @endif
 
                       </td>
+
                     </tr>
                     @endforeach
                 </tbody>
@@ -232,6 +241,65 @@ REOPEN SESSION
         </div>
     </div>
     @endif
+
+    @if($session->status !== 'open')
+<div class="mt-8">
+    <h3 class="text-lg font-semibold mb-3">
+        Rekap Tutup Session (Stok Kembali ke Gudang)
+    </h3>
+
+    <div class="bg-white shadow rounded overflow-x-auto">
+        <table class="w-full text-xs sm:text-sm border">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="border p-2 text-left">Produk</th>
+                    <th class="border p-2 text-center">Stok Fisik</th>
+                    <th class="border p-2 text-center">Rusak</th>
+                    <th class="border p-2 text-center">Kembali ke Gudang</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($session->items as $item)
+
+                    @php
+                        $fisik = $item->physical_remaining_qty ?? 0;
+                        $selisih = $item->difference_qty ?? 0;
+
+                        // asumsi: selisih negatif = minus (tidak relevan disini)
+                        $rusak = 0;
+
+                        // kita estimasi rusak dari movement
+                        $damageMovement = $movements
+                            ->where('product_id', $item->product_id)
+                            ->where('type', 'damage')
+                            ->sum('quantity');
+
+                        $rusak = abs($damageMovement);
+
+                        $kembali = $fisik - $rusak;
+                    @endphp
+
+                    <tr class="text-center">
+                        <td class="border p-2 text-left">
+                            {{ $item->product->name }}
+                        </td>
+                        <td class="border p-2">
+                            {{ $fisik }}
+                        </td>
+                        <td class="border p-2 text-red-600">
+                            {{ $rusak }}
+                        </td>
+                        <td class="border p-2 text-green-600 font-semibold">
+                            {{ $kembali > 0 ? $kembali : 0 }}
+                        </td>
+                    </tr>
+
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
 
 </div>
 

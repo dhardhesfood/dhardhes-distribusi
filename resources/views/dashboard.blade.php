@@ -29,7 +29,7 @@
 </div>
 </x-slot>
 
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-yellow-200 rounded-xl">
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-gray-100 rounded-xl">
 
 <a class="group flex items-center justify-between px-5 py-3 rounded-2xl shadow-sm mb-4 transition duration-200 text-white
 @if(isset($backupStatus) && $backupStatus->status === 'success')

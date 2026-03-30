@@ -74,11 +74,11 @@
         </style>
     </head>
     <body class="font-sans antialiased">
-        <div class="min-h-screen bg-yellow-200">
+        <div class="min-h-screen bg-gray-100">
             @include('layouts.navigation')
 
             @isset($header)
-                <header class="bg-yellow-200 shadow">
+                <header class="bg-gray-100 shadow">
                     <div class="w-full py-2 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>

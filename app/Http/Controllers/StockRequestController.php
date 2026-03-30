@@ -45,6 +45,7 @@ public function create()
     'products.name as product_name',
     'sales_stock_request_items.qty_pack'
 )
+        ->whereDate('sales_stock_requests.request_date', '>=', today())
         ->orderBy('sales_stock_requests.request_date','asc')
         ->get();
 

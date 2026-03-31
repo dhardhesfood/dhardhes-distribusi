@@ -44,7 +44,7 @@ class SalesFeeController extends Controller
                 DB::raw("
                      COALESCE(SUM(
                      CASE
-                     WHEN st.transaction_date BETWEEN '{$startDate}' AND '{$endDate}'
+                     WHEN st.transaction_date <= '{$endDate}'
                      THEN st.total_fee
                      ELSE 0
                      END
@@ -56,7 +56,7 @@ class SalesFeeController extends Controller
                     FROM cash_sales cs
                     WHERE cs.user_id = u.id
                     AND cs.status = 'locked'
-                    AND cs.sale_date BETWEEN '{$startDate}' AND '{$endDate}'
+                    AND cs.sale_date <= '{$endDate}'
                     ) as total_tunai"),
 
                 DB::raw('(

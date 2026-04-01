@@ -109,6 +109,33 @@ Tambah Produk Lagi
 
 <div class="bg-white shadow-sm sm:rounded-lg p-6">
 
+@php
+$allFulfilled = collect($fifo)->every(function($row){
+    return $row['status'] === 'Terpenuhi';
+});
+@endphp
+
+@if($allFulfilled && count($fifo) > 0)
+
+<div class="mb-4 p-4 bg-green-50 border border-green-200 rounded text-green-800 text-sm">
+
+    <div class="font-semibold mb-1">
+        📢 Semua request hari ini sudah terpenuhi
+    </div>
+
+    <div>
+        Perhatian: sales WAJIB menginput request stok untuk jadwal berikutnya minimal H-5 (5 hari ke depan).
+    </div>
+
+    <div class="mt-2 text-red-600">
+    ⏱️ <b>Request yang mendadak atau kurang dari H-5</b> berpotensi 
+    <b>TIDAK TERPENUHI</b> karena proses produksi membutuhkan waktu.
+</div>
+
+</div>
+
+@endif
+
 <h3 class="font-semibold mb-4">Daftar Request Sales</h3>
 
 <div class="overflow-x-auto">

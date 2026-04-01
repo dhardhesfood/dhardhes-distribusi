@@ -31,6 +31,31 @@
 
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-gray-100 rounded-xl">
 
+@if(isset($needRequestReminder) && $needRequestReminder)
+
+<div class="mb-4 p-4 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
+
+    <div class="font-semibold mb-1">
+        ⚠️ Reminder Request Stok
+    </div>
+
+    <div>
+        Jadwal request stok ke depan belum mencukupi.
+    </div>
+
+    <div class="mt-1">
+        Segera buka menu <b>Request Stok</b> dan input minimal 
+        <b>5 hari ke depan</b>.
+    </div>
+
+    <div class="mt-2 text-red-600">
+        <b>Request yang kurang dari H-5 berisiko TIDAK TERPENUHI</b> karena proses produksi membutuhkan waktu.
+    </div>
+
+</div>
+
+@endif
+
 <a class="group flex items-center justify-between px-5 py-3 rounded-2xl shadow-sm mb-4 transition duration-200 text-white
 @if(isset($backupStatus) && $backupStatus->status === 'success')
 bg-green-600 hover:bg-green-700

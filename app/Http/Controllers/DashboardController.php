@@ -143,8 +143,18 @@ if(auth()->user()->role === 'admin'){
         ->whereDate('m.start_date','<=',now())
         ->whereDate('m.end_date','>=',now())
         ->get();
-
+ 
 }          
+
+// ================= REMINDER REQUEST STOK =================
+
+$futureRequestDays = DB::table('sales_stock_requests')
+    ->whereDate('request_date','>=', today())
+    ->distinct()
+    ->count('request_date');
+
+$needRequestReminder = $futureRequestDays < 5;
+
 
         return view('dashboard', compact(
             'totalSettlementToday',
@@ -163,6 +173,8 @@ if(auth()->user()->role === 'admin'){
             'heavyRate',
             'withdrawRate',
             'backupStatus',
+            'needRequestReminder',
+            'futureRequestDays',
             'missions'
 
         ));

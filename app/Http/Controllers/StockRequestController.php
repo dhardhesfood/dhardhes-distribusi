@@ -58,22 +58,23 @@ public function create()
     */
 
     $raw = DB::table('sales_stock_requests')
-        ->join('sales_stock_request_items','sales_stock_requests.id','=','sales_stock_request_items.request_id')
-        ->join('products','products.id','=','sales_stock_request_items.product_id')
-        ->select(
-            'sales_stock_requests.request_date',
-            'products.id as product_id',
-            'products.name as product_name',
-            DB::raw('SUM(sales_stock_request_items.qty_pack) as qty')
-        )
-        ->groupBy(
-            'sales_stock_requests.request_date',
-            'products.id',
-            'products.name'
-        )
-        ->orderBy('products.id','asc')
-        ->orderBy('sales_stock_requests.request_date','asc')
-        ->get();
+    ->join('sales_stock_request_items','sales_stock_requests.id','=','sales_stock_request_items.request_id')
+    ->join('products','products.id','=','sales_stock_request_items.product_id')
+    ->select(
+        'sales_stock_requests.request_date',
+        'products.id as product_id',
+        'products.name as product_name',
+        DB::raw('SUM(sales_stock_request_items.qty_pack) as qty')
+    )
+    ->whereDate('sales_stock_requests.request_date', '>=', today()) // 🔥 INI KUNCI
+    ->groupBy(
+        'sales_stock_requests.request_date',
+        'products.id',
+        'products.name'
+    )
+    ->orderBy('products.id','asc')
+    ->orderBy('sales_stock_requests.request_date','asc')
+    ->get();
 
 
 

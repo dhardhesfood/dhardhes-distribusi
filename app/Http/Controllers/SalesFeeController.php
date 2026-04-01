@@ -194,13 +194,29 @@ if ($withdrawRate > 5 || $heavyRate > 10) {
             $rewardPaid     = (float)$row->total_reward_paid;
             $rewardPercent = 0;
 
-if ($totalGenerated >= 5000000) {
+            // =========================
+// KPI KHUSUS BULAN INI (BARU)
+// =========================
+$konsinyasiMonthly = DB::table('sales_transactions')
+    ->where('user_id',$row->id)
+    ->whereBetween('transaction_date',[$startDate,$endDate])
+    ->sum('total_fee');
+
+$tunaiMonthly = DB::table('cash_sales')
+    ->where('user_id',$row->id)
+    ->where('status','locked')
+    ->whereBetween('sale_date',[$startDate,$endDate])
+    ->sum('fee_total');
+
+$totalGeneratedMonthly = $konsinyasiMonthly + $tunaiMonthly;
+
+if ($totalGeneratedMonthly >= 5000000) {
     $rewardPercent = 12;
-} elseif ($totalGenerated >= 3000000) {
+} elseif ($totalGeneratedMonthly >= 3000000) {
     $rewardPercent = 10;
-} elseif ($totalGenerated >= 1500000) {
+} elseif ($totalGeneratedMonthly >= 1500000) {
     $rewardPercent = 7;
-} elseif ($totalGenerated >= 500000) {
+} elseif ($totalGeneratedMonthly >= 500000) {
     $rewardPercent = 5;
 }
 
@@ -224,7 +240,7 @@ if ($lateRate > 20) {
 
 $rewardAmount = $rewardStatus === 'gugur'
     ? 0
-    : ($totalGenerated * $rewardPercent / 100);
+    : ($totalGeneratedMonthly * $rewardPercent / 100);
 
 /*
 |--------------------------------------------------------------------------
@@ -525,47 +541,119 @@ public function lockReward(Request $request)
 
     foreach ($sales as $s) {
 
-        $konsinyasi = DB::table('sales_transactions')
-            ->where('user_id',$s->id)
-            ->whereBetween('transaction_date',[$startDate,$endDate])
-            ->sum('total_fee');
+    // =========================
+    // HITUNG FEE BULANAN
+    // =========================
+    $konsinyasi = DB::table('sales_transactions')
+        ->where('user_id',$s->id)
+        ->whereBetween('transaction_date',[$startDate,$endDate])
+        ->sum('total_fee');
 
-        $tunai = DB::table('cash_sales')
-            ->where('user_id',$s->id)
-            ->where('status','locked')
-            ->whereBetween('sale_date',[$startDate,$endDate])
-            ->sum('fee_total');
+    $tunai = DB::table('cash_sales')
+        ->where('user_id',$s->id)
+        ->where('status','locked')
+        ->whereBetween('sale_date',[$startDate,$endDate])
+        ->sum('fee_total');
 
-        $totalGenerated = $konsinyasi + $tunai;
+    $totalGenerated = $konsinyasi + $tunai;
 
-        $rewardPercent = 0;
+    // =========================
+    // HITUNG PERSEN KPI
+    // =========================
+    $rewardPercent = 0;
 
-        if ($totalGenerated >= 5000000) {
-            $rewardPercent = 12;
-        } elseif ($totalGenerated >= 3000000) {
-            $rewardPercent = 10;
-        } elseif ($totalGenerated >= 1500000) {
-            $rewardPercent = 7;
-        } elseif ($totalGenerated >= 500000) {
-            $rewardPercent = 5;
-        }
-
-        $rewardAmount = $totalGenerated * $rewardPercent / 100;
-
-        DB::table('sales_reward_months')->updateOrInsert(
-            [
-                'user_id' => $s->id,
-                'month'   => $month,
-                'year'    => $year
-            ],
-            [
-                'reward_amount' => $rewardAmount,
-                'locked_at'     => now(),
-                'updated_at'    => now(),
-                'created_at'    => now()
-            ]
-        );
+    if ($totalGenerated >= 5000000) {
+        $rewardPercent = 12;
+    } elseif ($totalGenerated >= 3000000) {
+        $rewardPercent = 10;
+    } elseif ($totalGenerated >= 1500000) {
+        $rewardPercent = 7;
+    } elseif ($totalGenerated >= 500000) {
+        $rewardPercent = 5;
     }
+
+    // =========================
+    // HITUNG KONDISI TOKO (SAMA PERSIS UI)
+    // =========================
+    $storeStats = DB::table('stores')
+        ->select(
+            DB::raw('COUNT(*) as total_stores'),
+
+            DB::raw("
+                SUM(
+                    CASE
+                    WHEN DATEDIFF(CURDATE(), DATE_ADD(last_visit_date, INTERVAL visit_interval_days DAY)) > 135
+                    THEN 1 ELSE 0 END
+                ) as withdraw_count
+            "),
+
+            DB::raw("
+                SUM(
+                    CASE
+                    WHEN DATEDIFF(CURDATE(), DATE_ADD(last_visit_date, INTERVAL visit_interval_days DAY)) > 100
+                    AND DATEDIFF(CURDATE(), DATE_ADD(last_visit_date, INTERVAL visit_interval_days DAY)) <= 135
+                    THEN 1 ELSE 0 END
+                ) as heavy_count
+            "),
+
+            DB::raw("
+                SUM(
+                    CASE
+                    WHEN DATEDIFF(CURDATE(), DATE_ADD(last_visit_date, INTERVAL visit_interval_days DAY)) > 0
+                    AND DATEDIFF(CURDATE(), DATE_ADD(last_visit_date, INTERVAL visit_interval_days DAY)) <= 100
+                    THEN 1 ELSE 0 END
+                ) as late_count
+            ")
+        )
+        ->first();
+
+    $totalStores = $storeStats->total_stores ?: 1;
+
+    $withdrawRate = ($storeStats->withdraw_count / $totalStores) * 100;
+    $heavyRate = ($storeStats->heavy_count / $totalStores) * 100;
+    $lateRate = ($storeStats->late_count / $totalStores) * 100;
+
+    // =========================
+    // APPLY RULE REWARD (SAMA UI)
+    // =========================
+    $rewardStatus = 'valid';
+
+    if ($withdrawRate > 5) {
+        $rewardStatus = 'gugur';
+    }
+
+    if ($heavyRate > 10) {
+        $rewardStatus = 'gugur';
+    }
+
+    if ($lateRate > 20) {
+        $rewardPercent *= 0.7;
+    }
+
+    // =========================
+    // HITUNG FINAL REWARD
+    // =========================
+    $rewardAmount = $rewardStatus === 'gugur'
+        ? 0
+        : ($totalGeneratedMonthly * $rewardPercent / 100);
+
+    // =========================
+    // SIMPAN KE DB
+    // =========================
+    DB::table('sales_reward_months')->updateOrInsert(
+        [
+            'user_id' => $s->id,
+            'month'   => $month,
+            'year'    => $year
+        ],
+        [
+            'reward_amount' => $rewardAmount,
+            'locked_at'     => now(),
+            'updated_at'    => now(),
+            'created_at'    => now()
+        ]
+    );
+}
 
     return redirect()
         ->route('sales-fees.index')

@@ -33,7 +33,8 @@
 
 @if(isset($needRequestReminder) && $needRequestReminder)
 
-<div class="mb-4 p-4 bg-red-200 border border-red-300 rounded text-red-900 text-sm animate-combo-alert">
+<a href="{{ route('stock.requests.create') }}" class="block">
+<div class="mb-4 p-4 bg-red-200 border border-red-300 rounded text-red-900 text-sm animate-combo-alert hover:shadow-lg transition cursor-pointer">
 
     <div class="font-semibold mb-1">
         ⚠️ Reminder Request Stok
@@ -53,6 +54,7 @@
     </div>
 
 </div>
+</a>
 
 @endif
 

@@ -33,7 +33,7 @@
 
 @if(isset($needRequestReminder) && $needRequestReminder)
 
-<div class="mb-4 p-4 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
+<div class="mb-4 p-4 bg-red-200 border border-red-300 rounded text-red-900 text-sm animate-combo-alert">
 
     <div class="font-semibold mb-1">
         ⚠️ Reminder Request Stok
@@ -670,6 +670,64 @@ transform:translateX(1200px) translateY(40px) rotate(15deg);
 opacity:0;
 }
 
+}
+
+/* ===== PULSE ALERT ===== */
+@keyframes comboAlert {
+    0% {
+        transform: translateX(0) scale(1);
+        box-shadow: 0 0 0 rgba(239,68,68,0.6);
+    }
+
+    10% {
+        transform: translateX(-6px);
+    }
+
+    20% {
+        transform: translateX(6px);
+    }
+
+    30% {
+        transform: translateX(-4px);
+    }
+
+    40% {
+        transform: translateX(4px);
+    }
+
+    50% {
+        transform: translateX(0) scale(1.02);
+        box-shadow: 0 0 20px rgba(239,68,68,0.5);
+    }
+
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(239,68,68,0.3);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(239,68,68,0);
+    }
+}
+
+.animate-combo-alert {
+    animation: comboAlert 2s infinite;
+}
+
+/* ===== SHAKE SEKALI SAAT LOAD ===== */
+@keyframes shakeOnce {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+    100% { transform: translateX(0); }
+}
+
+.animate-shake-delay {
+    animation: shakeOnce 0.5s ease;
+    animation-delay: 0.2s;
 }
 
 </style>

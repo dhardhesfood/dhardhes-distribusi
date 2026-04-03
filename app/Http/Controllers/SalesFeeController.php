@@ -188,6 +188,7 @@ if ($withdrawRate > 5 || $heavyRate > 10) {
 
         foreach ($salesData as $row) {
 
+            $totalGeneratedMonthly = 0;
             $totalGenerated = (float)$row->total_konsinyasi + (float)$row->total_tunai;
             $totalPaid      = (float)$row->total_fee_paid;
             $kasbon         = (float)$row->kasbon_remaining;
@@ -269,6 +270,12 @@ if ($rewardRemaining < 0) {
 
             $netFee = $totalGenerated - $totalPaid - $kasbon;
 
+            // 🔥 HITUNG SISA BULAN SEBELUMNYA (SETELAH NET ADA)
+            $previousFee = $netFee - $totalGeneratedMonthly;
+
+            // 🔥 AMANKAN BIAR TIDAK NEGATIF
+            $previousFee = max(0, $previousFee);
+
             $finalData[] = [
                 'user_id' => $row->id,
                 'name' => $row->name,
@@ -277,6 +284,8 @@ if ($rewardRemaining < 0) {
                 'kasbon_remaining' => $kasbon,
                 'net_fee' => $netFee,
                 'is_minus' => $netFee < 0 ? true : false,
+                'monthly_fee' => $totalGeneratedMonthly,
+                'previous_fee' => $previousFee,
                 'reward_percent' => $rewardPercent,
                 'reward_amount' => $rewardAmount,
                 'reward_paid' => $rewardPaid,

@@ -307,6 +307,59 @@ Rp {{ number_format($row->total_fee,0,',','.') }}
 
 </div>
 
+<div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
+
+    <div class="text-sm font-semibold text-gray-700 mb-3">
+        Ringkasan Fee (Transparansi Perhitungan Reward)
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full text-xs sm:text-sm border">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="p-2 border text-left">Nama Sales</th>
+                    <th class="p-2 border text-right">Total Fee (Semua Waktu)</th>
+                    <th class="p-2 border text-right">Fee Bulan Ini</th>
+                    <th class="p-2 border text-right">Sisa Fee Bulan Sebelumnya</th>
+                    <th class="p-2 border text-right">Sisa Fee Sekarang</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach($sales as $row)
+                <tr>
+                    <td class="p-2 border">
+                        {{ $row['name'] }}
+                    </td>
+
+                    <td class="p-2 border text-right">
+                        Rp {{ number_format($row['total_generated'],0,',','.') }}
+                    </td>
+
+                    <td class="p-2 border text-right text-blue-600 font-semibold">
+                        Rp {{ number_format($row['monthly_fee'],0,',','.') }}
+                    </td>
+
+                    <td class="p-2 border text-right">
+                        Rp {{ number_format($row['previous_fee'],0,',','.') }}
+                    </td>
+
+                    <td class="p-2 border text-right text-green-600 font-semibold">
+                        Rp {{ number_format($row['net_fee'],0,',','.') }}
+                    </td>
+                </tr>
+                @endforeach
+
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-3 text-xs text-gray-600">
+        💡 Reward dihitung hanya dari <b>fee bulan berjalan</b>. Fee bulan sebelumnya tidak dihitung ulang.
+    </div>
+
+</div>
+
 <h3 class="font-semibold mt-8 mb-3 text-gray-700">
 Rekap Fee Sales
 </h3>

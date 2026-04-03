@@ -16,6 +16,11 @@ class Kernel extends ConsoleKernel
             ->dailyAt('02:00')
             ->withoutOverlapping()
             ->onOneServer();
+
+        $schedule->command('app:check-sales-discipline')
+            ->dailyAt('01:00')
+            ->withoutOverlapping()
+            ->onOneServer();    
     }
 
     /**

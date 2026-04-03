@@ -39,6 +39,43 @@ class RewardService
 
         $kpiReward = $totalGenerated * $percent / 100;
 
+        // 🔥 Ambil discipline (late_count)
+$discipline = DB::table('sales_discipline_monthly')
+    ->where('user_id', $userId)
+    ->where('month', $month)
+    ->where('year', $year)
+    ->first();
+
+$lateCount = $discipline ? $discipline->late_count : 0;
+
+// 🔥 Tentukan penalty
+$penaltyRate = 0;
+
+if ($lateCount >= 9) {
+    $penaltyRate = 30;
+} elseif ($lateCount >= 7) {
+    $penaltyRate = 20;
+} elseif ($lateCount >= 5) {
+    $penaltyRate = 10;
+} elseif ($lateCount >= 3) {
+    $penaltyRate = 5;
+}
+
+// 🔥 Apply penalty ke KPI
+$kpiReward = $kpiReward * (1 - ($penaltyRate / 100));
+
+// 🔥 Simpan penalty ke tabel discipline (biar bisa audit)
+if ($discipline) {
+    DB::table('sales_discipline_monthly')
+        ->where('user_id', $userId)
+        ->where('month', $month)
+        ->where('year', $year)
+        ->update([
+            'penalty_rate' => $penaltyRate,
+            'updated_at' => now()
+        ]);
+}
+
         $missionReward = DB::table('mission_rewards')
             ->where('user_id',$userId)
             ->whereMonth('reward_date',$month)

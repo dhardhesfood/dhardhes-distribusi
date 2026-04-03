@@ -104,6 +104,35 @@ Jika toko <b>Terlambat &gt; 20%</b> → Reward <b>dipotong 30%</b>
 
 </ul>
 
+<div class="mt-3 font-semibold text-blue-800">
+Syarat Disiplin Request Stok
+</div>
+
+<ul class="list-disc pl-5 space-y-1 text-gray-700">
+
+<li>
+Jika telat <b>&ge; 3 hari</b> → Reward mulai dipotong <b>5%</b>
+</li>
+
+<li>
+Jika telat <b>&ge; 5 hari</b> → Reward dipotong <b>10%</b>
+</li>
+
+<li>
+Jika telat <b>&ge; 7 hari</b> → Reward dipotong <b>20%</b>
+</li>
+
+<li>
+Jika telat <b>&ge; 9 hari</b> → Reward dipotong <b>30%</b>
+</li>
+
+</ul>
+
+
+</div>
+
+<div class="mt-5 mb-6 p-3 rounded-md bg-green-50 border border-green-200 text-green-700 text-sm font-medium">
+💡 Semakin disiplin input request stok (minimal H-5), semakin aman reward yang didapat.
 </div>
 
 <div class="mt-5 mb-6 p-3 rounded-md bg-green-50 border border-green-200 text-green-700 text-sm font-medium">

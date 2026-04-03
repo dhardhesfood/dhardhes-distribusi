@@ -21,6 +21,12 @@ Request Stok Sales
 <form method="POST" action="{{ route('stock.requests.store') }}">
 @csrf
 
+<div class="mb-4 p-3 rounded border border-yellow-300 bg-yellow-50 text-yellow-800 text-sm">
+    <p>⚠️ Cek jadwal request setiap hari.</p>
+    <p>Sistem otomatis menghapus jadwal yang sudah lewat, sehingga jumlah list jadwal bisa berkurang.</p>
+    <p>Pastikan selalu ada minimal <b>5 jadwal pengiriman ke depan</b> agar reward kamu tidak terdampak.</p>
+</div>
+
 <div class="mb-4">
 <label class="block text-sm font-medium mb-1">Area</label>
 

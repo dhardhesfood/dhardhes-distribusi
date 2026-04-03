@@ -155,6 +155,17 @@ $futureRequestDays = DB::table('sales_stock_requests')
 
 $needRequestReminder = $futureRequestDays < 5;
 
+// ================= DISCIPLINE SALES =================
+
+$discipline = DB::table('sales_discipline_monthly')
+    ->where('user_id', auth()->id())
+    ->where('month', now()->month)
+    ->where('year', now()->year)
+    ->first();
+
+$disciplineLate = $discipline ? $discipline->late_count : 0;
+$disciplinePenalty = $discipline ? $discipline->penalty_rate : 0;
+
 
         return view('dashboard', compact(
             'totalSettlementToday',
@@ -175,7 +186,9 @@ $needRequestReminder = $futureRequestDays < 5;
             'backupStatus',
             'needRequestReminder',
             'futureRequestDays',
-            'missions'
+            'missions',
+            'disciplineLate',
+            'disciplinePenalty'
 
         ));
     }

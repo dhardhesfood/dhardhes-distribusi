@@ -58,6 +58,64 @@
 
 @endif
 
+{{-- ================= DISCIPLINE ALERT ================= --}}
+
+@php
+$status = 'AMAN';
+$color = 'green';
+
+if($disciplineLate >= 7){
+    $status = 'BAHAYA';
+    $color = 'red';
+}elseif($disciplineLate >= 3){
+    $status = 'WARNING';
+    $color = 'yellow';
+}
+@endphp
+
+<div class="mb-4 p-4 rounded text-sm border
+@if($color=='green') bg-green-100 border-green-300 text-green-800
+@elseif($color=='yellow') bg-yellow-100 border-yellow-300 text-yellow-800
+@else bg-red-100 border-red-300 text-red-800 animate-combo-alert
+@endif">
+
+    <div class="font-semibold mb-1">
+        📊 Status Disiplin Request Stok
+    </div>
+
+    <div class="font-semibold mb-1">
+    Disiplin input request stok mempengaruhi reward yang didapat.
+    </div>
+
+    <div>
+        Telat bulan ini: <b>{{ $disciplineLate }} hari</b>
+    </div>
+
+    <div>
+        Potensi potongan reward: <b>{{ $disciplinePenalty }}%</b>
+    </div>
+
+    <div class="mt-2 font-semibold">
+        Status: 
+        @if($status == 'WARNING')
+    <div class="mt-2 text-sm">
+        ⚠️ Jika terus telat, reward akan mulai dipotong bulan ini.
+    </div>
+        @elseif($status == 'BAHAYA')
+    <div class="mt-2 text-sm font-semibold">
+        🚨 Reward kamu sudah terpotong. Segera perbaiki request stok.
+    </div>
+        @endif
+        
+        @if($status=='AMAN') 🟢 AMAN
+        @elseif($status=='WARNING') 🟡 WARNING
+        @else 🔴 BAHAYA
+        @endif
+    </div>
+
+</div>
+
+
 <a class="group flex items-center justify-between px-5 py-3 rounded-2xl shadow-sm mb-4 transition duration-200 text-white
 @if(isset($backupStatus) && $backupStatus->status === 'success')
 bg-green-600 hover:bg-green-700

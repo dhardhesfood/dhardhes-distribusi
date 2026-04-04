@@ -24,7 +24,7 @@ Request Stok Sales
 <div class="mb-4 p-3 rounded border border-yellow-300 bg-yellow-50 text-yellow-800 text-sm">
     <p>⚠️ Cek jadwal request setiap hari.</p>
     <p>Sistem otomatis menghapus jadwal yang sudah lewat, sehingga jumlah list jadwal bisa berkurang.</p>
-    <p>Pastikan selalu ada minimal <b>5 jadwal pengiriman ke depan</b> agar reward kamu tidak terdampak.</p>
+    <p>Pastikan selalu ada minimal <b>3 jadwal pengiriman ke depan</b> agar reward kamu tidak terdampak.</p>
 </div>
 
 <div class="mb-4">
@@ -130,11 +130,11 @@ $allFulfilled = collect($fifo)->every(function($row){
     </div>
 
     <div>
-        Perhatian: sales WAJIB menginput request stok untuk jadwal berikutnya minimal H-5 (5 hari ke depan).
+        Perhatian: sales WAJIB menginput request stok untuk jadwal berikutnya minimal 3 jadwal pengiriman kedepan.
     </div>
 
     <div class="mt-2 text-red-600">
-    ⏱️ <b>Request yang mendadak atau kurang dari H-5</b> berpotensi 
+    ⏱️ <b>Request yang mendadak atau kurang dari 3 jadwal</b> berpotensi 
     <b>TIDAK TERPENUHI</b> karena proses produksi membutuhkan waktu.
 </div>
 

@@ -515,30 +515,30 @@ Reward Sales Bulan
 
 <tbody>
 
-@foreach($sales as $row)
+@forelse($totalRewards as $t)
 
 <tr>
 
 <td class="p-2 border">
-{{ $row['name'] }}
+{{ $t['name'] }}
 </td>
 
 <td class="p-2 border text-right text-green-700 font-semibold">
-Rp {{ number_format($row['reward_amount'],0,',','.') }}
+Rp {{ number_format($t['kpi_reward'],0,',','.') }}
 </td>
 
 <td class="p-2 border text-center">
 
-@if($row['reward_status'] === 'gugur')
+@if($t['kpi_reward'] > 0)
 
-<span class="text-red-600 font-semibold">
-GUGUR
+<span class="text-green-600 font-semibold">
+LOLOS
 </span>
 
 @else
 
-<span class="text-green-600 font-semibold">
-LOLOS
+<span class="text-red-600 font-semibold">
+TIDAK LOLOS
 </span>
 
 @endif
@@ -547,7 +547,15 @@ LOLOS
 
 </tr>
 
-@endforeach
+@empty
+
+<tr>
+<td colspan="3" class="p-3 text-center text-gray-500">
+Tidak ada data reward
+</td>
+</tr>
+
+@endforelse
 
 </tbody>
 

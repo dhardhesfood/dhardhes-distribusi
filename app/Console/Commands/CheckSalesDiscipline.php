@@ -17,7 +17,7 @@ class CheckSalesDiscipline extends Command
     /**
      * The console command description.
      */
-    protected $description = 'Check daily sales discipline (request stok H-5)';
+    protected $description = 'Check daily sales discipline (request stok H-3)';
 
     /**
      * Execute the console command.
@@ -36,12 +36,12 @@ class CheckSalesDiscipline extends Command
             // 🔹 Hitung coverage (jumlah hari unik ke depan)
             $coverage = DB::table('sales_stock_requests')
                 ->where('user_id', $user->id)
-                ->whereDate('request_date', '>=', Carbon::tomorrow())
+                ->whereDate('request_date', '>=', Carbon::today())
                 ->distinct()
                 ->count('request_date');
 
             // 🔹 Tentukan telat / tidak
-            $isLate = $coverage < 5 ? 1 : 0;
+            $isLate = $coverage < 3 ? 1 : 0;
 
             // 🔹 Cek apakah sudah ada record hari ini
             $existing = DB::table('sales_discipline_daily')

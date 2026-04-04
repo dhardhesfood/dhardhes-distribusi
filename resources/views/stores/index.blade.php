@@ -345,6 +345,24 @@ $lastPhysicalStocks = \App\Models\VisitItem::whereHas('visit', function($q) use 
                                 Edit
                             </a>
 
+                            @php
+    $phone = preg_replace('/[^0-9]/', '', $store->phone ?? '');
+
+    if (substr($phone, 0, 1) === '0') {
+        $phone = '62' . substr($phone, 1);
+    }
+
+    $message = urlencode("*Assalamualaikum Pak/Bu {$store->name}*\n\nSaya dari *Dhardhes Food* 😊\n\nMau menanyakan terkait *stok produk Dhardhes* di toko saat ini.\n\nSekalian konfirmasi rencana pengiriman:\n\n*Hari :*\n*Tanggal :*\n\nMohon infonya ya Pak/Bu 🙏\nTerima kasih");
+@endphp
+
+@if($phone)
+    <a href="https://wa.me/{{ $phone }}?text={{ $message }}"
+       target="_blank"
+       class="inline-flex justify-center items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-medium rounded-md shadow-md transition whitespace-nowrap">
+        WA
+    </a>
+@endif
+
                             @if(auth()->user()->role === 'admin')
 
                                 <a href="{{ route('stores.prices.edit', $store->id) }}"

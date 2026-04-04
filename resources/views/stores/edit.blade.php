@@ -72,8 +72,9 @@
                         <input type="text"
                                name="phone"
                                value="{{ old('phone', $store->phone) }}"
+                               placeholder="628xxxxxxxxxx"
                                class="w-full border-gray-300 rounded-md shadow-sm text-sm"
-                               @if(auth()->user()->role !== 'admin') readonly @endif>
+                               oninput="formatPhone(this)">
                     </div>
 
                     {{-- ADDRESS --}}
@@ -142,4 +143,22 @@
 
         </div>
     </div>
+
+    <script>
+function formatPhone(input){
+
+    let value = input.value.replace(/\D/g, '');
+
+    if(value.startsWith('0')){
+        value = '62' + value.substring(1);
+    }
+
+    if(!value.startsWith('62') && value.length > 0){
+        value = '62' + value;
+    }
+
+    input.value = value;
+}
+</script>
+
 </x-app-layout>

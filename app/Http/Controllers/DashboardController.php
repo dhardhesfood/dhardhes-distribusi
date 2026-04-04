@@ -153,7 +153,7 @@ $futureRequestDays = DB::table('sales_stock_requests')
     ->distinct()
     ->count('request_date');
 
-$needRequestReminder = $futureRequestDays < 5;
+$needRequestReminder = $futureRequestDays < 3;
 
 // ================= DISCIPLINE SALES =================
 

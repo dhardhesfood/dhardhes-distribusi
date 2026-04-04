@@ -46,11 +46,11 @@
 
     <div class="mt-1">
         Segera buka menu <b>Request Stok</b> dan input minimal 
-        <b>5 hari ke depan</b>.
+        <b>3 hari ke depan</b>.
     </div>
 
     <div class="mt-2 text-red-600">
-        <b>Request yang kurang dari H-5 berisiko TIDAK TERPENUHI</b> karena proses produksi membutuhkan waktu.
+        <b>Request yang kurang dari H-2 berisiko TIDAK TERPENUHI</b> karena proses produksi membutuhkan waktu.
     </div>
 
 </div>
@@ -67,7 +67,7 @@ $color = 'green';
 if($disciplineLate >= 7){
     $status = 'BAHAYA';
     $color = 'red';
-}elseif($disciplineLate >= 3){
+}elseif($disciplineLate >= 1){
     $status = 'WARNING';
     $color = 'yellow';
 }
@@ -88,7 +88,7 @@ if($disciplineLate >= 7){
     </div>
 
     <div>
-        Telat bulan ini: <b>{{ $disciplineLate }} hari</b>
+        Telat bulan ini: <b>{{ $disciplineLate }} kali</b>
     </div>
 
     <div>

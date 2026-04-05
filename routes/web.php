@@ -24,6 +24,7 @@ use App\Http\Controllers\SystemBackupController;
 use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\MissionController;
 use App\Http\Controllers\AIController;
+use App\Http\Controllers\ProductionRunController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -56,6 +57,20 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 */
 
 Route::middleware(['auth'])->group(function () {
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | PRODUKSI MIE MENTAH
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/produksi-mie', [ProductionRunController::class, 'index'])->name('production-run.index');
+    Route::post('/produksi-mie/preview', [ProductionRunController::class, 'preview'])->name('production-run.preview');
+    Route::post('/produksi-mie/store', [ProductionRunController::class, 'store'])->name('production-run.store');
+    Route::post('/produksi-mie/withdraw', [ProductionRunController::class, 'withdraw'])->name('production-run.withdraw');
+    Route::post('/withdraw/approve/{id}', [ProductionRunController::class, 'approve'])->name('withdraw.approve');
+    
 
     Route::get('/areas/create', [AreaController::class, 'create'])
         ->name('areas.create');
@@ -407,6 +422,13 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/receivables', [ReceivableController::class, 'store'])
         ->name('receivables.store');
 
+    Route::get('/produksi-mie/{id}/edit', [ProductionRunController::class, 'edit'])->name('production-run.edit');
+
+    Route::put('/produksi-mie/{id}', [ProductionRunController::class, 'update'])->name('production-run.update');
+
+    Route::delete('/produksi-mie/{id}', [ProductionRunController::class, 'destroy'])->name('production-run.destroy');
+
+
         /*
 |--------------------------------------------------------------------------
 | STOCK OPNAME (ADMIN ONLY)
@@ -474,7 +496,10 @@ Route::get('/ai/business-analysis', [AIController::class, 'businessAnalysis'])
 
     Route::post('/system/backups/restore/{filename}', [SystemBackupController::class, 'restore'])
     ->name('system.backups.restore');
-        
+
+    
 });
+
+
 
 require __DIR__.'/auth.php';

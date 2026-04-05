@@ -16,12 +16,14 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         Dashboard
                     </x-nav-link>
-
+                    
+                    @if(auth()->user()->role !== 'production')
                     <x-nav-link :href="route('sales-stock-sessions.index')" :active="request()->routeIs('sales-stock-sessions.*')">
                         Session Stok Sales
                     </x-nav-link>
+                    @endif
 
-                    @if(auth()->user()->role !== 'admin_gudang')
+                    @if(!in_array(auth()->user()->role, ['admin_gudang','production']))
 
                     <x-nav-link :href="route('areas.index')" :active="request()->routeIs('areas.*')">
                         Areas

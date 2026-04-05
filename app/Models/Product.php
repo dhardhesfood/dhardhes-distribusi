@@ -48,6 +48,14 @@ class Product extends Model
         return $this->hasMany(StorePrice::class);
     }
 
+    /**
+    * Komposisi bahan (recipe) untuk produksi
+    */
+    public function recipeItems()
+    {
+        return $this->hasMany(RecipeItem::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | BUSINESS LOGIC

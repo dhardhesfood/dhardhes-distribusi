@@ -229,6 +229,21 @@ Buka
 @endif
 
     @php
+
+if(auth()->user()->role === 'production'){
+
+    $menus = [
+        [
+            'route' => '/produksi-mie',
+            'label' => 'Produksi Mie Lidi Mentah',
+            'tag' => 'Produksi',
+            'color' => 'bg-red-600 hover:bg-red-700',
+            'emoji' => '🏭',
+        ],
+    ];
+
+}else{
+
     $menus = [
 
         // ================= OPERASIONAL =================
@@ -323,6 +338,15 @@ Buka
 ],
 
 [
+    'route' => '/produksi-mie',
+    'label' => 'Produksi Mie Lidi Mentah',
+    'tag' => 'Produksi',
+    'color' => 'bg-red-600 hover:bg-red-700',
+    'emoji' => '🏭',
+    'roles' => ['admin','production']
+],
+
+[
     'route'=>'stock.requests.create',
     'label'=>'Request Stok Sales',
     'tag'=>'Gudang',
@@ -340,6 +364,9 @@ Buka
 
     ];
 
+     }
+   
+
     // 🔐 FILTER KHUSUS ADMIN GUDANG
     if(auth()->user()->role === 'admin_gudang') {
         $menus = collect($menus)->filter(function($menu){
@@ -352,6 +379,8 @@ Buka
         })->values()->toArray();
     }
     @endphp
+
+    
 
     @if(isset($missions) && $missions->count() > 0 && in_array(auth()->user()->role, ['admin','sales']))
 
@@ -495,7 +524,7 @@ Progress: {{ $progress }} / {{ $target }} toko
     }
        @endphp
 
-        <a href="{{ route($menu['route']) }}"
+        <a href="{{ str_starts_with($menu['route'], '/') ? url($menu['route']) : route($menu['route']) }}"
            class="group flex items-center justify-between px-5 py-4 rounded-2xl shadow-sm transition duration-200 text-white {{ $menu['color'] }}">
 
             <div class="flex items-center gap-3">

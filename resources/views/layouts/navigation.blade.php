@@ -125,7 +125,7 @@
                 Dashboard
             </x-responsive-nav-link>
 
-            @if(auth()->user()->role !== 'admin_gudang')
+           @if(!in_array(auth()->user()->role, ['admin_gudang','production']))
 
             <x-responsive-nav-link :href="route('areas.index')" :active="request()->routeIs('areas.*')">
                 Areas

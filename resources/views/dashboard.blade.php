@@ -31,7 +31,7 @@
 
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-gray-100 rounded-xl">
 
-@if(isset($needRequestReminder) && $needRequestReminder)
+@if(in_array(auth()->user()->role, ['admin','sales']) && isset($needRequestReminder) && $needRequestReminder)
 
 <a href="{{ route('stock.requests.create') }}" class="block">
 <div class="mb-4 p-4 bg-red-200 border border-red-300 rounded text-red-900 text-sm animate-combo-alert hover:shadow-lg transition cursor-pointer">
@@ -73,12 +73,17 @@ if($disciplineLate >= 7){
 }
 @endphp
 
+
+@if(in_array(auth()->user()->role, ['admin','sales']))
 <div class="mb-4 p-4 rounded text-sm border
 @if($color=='green') bg-green-100 border-green-300 text-green-800
 @elseif($color=='yellow') bg-yellow-100 border-yellow-300 text-yellow-800
 @else bg-red-100 border-red-300 text-red-800 animate-combo-alert
 @endif">
+@endif
 
+
+@if(in_array(auth()->user()->role, ['admin','sales']))
     <div class="font-semibold mb-1">
         📊 Status Disiplin Request Stok
     </div>
@@ -114,7 +119,7 @@ if($disciplineLate >= 7){
     </div>
 
 </div>
-
+@endif
 
 <a class="group flex items-center justify-between px-5 py-3 rounded-2xl shadow-sm mb-4 transition duration-200 text-white
 @if(isset($backupStatus) && $backupStatus->status === 'success')

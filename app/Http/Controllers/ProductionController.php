@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Product;
 use App\Models\ProductionBatch;
 use App\Models\StockMovement;
+use App\Models\ProductionBatchItem;
+use App\Models\ProductVariant;
 
 class ProductionController extends Controller
 {
@@ -20,11 +22,14 @@ class ProductionController extends Controller
         $month = $request->month ?? now()->month;
         $year  = $request->year ?? now()->year;
 
-        $productions = ProductionBatch::with('product')
-    ->whereMonth('production_date', $month)
-    ->whereYear('production_date', $year)
-    ->orderBy('production_date','desc')
-    ->get();
+        $productions = ProductionBatch::with([
+                       'product',
+                       'items.variant'
+                ])
+          ->whereMonth('production_date', $month)
+          ->whereYear('production_date', $year)
+          ->orderBy('production_date','desc')
+          ->get();
 
         return view('productions.create', compact('products','productions','month','year'));
     }
@@ -35,27 +40,50 @@ class ProductionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
-            'production_date' => 'required|date',
-            'notes' => 'nullable|string'
-        ]);
+    'product_id' => 'required|exists:products,id',
+    'production_date' => 'required|date',
+    'notes' => 'nullable|string',
+
+    'variants' => 'required|array|min:1',
+    'variants.*.id' => 'required|exists:product_variants,id',
+    'variants.*.qty' => 'nullable|integer|min:1',
+]);
 
         DB::transaction(function () use ($request) {
+
+        $filteredVariants = collect($request->variants)
+        ->filter(function ($v) {
+        return isset($v['qty']) && $v['qty'] > 0;
+     })
+        ->values();
+
+        if ($filteredVariants->isEmpty()) {
+        return back()->with('error', 'Minimal pilih 1 varian dan isi jumlah');
+}
+
+        $totalQty = $filteredVariants->sum('qty');
 
             // 1. Simpan data produksi
             $production = ProductionBatch::create([
                 'product_id' => $request->product_id,
-                'quantity' => $request->quantity,
+                'quantity' => $totalQty,
                 'production_date' => $request->production_date,
                 'created_by' => auth()->id(),
                 'notes' => $request->notes,
             ]);
 
+            foreach ($filteredVariants as $variant) {
+                 ProductionBatchItem::create([
+                 'production_batch_id' => $production->id,
+                 'product_variant_id' => $variant['id'],
+                 'quantity' => $variant['qty'],
+               ]);
+            }
+
             // 2. Tambah stok gudang (ledger)
             StockMovement::create([
                 'product_id' => $request->product_id,
-                'quantity' => $request->quantity,
+                'quantity' => $totalQty,
                 'type' => 'warehouse_in',
                 'reference_id' => $production->id,
                 'reference_type' => 'production_batch',
@@ -67,4 +95,36 @@ class ProductionController extends Controller
 
         return redirect()->back()->with('success', 'Produksi berhasil disimpan dan stok gudang bertambah.');
     }
+
+    
+    public function destroy($id)
+{
+    if (auth()->user()->role !== 'admin') {
+    abort(403);
+}
+    DB::transaction(function () use ($id) {
+
+        $production = ProductionBatch::findOrFail($id);
+
+        // 1. BALIKKAN STOK (WAJIB)
+        StockMovement::create([
+            'product_id' => $production->product_id,
+            'quantity' => $production->quantity,
+            'type' => 'warehouse_out',
+            'reference_id' => $production->id,
+            'reference_type' => 'production_delete',
+            'session_id' => null,
+            'notes' => 'Hapus produksi #' . $production->id,
+            'created_by' => auth()->id(),
+        ]);
+
+        // 2. HAPUS DETAIL VARIAN
+        ProductionBatchItem::where('production_batch_id', $production->id)->delete();
+
+        // 3. HAPUS HEADER
+        $production->delete();
+    });
+
+    return back()->with('success', 'Produksi berhasil dihapus & stok dikembalikan');
+}
 }

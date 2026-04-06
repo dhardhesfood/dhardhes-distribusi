@@ -175,7 +175,7 @@ Status Backup Database
 </div>
 
 </a>
-
+    @if(in_array(auth()->user()->role, ['admin','sales']))
     @if(isset($notificationsCount) && $notificationsCount > 0)
 
 <div class="mb-5 bg-blue-100 border border-blue-300 text-blue-900 px-5 py-4 rounded-xl shadow">
@@ -211,6 +211,7 @@ Buka
 </div>
 
 @endif
+@endif
 
     @if(auth()->user()->role === 'admin' && isset($pendingVisits) && $pendingVisits > 0)
 
@@ -242,7 +243,7 @@ if(auth()->user()->role === 'production'){
             'route' => '/produksi-mie',
             'label' => 'Produksi Mie Lidi Mentah',
             'tag' => 'Produksi',
-            'color' => 'bg-red-600 hover:bg-red-700',
+            'color' => 'bg-blue-600 hover:bg-blue-700',
             'emoji' => '🏭',
         ],
     ];
@@ -346,7 +347,7 @@ if(auth()->user()->role === 'production'){
     'route' => '/produksi-mie',
     'label' => 'Produksi Mie Lidi Mentah',
     'tag' => 'Produksi',
-    'color' => 'bg-red-600 hover:bg-red-700',
+    'color' => 'bg-blue-600 hover:bg-blue-700',
     'emoji' => '🏭',
     'roles' => ['admin','production']
 ],

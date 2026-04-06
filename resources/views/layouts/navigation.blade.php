@@ -37,6 +37,12 @@
                         Master Produk
                     </x-nav-link>
 
+                    @if(auth()->user()->role === 'admin')
+                    <x-nav-link :href="route('product-variants.index')" :active="request()->routeIs('product-variants.*')">
+                    Varian Produk
+                    </x-nav-link>
+                    @endif
+
                     <x-nav-link :href="route('cash-sales.create')" :active="request()->routeIs('cash-sales.*')">
                         Penjualan Tunai
                     </x-nav-link>
@@ -138,6 +144,12 @@
             <x-responsive-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">
                 Master Produk
             </x-responsive-nav-link>
+
+            @if(auth()->user()->role === 'admin')
+            <x-responsive-nav-link :href="route('product-variants.index')" :active="request()->routeIs('product-variants.*')">
+               Varian Produk
+            </x-responsive-nav-link>
+            @endif
 
             <x-responsive-nav-link :href="route('cash-sales.create')" :active="request()->routeIs('cash-sales.*')">
                 Penjualan Tunai

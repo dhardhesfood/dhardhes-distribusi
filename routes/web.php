@@ -84,6 +84,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/areas', [AreaController::class, 'store'])
     ->name('areas.store');
 
+
+
     /*
     |--------------------------------------------------------------------------
     | KPI SALES
@@ -168,6 +170,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/productions', [ProductionController::class, 'store'])
         ->name('productions.store');
+
+    Route::delete('/productions/{id}', [ProductionController::class, 'destroy'])
+    ->name('productions.destroy');    
 
 
     Route::get('/stock-requests/create', [\App\Http\Controllers\StockRequestController::class, 'create'])
@@ -428,6 +433,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::delete('/produksi-mie/{id}', [ProductionRunController::class, 'destroy'])->name('production-run.destroy');
 
+    Route::get('/product-variants', [\App\Http\Controllers\ProductVariantController::class, 'index'])->name('product-variants.index');
+
+    Route::post('/product-variants', [\App\Http\Controllers\ProductVariantController::class, 'store'])->name('product-variants.store');
+
+    Route::delete('/product-variants/{id}', [\App\Http\Controllers\ProductVariantController::class, 'destroy'])->name('product-variants.destroy');
+
 
         /*
 |--------------------------------------------------------------------------
@@ -496,10 +507,20 @@ Route::get('/ai/business-analysis', [AIController::class, 'businessAnalysis'])
 
     Route::post('/system/backups/restore/{filename}', [SystemBackupController::class, 'restore'])
     ->name('system.backups.restore');
-
     
 });
 
+    /*
+    |--------------------------------------------------------------------------
+    | SYSTEM BACKUP
+    |--------------------------------------------------------------------------
+    */
+     Route::get('/api/product-variants/{product}', function ($productId) {
+    return \App\Models\ProductVariant::where('product_id', $productId)
+        ->where('is_active', true)
+        ->select('id','name')
+        ->get();
+ });
 
 
 require __DIR__.'/auth.php';

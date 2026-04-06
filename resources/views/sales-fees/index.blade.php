@@ -321,6 +321,7 @@ Rp {{ number_format($row->total_fee,0,',','.') }}
                     <th class="p-2 border text-right">Total Fee (Semua Waktu)</th>
                     <th class="p-2 border text-right">Fee Bulan Ini</th>
                     <th class="p-2 border text-right">Sisa Fee Bulan Sebelumnya</th>
+                    <th class="p-2 border text-right">Kasbon Bulan Ini</th>
                     <th class="p-2 border text-right">Sisa Fee Sekarang</th>
                 </tr>
             </thead>
@@ -342,6 +343,10 @@ Rp {{ number_format($row->total_fee,0,',','.') }}
 
                     <td class="p-2 border text-right">
                         Rp {{ number_format($row['previous_fee'],0,',','.') }}
+                    </td>
+
+                    <td class="p-2 border text-right text-orange-600 font-semibold">
+                       Rp {{ number_format($row['kasbon_monthly'] ?? 0,0,',','.') }}
                     </td>
 
                     <td class="p-2 border text-right text-green-600 font-semibold">

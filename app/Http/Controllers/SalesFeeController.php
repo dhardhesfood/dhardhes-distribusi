@@ -22,10 +22,11 @@ class SalesFeeController extends Controller
         $userId = auth()->id();
         $cacheKey = "dashboard_fee_{$userId}_{$month}_{$year}";
 
-        $data = Cache::remember($cacheKey, 300, function () use ($month, $year, $user) {
+        $data = (function () use ($month, $year, $user) {
 
         $startDate = Carbon::create($year,$month,1)->startOfMonth();
         $endDate   = Carbon::create($year,$month,1)->endOfMonth();
+        $prevEndDate = Carbon::create($year,$month,1)->subMonth()->endOfMonth();
 
         $query = DB::table('users as u')
             ->leftJoin('sales_transactions as st', 'st.user_id', '=', 'u.id')
@@ -73,12 +74,13 @@ class SalesFeeController extends Controller
                     AND rp.year = {$year}
                     ) as total_reward_paid"),
 
-                DB::raw('(
+                DB::raw("(
                     SELECT COALESCE(SUM(k.amount_total - k.amount_paid),0)
                     FROM kasbons k
                     WHERE k.user_id = u.id
-                      AND k.status = "open"
-                ) as kasbon_remaining')
+                    AND k.status = 'open'
+                    AND k.created_at <= '{$endDate}'
+                    ) as kasbon_remaining")
             )
             ->groupBy('u.id', 'u.name')
             ->get();
@@ -187,6 +189,44 @@ if ($withdrawRate > 5 || $heavyRate > 10) {
 }
 
         foreach ($salesData as $row) {
+       
+           // =========================
+// DATA SAMPAI BULAN SEBELUMNYA
+// =========================
+
+$totalGeneratedPrev = DB::table('sales_transactions')
+    ->where('user_id', $row->id)
+    ->where('transaction_date', '<=', $prevEndDate)
+    ->sum('total_fee');
+
+$totalTunaiPrev = DB::table('cash_sales')
+    ->where('user_id', $row->id)
+    ->where('status', 'locked')
+    ->where('sale_date', '<=', $prevEndDate)
+    ->sum('fee_total');
+
+$totalGeneratedPrev += $totalTunaiPrev;
+
+$totalPaidPrev = DB::table('sales_fee_payments')
+    ->where('user_id', $row->id)
+    ->where('created_at', '<=', $prevEndDate)
+    ->sum('amount_paid');
+
+$kasbonPrev = DB::table('kasbons')
+    ->where('user_id', $row->id)
+    ->where('status', 'open')
+    ->where('created_at', '<=', $prevEndDate)
+    ->sum(DB::raw('amount_total - amount_paid'));
+
+    // =========================
+// KASBON BULAN INI
+// =========================
+$kasbonMonthly = DB::table('kasbons')
+    ->where('user_id', $row->id)
+    ->where('status', 'open')
+    ->whereMonth('created_at', $month)
+    ->whereYear('created_at', $year)
+    ->sum(DB::raw('amount_total - amount_paid'));
 
             $totalGeneratedMonthly = 0;
             $totalGenerated = (float)$row->total_konsinyasi + (float)$row->total_tunai;
@@ -268,13 +308,14 @@ if ($rewardRemaining < 0) {
     $rewardRemaining = 0;
 }
 
-            $netFee = $totalGenerated - $totalPaid - $kasbon;
-
-            // 🔥 HITUNG SISA BULAN SEBELUMNYA (SETELAH NET ADA)
-            $previousFee = $netFee - $totalGeneratedMonthly;
-
-            // 🔥 AMANKAN BIAR TIDAK NEGATIF
+           // 🔥 HITUNG SISA BULAN SEBELUMNYA (SETELAH NET ADA)
+            $previousFee = $totalGeneratedPrev - $totalPaidPrev - $kasbonPrev;
             $previousFee = max(0, $previousFee);
+
+            $netFee = $previousFee + $totalGeneratedMonthly - $kasbonMonthly;
+            $netFee = max(0, $netFee);
+
+            
 
             $finalData[] = [
                 'user_id' => $row->id,
@@ -282,6 +323,7 @@ if ($rewardRemaining < 0) {
                 'total_generated' => $totalGenerated,
                 'total_paid' => $totalPaid,
                 'kasbon_remaining' => $kasbon,
+                'kasbon_monthly' => $kasbonMonthly,
                 'net_fee' => $netFee,
                 'is_minus' => $netFee < 0 ? true : false,
                 'monthly_fee' => $totalGeneratedMonthly,
@@ -436,7 +478,7 @@ as fees
         'totalRewards' => $totalRewards,
     ];
 
-});
+})();
 
 // ==============================
 // TAMBAH DUMMY PERFORMANCE

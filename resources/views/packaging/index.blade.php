@@ -1,17 +1,17 @@
 <x-app-layout>
 
-<div class="p-6">
+<div class="p-6 max-w-6xl mx-auto space-y-6">
 
     <!-- CARD INPUT -->
-    <div style="background:white; padding:20px; border-radius:10px; margin-bottom:20px;">
-        <h4 style="margin-bottom:15px;">Produksi Kemasan</h4>
+    <div class="bg-white p-6 rounded-xl shadow">
+        <h2 class="text-xl font-bold mb-4">Produksi Kemasan</h2>
 
         <form method="POST" action="{{ route('packaging.store') }}">
             @csrf
 
-            <div style="margin-bottom:15px;">
-                <label><b>Produk</b></label><br>
-                <select name="product_id" id="product" style="padding:8px; width:300px;">
+            <div class="mb-4">
+                <label class="font-semibold">Produk</label>
+                <select name="product_id" id="product" class="border rounded w-full p-2 mt-1">
                     <option value="">Pilih Produk</option>
                     @foreach($products as $p)
                         <option value="{{ $p->id }}">{{ $p->name }}</option>
@@ -21,131 +21,95 @@
 
             <div id="variants"></div>
 
-            <button type="submit" style="
-                margin-top:15px;
-                background:#16a34a;
-                color:white;
-                border:none;
-                padding:10px 20px;
-                border-radius:6px;
-                cursor:pointer;
-            ">
+            <button type="submit" class="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
                 Simpan Kemasan
             </button>
-            
         </form>
 
-        <hr style="margin:25px 0;">
+        <hr class="my-6">
 
-<h4 style="margin-bottom:15px; color:#dc2626;">Input Kemasan Rusak</h4>
+        <h3 class="text-lg font-bold mb-3 text-red-600">Input Kemasan Rusak</h3>
 
-<form method="POST" action="{{ route('packaging.damage') }}">
-    @csrf
+        <form method="POST" action="{{ route('packaging.damage') }}">
+            @csrf
 
-    <div style="margin-bottom:15px;">
-        <label><b>Produk</b></label><br>
-        <select name="product_id" id="product_damage" style="padding:8px; width:300px;">
-            <option value="">Pilih Produk</option>
-            @foreach($products as $p)
-                <option value="{{ $p->id }}">{{ $p->name }}</option>
-            @endforeach
-        </select>
-    </div>
+            <div class="mb-4">
+                <label class="font-semibold">Produk</label>
+                <select name="product_id" id="product_damage" class="border rounded w-full p-2 mt-1">
+                    <option value="">Pilih Produk</option>
+                    @foreach($products as $p)
+                        <option value="{{ $p->id }}">{{ $p->name }}</option>
+                    @endforeach
+                </select>
+            </div>
 
-    <div id="variants_damage"></div>
+            <div id="variants_damage"></div>
 
-    <button type="submit" style="
-        margin-top:15px;
-        background:#dc2626;
-        color:white;
-        border:none;
-        padding:10px 20px;
-        border-radius:6px;
-        cursor:pointer;
-    ">
-        Simpan Kemasan Rusak
-    </button>
-</form>
+            <button type="submit" class="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">
+                Simpan Kemasan Rusak
+            </button>
+        </form>
     </div>
 
     <!-- TABLE -->
-    <div style="background:white; padding:20px; border-radius:10px;">
-        <form method="GET" style="margin-bottom:15px;">
-            <select name="year"
-    style="padding:8px; border:1px solid #ccc; border-radius:6px; margin-right:10px;">
+    <div class="bg-white p-6 rounded-xl shadow">
 
-    @for($y = now()->year; $y >= now()->year - 3; $y--)
-        <option value="{{ $y }}" {{ request('year', now()->year) == $y ? 'selected' : '' }}>
-            {{ $y }}
-        </option>
-    @endfor
+        <form method="GET" class="flex items-center gap-3 mb-4">
+            <select name="year" class="border rounded p-2">
+                @for($y = now()->year; $y >= now()->year - 3; $y--)
+                    <option value="{{ $y }}" {{ request('year', now()->year) == $y ? 'selected' : '' }}>
+                        {{ $y }}
+                    </option>
+                @endfor
+            </select>
 
-</select>
-    <select name="month" onchange="this.form.submit()"
-        style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+            <select name="month" onchange="this.form.submit()" class="border rounded p-2">
+                <option value="">Semua Bulan</option>
+                @for($m=1; $m<=12; $m++)
+                    <option value="{{ $m }}" {{ request('month') == $m ? 'selected' : '' }}>
+                        {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+                    </option>
+                @endfor
+            </select>
+        </form>
 
-        <option value="">Semua Bulan</option>
+        <h3 class="text-lg font-bold mb-3">Stok Kemasan</h3>
 
-        @for($m=1; $m<=12; $m++)
-            <option value="{{ $m }}" {{ request('month') == $m ? 'selected' : '' }}>
-                {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
-            </option>
-        @endfor
-
-    </select>      
-        <h4 style="margin-bottom:15px;">Stok Kemasan</h4>
-
-        <table style="width:100%; border-collapse:collapse;">
+        <table class="w-full text-sm border border-gray-200">
             <thead>
-                <tr style="background:#f3f4f6;">
-                    <th style="padding:10px;">Produk</th>
-                    <th style="padding:10px;">Varian</th>
-                    <th style="padding:10px;">Stok</th>
-                    <th style="padding:10px;">Aksi</th>
+                <tr class="bg-gray-100">
+                    <th class="p-2 border">Produk</th>
+                    <th class="p-2 border">Varian</th>
+                    <th class="p-2 border">Stok</th>
+                    <th class="p-2 border">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($stocks as $s)
-                    <tr style="border-top:1px solid #e5e7eb;">
-                        <td style="padding:10px;">{{ $s->product_name }}</td>
-                        <td style="padding:10px; color:#dc2626; font-weight:bold;">
-                            {{ $s->variant_name }}
+                    <tr class="border-t hover:bg-gray-50">
+                        <td class="p-2 border">{{ $s->product_name }}</td>
+                        <td class="p-2 border text-red-600 font-semibold">{{ $s->variant_name }}</td>
+                        <td class="p-2 border">{{ $s->stock_qty ?? 0 }}</td>
+
+                        <td class="p-2 border">
+                            @if(auth()->user()->role === 'admin')
+                            <form method="POST" action="{{ route('packaging.update') }}" class="flex gap-2">
+                                @csrf
+                                <input type="hidden" name="product_id" value="{{ $s->product_id }}">
+                                <input type="hidden" name="variant_id" value="{{ $s->product_variant_id }}">
+                                <input type="number" name="qty" value="{{ $s->stock_qty }}" class="border rounded p-1 w-20">
+                                <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs">
+                                    Edit
+                                </button>
+                            </form>
+                            @else
+                                <span class="text-gray-400">-</span>
+                            @endif
                         </td>
-                        <td style="padding:10px;">
-    {{ $s->stock_qty ?? 0 }}
-</td>
-
-<td style="padding:10px;">
-
-@if(auth()->user()->role === 'admin')
-
-<form method="POST" action="{{ route('packaging.update') }}" style="display:flex; gap:5px;">
-@csrf
-
-<input type="hidden" name="product_id" value="{{ $s->product_id }}">
-<input type="hidden" name="variant_id" value="{{ $s->product_variant_id }}">
-
-<input type="number" name="qty" value="{{ $s->stock_qty }}"
-       style="width:80px; padding:5px; border:1px solid #ccc; border-radius:4px;">
-
-<button type="submit"
-       style="background:#f59e0b; color:white; border:none; padding:5px 10px; border-radius:5px;">
-    Edit
-</button>
-
-</form>
-
-@else
-
-<span style="color:#9ca3af;">-</span>
-
-@endif
-
-</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="3" style="padding:15px; text-align:center;">
+                        <td colspan="4" class="p-4 text-center text-gray-500">
                             Belum ada stok kemasan
                         </td>
                     </tr>
@@ -153,98 +117,94 @@
             </tbody>
         </table>
 
-    <div style="margin-top:30px;">
-    <h4>Produksi Harian</h4>
+        <!-- PRODUKSI HARIAN -->
+        <div class="mt-6">
+            <h3 class="text-lg font-bold mb-3">Produksi Harian</h3>
 
-    <table style="width:100%; border-collapse:collapse;">
-        <thead>
-            <tr style="background:#f3f4f6;">
-                <th style="padding:10px;">Tanggal</th>
-                <th style="padding:10px;">Produk</th>
-                <th style="padding:10px;">Varian</th>
-                <th style="padding:10px;">Qty Produksi</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($daily as $d)
-                <tr style="border-top:1px solid #e5e7eb;">
-                    <td style="padding:10px;">{{ $d->tanggal }}</td>
-                    <td style="padding:10px;">{{ $d->product_name }}</td>
-                    <td style="padding:10px; color:red;">{{ $d->variant_name }}</td>
-                    <td style="padding:10px; color:#16a34a; font-weight:bold;">
-                    {{ $d->total_qty }}
-                    </td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-</div>
+            <table class="w-full text-sm border border-gray-200">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="p-2 border">Tanggal</th>
+                        <th class="p-2 border">Produk</th>
+                        <th class="p-2 border">Varian</th>
+                        <th class="p-2 border">Qty Produksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($daily as $d)
+                        <tr class="border-t hover:bg-gray-50">
+                            <td class="p-2 border">{{ $d->tanggal }}</td>
+                            <td class="p-2 border">{{ $d->product_name }}</td>
+                            <td class="p-2 border text-red-600">{{ $d->variant_name }}</td>
+                            <td class="p-2 border text-green-600 font-semibold">{{ $d->total_qty }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
 
-<div style="margin-top:30px;">
-    <h4>History Stok Kemasan</h4>
+        <!-- HISTORY -->
+        <div class="mt-6">
+            <h3 class="text-lg font-bold mb-3">History Stok Kemasan</h3>
 
-    <table style="width:100%; border-collapse:collapse;">
-        <thead>
-            <tr style="background:#f3f4f6;">
-                <th style="padding:10px;">Tanggal</th>
-                <th style="padding:10px;">Produk</th>
-                <th style="padding:10px;">Varian</th>
-                <th style="padding:10px;">Jenis</th>
-                <th style="padding:10px;">Qty</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($histories as $h)
-                <tr style="border-top:1px solid #e5e7eb;">
-                    <td style="padding:10px;">
-                        {{ \Carbon\Carbon::parse($h->created_at)->format('d-m-Y H:i') }}
-                    </td>
-                    <td style="padding:10px;">{{ $h->product_name }}</td>
-                    <td style="padding:10px; color:red;">{{ $h->variant_name }}</td>
-                    <td style="padding:10px;">
-    @if($h->type == 'in')
-        <span style="color:#16a34a; font-weight:bold;">Bertambah</span>
-    @elseif($h->type == 'out')
+            <table class="w-full text-sm border border-gray-200">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="p-2 border">Tanggal</th>
+                        <th class="p-2 border">Produk</th>
+                        <th class="p-2 border">Varian</th>
+                        <th class="p-2 border">Jenis</th>
+                        <th class="p-2 border">Qty</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($histories as $h)
+                        <tr class="border-t hover:bg-gray-50">
+                            <td class="p-2 border">
+                                {{ \Carbon\Carbon::parse($h->created_at)->format('d-m-Y H:i') }}
+                            </td>
+                            <td class="p-2 border">{{ $h->product_name }}</td>
+                            <td class="p-2 border text-red-600">{{ $h->variant_name }}</td>
 
-    @if($h->reference_type == 'production_batch')
-        <span style="color:#dc2626; font-weight:bold;">Berkurang (Produksi)</span>
+                            <td class="p-2 border">
+                                @if($h->type == 'in')
+                                    <span class="text-green-600 font-semibold">Bertambah</span>
 
-    @elseif($h->reference_type == 'damage')
-        <span style="color:#dc2626; font-weight:bold;">Berkurang (Rusak)</span>
+                                @elseif($h->type == 'out')
+                                    @if($h->reference_type == 'production_batch')
+                                        <span class="text-red-600 font-semibold">Berkurang (Produksi)</span>
+                                    @elseif($h->reference_type == 'damage')
+                                        <span class="text-red-600 font-semibold">Berkurang (Rusak)</span>
+                                    @else
+                                        <span class="text-red-600 font-semibold">Berkurang</span>
+                                    @endif
 
-    @else
-        <span style="color:#dc2626; font-weight:bold;">Berkurang</span>
-    @endif
+                                @elseif($h->type == 'return')
+                                    <span class="text-blue-600 font-semibold">Dikembalikan</span>
 
-    @elseif($h->type == 'return')
-        <span style="color:#2563eb; font-weight:bold;">Dikembalikan</span>
-    @elseif($h->type == 'adjustment')
-        <span style="color:#f59e0b; font-weight:bold;">Penyesuaian</span>
-    @else
-        {{ $h->type }}
-    @endif
-</td>
+                                @elseif($h->type == 'adjustment')
+                                    <span class="text-yellow-500 font-semibold">Penyesuaian</span>
+                                @endif
+                            </td>
 
-<td style="padding:10px; font-weight:bold;">
-    @if($h->type == 'in')
-        <span style="color:#16a34a;">+{{ $h->quantity }}</span>
-    @elseif($h->type == 'out')
-        <span style="color:#dc2626;">-{{ $h->quantity }}</span>
-    @elseif($h->type == 'return')
-        <span style="color:#16a34a;">+{{ $h->quantity }}</span>
-    @elseif($h->type == 'adjustment')
-        <span style="color:#f59e0b;">
-            {{ $h->quantity > 0 ? '+' : '' }}{{ $h->quantity }}
-        </span>
-    @endif
-</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-
-
-</div>
+                            <td class="p-2 border font-semibold">
+                                @if($h->type == 'in')
+                                    <span class="text-green-600">+{{ $h->quantity }}</span>
+                                @elseif($h->type == 'out')
+                                    <span class="text-red-600">-{{ $h->quantity }}</span>
+                                @elseif($h->type == 'return')
+                                    <span class="text-green-600">+{{ $h->quantity }}</span>
+                                @elseif($h->type == 'adjustment')
+                                    <span class="text-yellow-500">
+                                        {{ $h->quantity > 0 ? '+' : '' }}{{ $h->quantity }}
+                                    </span>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
 
     </div>
 
@@ -261,15 +221,10 @@ document.getElementById('product').addEventListener('change', function () {
 
             data.forEach(v => {
                 html += `
-                    <div style="
-                        display:flex;
-                        justify-content:space-between;
-                        padding:8px 0;
-                        border-bottom:1px solid #eee;
-                    ">
+                    <div class="flex justify-between py-2 border-b">
                         <div>${v.name}</div>
                         <div>
-                            <input type="number" name="variants[${v.id}][qty]" style="width:100px; padding:6px;">
+                            <input type="number" name="variants[${v.id}][qty]" class="border rounded p-2 w-24">
                             <input type="hidden" name="variants[${v.id}][id]" value="${v.id}">
                         </div>
                     </div>
@@ -290,15 +245,10 @@ document.getElementById('product_damage').addEventListener('change', function ()
 
             data.forEach(v => {
                 html += `
-                    <div style="
-                        display:flex;
-                        justify-content:space-between;
-                        padding:8px 0;
-                        border-bottom:1px solid #eee;
-                    ">
+                    <div class="flex justify-between py-2 border-b">
                         <div>${v.name}</div>
                         <div>
-                            <input type="number" name="variants[${v.id}][qty]" style="width:100px; padding:6px;">
+                            <input type="number" name="variants[${v.id}][qty]" class="border rounded p-2 w-24">
                             <input type="hidden" name="variants[${v.id}][id]" value="${v.id}">
                         </div>
                     </div>
@@ -309,6 +259,5 @@ document.getElementById('product_damage').addEventListener('change', function ()
         });
 });
 </script>
-
 
 </x-app-layout>

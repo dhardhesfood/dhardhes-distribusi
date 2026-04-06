@@ -25,6 +25,7 @@ use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\MissionController;
 use App\Http\Controllers\AIController;
 use App\Http\Controllers\ProductionRunController;
+use App\Http\Controllers\PackagingController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -172,9 +173,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('productions.store');
 
     Route::delete('/productions/{id}', [ProductionController::class, 'destroy'])
-    ->name('productions.destroy');    
-
-
+    ->name('productions.destroy');
+    
     Route::get('/stock-requests/create', [\App\Http\Controllers\StockRequestController::class, 'create'])
     ->name('stock.requests.create');
 
@@ -183,6 +183,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::delete('/stock-requests/{id}', [\App\Http\Controllers\StockRequestController::class, 'destroy'])
     ->name('stock.requests.destroy');
+
+    Route::get('/packaging', [App\Http\Controllers\PackagingController::class, 'index'])->name('packaging.index');
+    Route::post('/packaging', [App\Http\Controllers\PackagingController::class, 'store'])->name('packaging.store');
+    Route::post('/packaging/update', [App\Http\Controllers\PackagingController::class, 'update'])
+    ->name('packaging.update');
+    Route::post('/packaging/damage', [PackagingController::class, 'damage'])->name('packaging.damage');
 
     /*
     |--------------------------------------------------------------------------

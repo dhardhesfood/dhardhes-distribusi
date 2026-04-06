@@ -236,7 +236,20 @@ Buka
 
     @php
 
-if(auth()->user()->role === 'production'){
+    if(auth()->user()->role === 'packaging'){
+
+    $menus = [
+        [
+            'route'=>'packaging.index',
+            'label'=>'Produksi Kemasan',
+            'tag'=>'Produksi',
+            'color'=>'bg-emerald-600 hover:bg-emerald-700',
+            'emoji'=>'📦',
+        ],
+    ];
+
+}
+elseif(auth()->user()->role === 'production'){
 
     $menus = [
         [
@@ -248,7 +261,8 @@ if(auth()->user()->role === 'production'){
         ],
     ];
 
-}else{
+}
+else{
 
     $menus = [
 
@@ -341,6 +355,15 @@ if(auth()->user()->role === 'production'){
     'color'=>'bg-indigo-600 hover:bg-indigo-700',
     'emoji'=>'🏭',
     'roles'=>['admin','admin_gudang']
+    ],
+
+    [
+    'route'=>'packaging.index',
+    'label'=>'Produksi Kemasan',
+    'tag'=>'Produksi',
+    'color'=>'bg-emerald-600 hover:bg-emerald-700',
+    'emoji'=>'📦',
+    'roles'=>['admin','admin_gudang','packaging']
 ],
 
 [
@@ -380,6 +403,7 @@ if(auth()->user()->role === 'production'){
                 'sales-stock-sessions.index',
                 'productions.create',
                 'stock.requests.create',
+                'packaging.index',
                 'warehouse.index'
             ]);
         })->values()->toArray();

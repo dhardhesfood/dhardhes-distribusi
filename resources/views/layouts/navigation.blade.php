@@ -16,6 +16,14 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         Dashboard
                     </x-nav-link>
+
+                    @if(auth()->user()->role === 'packaging')
+
+                   <x-nav-link :href="route('packaging.index')" :active="request()->routeIs('packaging.*')">
+                        Produksi Kemasan
+                   </x-nav-link>
+
+                   @else
                     
                     @if(auth()->user()->role !== 'production')
                     <x-nav-link :href="route('sales-stock-sessions.index')" :active="request()->routeIs('sales-stock-sessions.*')">
@@ -74,6 +82,7 @@
 
                 </div>
             </div>
+            @endif
 
             <!-- Settings Desktop -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">

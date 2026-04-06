@@ -357,6 +357,48 @@ $lastFifoDate = $row['date'];
 
 </div>
 
+@php
+$detailShortage = collect($fifo)
+    ->filter(fn($row) => $row['short'] > 0)
+    ->sortBy('date');
+@endphp
+
+@if($detailShortage->count() > 0)
+
+<div class="mt-6 max-w-4xl mx-auto sm:px-6 lg:px-8">
+<div class="bg-red-100 border border-red-300 text-red-900 px-6 py-4 rounded-lg shadow">
+
+<div class="font-semibold mb-2">
+Detail Kekurangan
+</div>
+
+@php
+$lastDate = null;
+@endphp
+
+@foreach($detailShortage as $row)
+
+@if($lastDate !== null && $lastDate != $row['date'])
+
+<div class="my-2 border-t border-red-300"></div>
+
+@endif
+
+<div>
+{{ $row['date'] }} → {{ $row['product'] }} kurang {{ $row['short'] }} pack
+</div>
+
+@php
+$lastDate = $row['date'];
+@endphp
+
+@endforeach
+
+</div>
+</div>
+
+@endif
+
 @if(!empty($shortage))
 
 <div class="mt-6 max-w-4xl mx-auto sm:px-6 lg:px-8">

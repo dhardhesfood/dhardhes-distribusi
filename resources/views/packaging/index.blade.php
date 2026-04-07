@@ -7,6 +7,16 @@
         <h2 class="text-xl font-bold mb-4">Produksi Kemasan</h2>
 
         <form method="POST" action="{{ route('packaging.store') }}">
+            <div class="mb-4">
+        <label class="font-semibold">Tanggal Produksi</label>
+        <input 
+               type="date" 
+               name="tanggal"
+               value="{{ date('Y-m-d') }}"
+               class="border rounded w-full p-2 mt-1"
+               required
+               >
+           </div>
             @csrf
 
             <div class="mb-4">

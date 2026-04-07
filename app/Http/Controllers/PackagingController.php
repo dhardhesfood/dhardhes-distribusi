@@ -75,6 +75,7 @@ class PackagingController extends Controller
     {
         $request->validate([
             'product_id' => 'required|exists:products,id',
+            'tanggal' => 'required|date',
             'variants' => 'required|array|min:1',
             'variants.*.id' => 'required|exists:product_variants,id',
             'variants.*.qty' => 'nullable|integer|min:1',
@@ -101,7 +102,7 @@ class PackagingController extends Controller
                     'reference_type' => 'packaging_input',
                     'reference_id' => null,
                     'created_by' => auth()->id(),
-                    'created_at' => now(),
+                    'created_at' => $request->tanggal . ' ' . now()->format('H:i:s'),
                     'updated_at' => now(),
                 ]);
 

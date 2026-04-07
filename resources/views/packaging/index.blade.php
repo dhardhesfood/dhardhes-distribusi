@@ -85,47 +85,81 @@
 
         <h3 class="text-lg font-bold mb-3">Stok Kemasan</h3>
 
-        <table class="w-full text-sm border border-gray-200">
-            <thead>
-                <tr class="bg-gray-100">
-                    <th class="p-2 border">Produk</th>
-                    <th class="p-2 border">Varian</th>
-                    <th class="p-2 border">Stok</th>
-                    <th class="p-2 border">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($stocks as $s)
-                    <tr class="border-t hover:bg-gray-50">
-                        <td class="p-2 border">{{ $s->product_name }}</td>
-                        <td class="p-2 border text-red-600 font-semibold">{{ $s->variant_name }}</td>
-                        <td class="p-2 border">{{ $s->stock_qty ?? 0 }}</td>
+        <div class="space-y-4">
 
-                        <td class="p-2 border">
-                            @if(auth()->user()->role === 'admin')
-                            <form method="POST" action="{{ route('packaging.update') }}" class="flex gap-2">
-                                @csrf
-                                <input type="hidden" name="product_id" value="{{ $s->product_id }}">
-                                <input type="hidden" name="variant_id" value="{{ $s->product_variant_id }}">
-                                <input type="number" name="qty" value="{{ $s->stock_qty }}" class="border rounded p-1 w-20">
-                                <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs">
-                                    Edit
-                                </button>
-                            </form>
-                            @else
-                                <span class="text-gray-400">-</span>
-                            @endif
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="4" class="p-4 text-center text-gray-500">
-                            Belum ada stok kemasan
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+@forelse($groupedStocks as $productName => $variants)
+
+<div class="border rounded-lg p-4 shadow-sm">
+
+    <!-- NAMA PRODUK -->
+    <div class="font-bold text-lg mb-2">
+        {{ $productName }}
+    </div>
+
+    <!-- VARIAN -->
+    <div class="space-y-2">
+
+        @foreach($variants as $v)
+        <div class="flex justify-between items-center border-b pb-2">
+
+            <div class="text-red-600 font-semibold">
+                {{ $v->variant_name }}
+            </div>
+
+            <div class="flex items-center gap-2">
+
+                <div class="text-center w-10">
+                    {{ $v->stock_qty }}
+                </div>
+
+                @if(auth()->user()->role === 'admin')
+                <form method="POST" action="{{ route('packaging.update') }}" class="flex items-center gap-1">
+    @csrf
+
+    <input type="hidden" name="product_id" value="{{ $v->product_id }}">
+    <input type="hidden" name="variant_id" value="{{ $v->variant_id }}">
+
+    <!-- DISPLAY MODE -->
+    <span class="cursor-pointer text-blue-600 text-sm"
+          onclick="toggleEdit(this)">
+        ✏️
+    </span>
+
+    <!-- EDIT MODE (HIDDEN DEFAULT) -->
+    <div class="hidden flex items-center gap-1">
+
+        <input 
+            type="number" 
+            name="qty" 
+            value="{{ $v->stock_qty }}" 
+            class="border rounded p-1 w-14 text-center text-sm"
+        >
+
+        <button type="submit" 
+            class="bg-yellow-500 text-white px-2 py-1 rounded text-xs">
+            ✔
+        </button>
+
+    </div>
+</form>
+                @endif
+
+            </div>
+
+        </div>
+        @endforeach
+
+    </div>
+
+</div>
+
+@empty
+<div class="text-center text-gray-500 py-4">
+    Belum ada data produk
+</div>
+@endforelse
+
+</div>
 
         <!-- PRODUKSI HARIAN -->
         <div class="mt-6">
@@ -155,65 +189,13 @@
 
         <!-- HISTORY -->
         <div class="mt-6">
-            <h3 class="text-lg font-bold mb-3">History Stok Kemasan</h3>
+            <div class="mt-6">
+    <a href="{{ route('packaging.history') }}"
+       class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+        Lihat History Stok Kemasan
+    </a>
+</div>
 
-            <table class="w-full text-sm border border-gray-200">
-                <thead>
-                    <tr class="bg-gray-100">
-                        <th class="p-2 border">Tanggal</th>
-                        <th class="p-2 border">Produk</th>
-                        <th class="p-2 border">Varian</th>
-                        <th class="p-2 border">Jenis</th>
-                        <th class="p-2 border">Qty</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($histories as $h)
-                        <tr class="border-t hover:bg-gray-50">
-                            <td class="p-2 border">
-                                {{ \Carbon\Carbon::parse($h->created_at)->format('d-m-Y H:i') }}
-                            </td>
-                            <td class="p-2 border">{{ $h->product_name }}</td>
-                            <td class="p-2 border text-red-600">{{ $h->variant_name }}</td>
-
-                            <td class="p-2 border">
-                                @if($h->type == 'in')
-                                    <span class="text-green-600 font-semibold">Bertambah</span>
-
-                                @elseif($h->type == 'out')
-                                    @if($h->reference_type == 'production_batch')
-                                        <span class="text-red-600 font-semibold">Berkurang (Produksi)</span>
-                                    @elseif($h->reference_type == 'damage')
-                                        <span class="text-red-600 font-semibold">Berkurang (Rusak)</span>
-                                    @else
-                                        <span class="text-red-600 font-semibold">Berkurang</span>
-                                    @endif
-
-                                @elseif($h->type == 'return')
-                                    <span class="text-blue-600 font-semibold">Dikembalikan</span>
-
-                                @elseif($h->type == 'adjustment')
-                                    <span class="text-yellow-500 font-semibold">Penyesuaian</span>
-                                @endif
-                            </td>
-
-                            <td class="p-2 border font-semibold">
-                                @if($h->type == 'in')
-                                    <span class="text-green-600">+{{ $h->quantity }}</span>
-                                @elseif($h->type == 'out')
-                                    <span class="text-red-600">-{{ $h->quantity }}</span>
-                                @elseif($h->type == 'return')
-                                    <span class="text-green-600">+{{ $h->quantity }}</span>
-                                @elseif($h->type == 'adjustment')
-                                    <span class="text-yellow-500">
-                                        {{ $h->quantity > 0 ? '+' : '' }}{{ $h->quantity }}
-                                    </span>
-                                @endif
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
         </div>
 
     </div>
@@ -268,6 +250,12 @@ document.getElementById('product_damage').addEventListener('change', function ()
             document.getElementById('variants_damage').innerHTML = html;
         });
 });
+function toggleEdit(el) {
+    const form = el.closest('form');
+    const editBox = form.querySelector('div');
+
+    editBox.classList.toggle('hidden');
+}
 </script>
 
 </x-app-layout>

@@ -16,18 +16,27 @@ class PackagingController extends Controller
     $year = request('year') ?? now()->year;
 
     // 🔥 AMBIL STOK KEMASAN
-    $stocks = DB::table('packaging_stocks')
-        ->join('products', 'products.id', '=', 'packaging_stocks.product_id')
-        ->join('product_variants', 'product_variants.id', '=', 'packaging_stocks.product_variant_id')
-        ->select(
-    'products.name as product_name',
-    'product_variants.name as variant_name',
-    'packaging_stocks.stock_qty',
-    'packaging_stocks.product_id',
-    'packaging_stocks.product_variant_id'
-)
-        ->orderBy('products.name')
-        ->get();
+    $stocks = DB::table('product_variants')
+    ->join('products', 'products.id', '=', 'product_variants.product_id')
+    ->leftJoin('packaging_stocks', function ($join) {
+        $join->on('packaging_stocks.product_variant_id', '=', 'product_variants.id');
+    })
+    ->where('product_variants.is_active', 1)
+    ->select(
+        'products.id as product_id',
+        'products.name as product_name',
+        'product_variants.id as variant_id',
+        'product_variants.name as variant_name',
+        DB::raw('COALESCE(packaging_stocks.stock_qty, 0) as stock_qty')
+    )
+    ->orderBy('products.name')
+    ->get();
+
+    $groupedStocks = [];
+
+      foreach ($stocks as $row) {
+    $groupedStocks[$row->product_name][] = $row;
+}
 
         $histories = DB::table('packaging_movements')
     ->join('products', 'products.id', '=', 'packaging_movements.product_id')
@@ -68,7 +77,13 @@ class PackagingController extends Controller
     ->orderBy('tanggal','desc')
     ->get();
 
-    return view('packaging.index', compact('products', 'stocks', 'histories', 'daily'));
+    return view('packaging.index', compact(
+    'products',
+    'stocks',
+    'histories',
+    'daily',
+    'groupedStocks'
+));
 }
 
     public function store(Request $request)
@@ -232,6 +247,22 @@ public function damage(Request $request)
     });
 
     return back()->with('success', 'Kemasan rusak berhasil dikurangi');
+}
+
+public function history(Request $request)
+{
+    $histories = DB::table('packaging_movements')
+        ->join('products', 'products.id', '=', 'packaging_movements.product_id')
+        ->join('product_variants', 'product_variants.id', '=', 'packaging_movements.product_variant_id')
+        ->select(
+            'packaging_movements.*',
+            'products.name as product_name',
+            'product_variants.name as variant_name'
+        )
+        ->orderBy('packaging_movements.created_at', 'desc')
+        ->get();
+
+    return view('packaging.history', compact('histories'));
 }
 
 }

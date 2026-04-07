@@ -189,6 +189,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/packaging/update', [App\Http\Controllers\PackagingController::class, 'update'])
     ->name('packaging.update');
     Route::post('/packaging/damage', [PackagingController::class, 'damage'])->name('packaging.damage');
+    Route::get('/packaging/history', [PackagingController::class, 'history'])
+    ->name('packaging.history');
 
     /*
     |--------------------------------------------------------------------------

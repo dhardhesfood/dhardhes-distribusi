@@ -2,6 +2,99 @@
 
 <div class="p-6 max-w-6xl mx-auto space-y-6">
 
+{{-- 🔥 INFO PENTING KE TIM KEMASAN --}}
+<div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg shadow">
+
+    <div class="font-bold text-yellow-700 mb-1">
+        ⚠️ Perhatian Produksi
+    </div>
+
+    <div class="text-sm text-gray-700 space-y-1">
+
+        <div>
+            Data analisa ini hanya berdasarkan stok <b>pack siap jual</b> di sistem.
+        </div>
+
+        <div>
+            Kemungkinan masih ada stok produk <b>belum dipack di gudang</b>.
+        </div>
+
+        <div class="mt-2 font-semibold">
+            👉 Sebelum produksi kemasan:
+        </div>
+
+        <ul class="list-disc ml-5">
+            <li>Tanyakan ke gudang stok produk yang belum dipack</li>
+            <li>Sesuaikan dengan kebutuhan kemasan saat ini</li>
+        </ul>
+
+        <div class="text-red-600 font-semibold mt-2">
+            Hindari produksi berlebih (over produksi)
+        </div>
+
+    </div>
+
+</div>
+
+{{-- 🔥 ANALISA KEBUTUHAN KEMASAN --}}
+@if(!empty($packagingAnalysis))
+
+<div class="space-y-4">
+
+    <h2 class="text-xl font-bold">Analisa Kebutuhan Kemasan</h2>
+
+    @foreach($packagingAnalysis as $date => $productGroups)
+
+        <div class="bg-white p-4 rounded-xl shadow">
+
+            <div class="font-bold text-lg mb-3">
+                📅 {{ \Carbon\Carbon::parse($date)->format('d-m-Y') }}
+            </div>
+
+            @foreach($productGroups as $productName => $items)
+
+                <div class="mb-4">
+
+                    <div class="font-semibold mb-2">
+                        {{ $productName }}
+                    </div>
+
+                    <div class="space-y-1">
+
+                        @foreach($items as $item)
+
+                            <div class="flex justify-between border-b py-1 text-sm">
+
+                                <div class="text-red-600">
+                                    {{ $item['variant'] }}
+                                </div>
+
+                                <div>
+                                    butuh {{ $item['needed'] }} |
+                                    stok {{ $item['stock'] }} |
+                                    <span class="{{ $item['short'] > 0 ? 'text-red-600 font-bold' : 'text-green-600' }}">
+                                        {{ $item['short'] > 0 ? 'kurang '.$item['short'] : 'cukup' }}
+                                    </span>
+                                </div>
+
+                            </div>
+
+                        @endforeach
+
+                    </div>
+
+                </div>
+
+            @endforeach
+
+        </div>
+
+    @endforeach
+
+</div>
+
+@endif
+
     <!-- CARD INPUT -->
     <div class="bg-white p-6 rounded-xl shadow">
         <h2 class="text-xl font-bold mb-4">Produksi Kemasan</h2>

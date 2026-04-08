@@ -38,6 +38,123 @@ class PackagingController extends Controller
     $groupedStocks[$row->product_name][] = $row;
 }
 
+/*
+=========================
+🔥 AMBIL DATA REQUEST (UNTUK FIFO)
+=========================
+*/
+
+$raw = DB::table('sales_stock_requests')
+    ->join('sales_stock_request_items','sales_stock_requests.id','=','sales_stock_request_items.request_id')
+    ->join('products','products.id','=','sales_stock_request_items.product_id')
+    ->select(
+        'sales_stock_requests.request_date',
+        'products.id as product_id',
+        'products.name as product_name',
+        DB::raw('SUM(sales_stock_request_items.qty_pack) as qty')
+    )
+    ->whereDate('sales_stock_requests.request_date', '>=', today())
+    ->groupBy(
+        'sales_stock_requests.request_date',
+        'products.id',
+        'products.name'
+    )
+    ->orderBy('products.id','asc')
+    ->orderBy('sales_stock_requests.request_date','asc')
+    ->get();
+
+/*
+=========================
+READY PACK
+=========================
+*/
+
+$ready = DB::table('warehouse_ready_packs')
+    ->pluck('ready_pack','product_id')
+    ->toArray();
+
+/*
+=========================
+FIFO ENGINE
+=========================
+*/
+
+$fifo = [];
+$currentProduct = null;
+$stock = 0;
+
+foreach($raw as $row){
+
+    if($currentProduct !== $row->product_id){
+        $currentProduct = $row->product_id;
+        $stock = $ready[$row->product_id] ?? 0;
+    }
+
+    $allocated = min($stock,$row->qty);
+    $short = $row->qty - $allocated;
+    $stock -= $allocated;
+
+    $fifo[] = [
+        'date'=>$row->request_date,
+        'product'=>$row->product_name,
+        'product_id'=>$row->product_id,
+        'short'=>$short
+    ];
+}
+
+/*
+=========================
+🔥 ANALISA KEMASAN
+=========================
+*/
+
+$packagingAnalysis = [];
+
+foreach($fifo as $row){
+
+    if($row['short'] <= 0) continue;
+
+    $date = $row['date'];
+    $productId = $row['product_id'];
+    $productName = $row['product'];
+    $shortPack = $row['short'];
+
+    $recipe = DB::table('product_pack_recipes')
+        ->where('product_id',$productId)
+        ->where('is_active',1)
+        ->first();
+
+    if(!$recipe) continue;
+
+    $items = DB::table('product_pack_recipe_items')
+        ->where('recipe_id',$recipe->id)
+        ->get();
+
+    foreach($items as $item){
+
+        $variant = DB::table('product_variants')
+            ->where('id',$item->product_variant_id)
+            ->first();
+
+        if(!$variant) continue;
+
+        $needed = $shortPack * $item->qty_per_pack;
+
+        $stockQty = DB::table('packaging_stocks')
+            ->where('product_variant_id',$variant->id)
+            ->value('stock_qty') ?? 0;
+
+        $short = $needed - $stockQty;
+
+        $packagingAnalysis[$date][$productName][] = [
+         'variant' => $variant->name,
+         'needed' => $needed,
+         'stock' => $stockQty,
+         'short' => $short
+      ];
+    }
+}
+
         $histories = DB::table('packaging_movements')
     ->join('products', 'products.id', '=', 'packaging_movements.product_id')
     ->join('product_variants', 'product_variants.id', '=', 'packaging_movements.product_variant_id')
@@ -82,7 +199,8 @@ class PackagingController extends Controller
     'stocks',
     'histories',
     'daily',
-    'groupedStocks'
+    'groupedStocks',
+    'packagingAnalysis'
 ));
 }
 

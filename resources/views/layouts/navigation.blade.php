@@ -49,7 +49,12 @@
                     <x-nav-link :href="route('product-variants.index')" :active="request()->routeIs('product-variants.*')">
                     Varian Produk
                     </x-nav-link>
+
+                    <x-nav-link href="/recipes" :active="request()->is('recipes*')">
+                    Recipe Pack
+                    </x-nav-link>
                     @endif
+
 
                     <x-nav-link :href="route('cash-sales.create')" :active="request()->routeIs('cash-sales.*')">
                         Penjualan Tunai
@@ -157,6 +162,10 @@
             @if(auth()->user()->role === 'admin')
             <x-responsive-nav-link :href="route('product-variants.index')" :active="request()->routeIs('product-variants.*')">
                Varian Produk
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link href="/recipes" :active="request()->is('recipes*')">
+            Recipe Pack
             </x-responsive-nav-link>
             @endif
 

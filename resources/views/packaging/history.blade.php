@@ -47,7 +47,13 @@
                     </td>
 
                     <td class="p-2 border font-semibold">
+                        @if($h->type == 'out')
+                        -{{ abs($h->quantity) }}
+                        @elseif($h->type == 'in' || $h->type == 'return')
+                        +{{ abs($h->quantity) }}
+                        @elseif($h->type == 'adjustment')
                         {{ $h->quantity > 0 ? '+' : '' }}{{ $h->quantity }}
+                        @endif
                     </td>
 
                 </tr>

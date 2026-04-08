@@ -447,8 +447,16 @@ Route::middleware(['auth'])->group(function () {
 
     Route::delete('/product-variants/{id}', [\App\Http\Controllers\ProductVariantController::class, 'destroy'])->name('product-variants.destroy');
 
+    /*
+    |--------------------------------------------------------------------------
+    | KOMPOSISI PRODUK PACK (ADMIN ONLY)
+    |--------------------------------------------------------------------------
+    */
 
-        /*
+    Route::get('/recipes', [App\Http\Controllers\RecipeController::class, 'index']);
+    Route::post('/recipes/store', [App\Http\Controllers\RecipeController::class, 'store']);
+
+/*
 |--------------------------------------------------------------------------
 | STOCK OPNAME (ADMIN ONLY)
 |--------------------------------------------------------------------------

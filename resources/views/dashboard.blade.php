@@ -339,6 +339,17 @@ else{
             'emoji'=>'📦'
         ],
 
+        // ================= ORDER ONLINE =================
+
+        [
+            'route'=>'/online-orders/create',
+            'label'=>'Order Online',
+            'tag'=>'Online',
+            'color'=>'bg-amber-600 hover:bg-amber-700',
+            'emoji'=>'🛍️',
+            'roles'=>['admin','admin_gudang']
+        ],
+
         // ================= RISIKO =================
         [
             'route'=>'kasbons.index',
@@ -404,7 +415,8 @@ else{
                 'productions.create',
                 'stock.requests.create',
                 'packaging.index',
-                'warehouse.index'
+                'warehouse.index',
+                '/online-orders/create'
             ]);
         })->values()->toArray();
     }

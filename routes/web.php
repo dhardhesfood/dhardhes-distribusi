@@ -26,6 +26,9 @@ use App\Http\Controllers\MissionController;
 use App\Http\Controllers\AIController;
 use App\Http\Controllers\ProductionRunController;
 use App\Http\Controllers\PackagingController;
+use App\Http\Controllers\WarehouseController;
+use App\Http\Controllers\OnlineOrderController;
+use App\Http\Controllers\PackageTemplateController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -85,6 +88,25 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/areas', [AreaController::class, 'store'])
     ->name('areas.store');
 
+    /*
+    |--------------------------------------------------------------------------
+    | ORDER ONLINE
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/online-orders/create', [OnlineOrderController::class, 'create']);
+    Route::get('/online-orders/template/{id}', [OnlineOrderController::class, 'getTemplateItems']);
+    Route::post('/online-orders/store', [OnlineOrderController::class, 'store']);
+    
+    Route::get('/package-templates', [PackageTemplateController::class, 'index']);
+    Route::get('/package-templates/create', [PackageTemplateController::class, 'create']);
+    Route::post('/package-templates/store', [PackageTemplateController::class, 'store']);
+    Route::get('/package-templates/variants/{id}', [PackageTemplateController::class, 'getVariants']);
+    Route::delete('/package-templates/{id}', [PackageTemplateController::class, 'destroy']);
+        
+
+    
+  
 
 
     /*
@@ -207,7 +229,16 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/warehouse/ready-packs', 
     [\App\Http\Controllers\WarehouseController::class, 'updateReadyPacks'])
     ->name('warehouse.ready_packs.update');
+
+    Route::get('/warehouse/convert/{product}', [WarehouseController::class, 'convertForm'])->name('warehouse.convert.form');
+    Route::post('/warehouse/convert/{product}', [WarehouseController::class, 'convertProcess'])->name('warehouse.convert.process');
     
+    Route::get('/warehouse/convert-offline/{product}', [WarehouseController::class, 'convertOfflineForm'])
+    ->name('warehouse.convert.offline.form');
+
+    Route::post('/warehouse/convert-offline/{product}', [WarehouseController::class, 'convertToOffline'])
+    ->name('warehouse.convert.offline');
+
     /*
     |--------------------------------------------------------------------------
     | WAREHOUSE → SALES TRANSFER
@@ -302,6 +333,8 @@ Route::middleware(['auth'])->group(function () {
         ->get(['id','name']);
 
         });
+
+    
 
     /*
     |--------------------------------------------------------------------------
@@ -447,6 +480,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::delete('/product-variants/{id}', [\App\Http\Controllers\ProductVariantController::class, 'destroy'])->name('product-variants.destroy');
 
+    
     /*
     |--------------------------------------------------------------------------
     | KOMPOSISI PRODUK PACK (ADMIN ONLY)

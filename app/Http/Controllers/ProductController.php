@@ -26,6 +26,7 @@ class ProductController extends Controller
             'default_selling_price'   => 'required|numeric|min:0',
             'default_fee_nominal'     => 'required|numeric|min:0',
             'warehouse_price'         => 'required|numeric|min:0',
+            'channel_type' => 'required|in:offline,online',
         ]);
 
         Product::create([
@@ -36,6 +37,7 @@ class ProductController extends Controller
             'warehouse_price'         => $validated['warehouse_price'],
             'unit'                    => 'Pcs',
             'is_active'               => 1,
+            'channel_type' => $validated['channel_type'],
         ]);
 
         return redirect()->route('products.index')
@@ -59,6 +61,7 @@ class ProductController extends Controller
             'default_fee_nominal'     => 'required|numeric|min:0',
             'warehouse_price'         => 'required|numeric|min:0',
             'is_active'               => 'nullable|boolean',
+            'channel_type' => 'required|in:offline,online',
         ]);
 
         $product->update([
@@ -68,6 +71,7 @@ class ProductController extends Controller
             'default_fee_nominal'     => $validated['default_fee_nominal'],
             'warehouse_price'         => $validated['warehouse_price'],
             'is_active'               => $request->boolean('is_active'),
+            'channel_type' => 'required|in:offline,online',
         ]);
 
         return redirect()->route('products.index')

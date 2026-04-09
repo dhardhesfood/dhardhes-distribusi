@@ -57,6 +57,19 @@
                        style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;">
             </div>
 
+            <div style="margin-bottom:20px;">
+    <label>Channel Produk</label><br>
+    <select name="channel_type"
+            style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;">
+        <option value="offline" {{ old('channel_type') == 'offline' ? 'selected' : '' }}>
+            OFFLINE
+        </option>
+        <option value="online" {{ old('channel_type') == 'online' ? 'selected' : '' }}>
+            ONLINE
+        </option>
+    </select>
+</div>
+
             <div>
                 <button type="submit"
                         style="background:#2563eb;color:white;padding:12px 20px;border-radius:10px;font-weight:600;border:none;">

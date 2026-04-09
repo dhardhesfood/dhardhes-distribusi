@@ -53,6 +53,11 @@
                     <x-nav-link href="/recipes" :active="request()->is('recipes*')">
                     Recipe Pack
                     </x-nav-link>
+
+                    <x-nav-link :href="url('/package-templates')" :active="request()->is('package-templates*')">
+                    Master Paket
+                    </x-nav-link>
+
                     @endif
 
 
@@ -166,6 +171,10 @@
 
             <x-responsive-nav-link href="/recipes" :active="request()->is('recipes*')">
             Recipe Pack
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="url('/package-templates')" :active="request()->is('package-templates*')">
+            Master Paket
             </x-responsive-nav-link>
             @endif
 

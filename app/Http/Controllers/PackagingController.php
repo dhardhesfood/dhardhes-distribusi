@@ -112,8 +112,6 @@ $packagingAnalysis = [];
 
 foreach($fifo as $row){
 
-    if($row['short'] <= 0) continue;
-
     $date = $row['date'];
     $productId = $row['product_id'];
     $productName = $row['product'];
@@ -154,6 +152,10 @@ foreach($fifo as $row){
       ];
     }
 }
+
+ksort($packagingAnalysis);
+
+
 
         $histories = DB::table('packaging_movements')
     ->join('products', 'products.id', '=', 'packaging_movements.product_id')

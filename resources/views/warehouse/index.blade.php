@@ -67,6 +67,16 @@ name="ready_packs[{{ $stock->id }}]"
 value="{{ $stock->ready_pack ?? 0 }}"
 class="border rounded p-1 w-24 text-center">
 
+{{-- 🔥 TOMBOL CONVERT (ADMIN ONLY + OFFLINE ONLY) --}}
+@if(auth()->user()->role === 'admin' && ($stock->channel_type ?? 'offline') === 'offline')
+<div class="mt-2">
+    <a href="{{ route('warehouse.convert.form', $stock->id) }}"
+       style="font-size:12px;background:#2563eb;color:white;padding:4px 8px;border-radius:6px;text-decoration:none;">
+        Convert
+    </a>
+</div>
+@endif
+
 </td>
 
 </tr>
@@ -89,6 +99,64 @@ Update Ready Pack
 </form>
 
             </table>
+
+            <hr class="my-6">
+
+<h3 class="text-lg font-semibold mb-3">Gudang Online (Detail Varian)</h3>
+
+<table class="w-full border border-gray-300">
+    <thead class="bg-gray-100">
+        <tr>
+            <th class="p-2 border text-left">Produk</th>
+            <th class="p-2 border text-left">Varian</th>
+            <th class="p-2 border text-right">Stok</th>
+            <th class="p-2 border text-center">Aksi</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+    @forelse($onlineStocks as $row)
+
+    <tr>
+        <td class="p-2 border">
+            {{ $row->product_name }}
+        </td>
+
+        <td class="p-2 border">
+            {{ $row->variant_name }}
+        </td>
+
+        <td class="p-2 border text-right font-semibold">
+            {{ number_format($row->stock_qty) }}
+        </td>
+
+        <td class="p-2 border text-center">
+
+@if(auth()->user()->role === 'admin')
+    <a href="{{ route('warehouse.convert.offline.form', $row->product_id) }}"
+       style="background:#dc2626;color:white;padding:4px 10px;border-radius:6px;font-size:12px;text-decoration:none;">
+        Balik
+    </a>
+@endif
+
+</td>
+    </tr>
+
+    @empty
+
+    <tr>
+        <td colspan="3" class="text-center py-4 text-gray-500">
+            Belum ada stok online
+        </td>
+        
+    </tr>
+
+    @endforelse
+
+    </tbody>
+    
+</table>
 
                 <div class="mt-6 space-y-3">
 

@@ -53,6 +53,8 @@ try {
 
         DB::transaction(function () use ($request) {
 
+        $product = Product::findOrFail($request->product_id);
+
             $filteredVariants = collect($request->variants)
                 ->filter(function ($v) {
                     return isset($v['qty']) && $v['qty'] > 0;
@@ -102,6 +104,32 @@ foreach ($filteredVariants as $variant) {
                     'quantity' => $variant['qty'],
                 ]);
             }
+
+            // 🔥 TAMBAH GUDANG ONLINE (VARIANT LEVEL)
+if ($product->channel_type === 'online') {
+
+    foreach ($filteredVariants as $variant) {
+
+        $existing = DB::table('warehouse_variant_stocks')
+            ->where('product_id', $request->product_id)
+            ->where('product_variant_id', $variant['id'])
+            ->first();
+
+        if ($existing) {
+            DB::table('warehouse_variant_stocks')
+                ->where('id', $existing->id)
+                ->increment('stock_qty', $variant['qty']);
+        } else {
+            DB::table('warehouse_variant_stocks')->insert([
+                'product_id' => $request->product_id,
+                'product_variant_id' => $variant['id'],
+                'stock_qty' => $variant['qty'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+}
 
             // 2. Tambah stok gudang (ledger)
             StockMovement::create([
@@ -156,6 +184,19 @@ foreach ($filteredVariants as $variant) {
             $production = ProductionBatch::findOrFail($id);
 
             $items = ProductionBatchItem::where('production_batch_id', $production->id)->get();
+
+            $product = Product::find($production->product_id);
+
+             if ($product && $product->channel_type === 'online') {
+
+             foreach ($items as $item) {
+
+            DB::table('warehouse_variant_stocks')
+            ->where('product_id', $production->product_id)
+            ->where('product_variant_id', $item->product_variant_id)
+            ->decrement('stock_qty', $item->quantity);
+        }
+    }
 
             // 1. BALIKKAN STOK (WAJIB)
             StockMovement::create([

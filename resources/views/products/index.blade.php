@@ -33,6 +33,7 @@
             <th style="padding:12px;text-align:right;">Harga Jual</th>
             <th style="padding:12px;text-align:right;">Fee</th>
             <th style="padding:12px;text-align:right;">Warehouse Price</th>
+            <th style="padding:12px;text-align:center;">Channel</th>
             <th style="padding:12px;text-align:center;">Aksi</th>
         </tr>
     </thead>
@@ -60,6 +61,14 @@
             <td style="padding:12px;text-align:right;">
                 Rp {{ number_format($product->warehouse_price,0,',','.') }}
             </td>
+
+            <td style="padding:12px;text-align:center;">
+    @if($product->channel_type == 'online')
+        <span style="color:#2563eb;font-weight:600;">ONLINE</span>
+    @else
+        <span style="color:#6b7280;">OFFLINE</span>
+    @endif
+</td>
 
             <td style="padding:12px;text-align:center;">
                 <a href="{{ route('products.edit', $product->id) }}"

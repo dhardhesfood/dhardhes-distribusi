@@ -55,6 +55,21 @@
             </div>
 
             <div style="margin-bottom:20px;">
+    <label>Channel Produk</label><br>
+    <select name="channel_type"
+            style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;">
+        <option value="offline"
+            {{ old('channel_type', $product->channel_type) == 'offline' ? 'selected' : '' }}>
+            OFFLINE
+        </option>
+        <option value="online"
+            {{ old('channel_type', $product->channel_type) == 'online' ? 'selected' : '' }}>
+            ONLINE
+        </option>
+    </select>
+</div>
+
+            <div style="margin-bottom:20px;">
                 <label>
                     <input type="checkbox" name="is_active" value="1"
                         {{ old('is_active', $product->is_active) ? 'checked' : '' }}>

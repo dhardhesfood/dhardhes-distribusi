@@ -28,6 +28,14 @@ class ReceivableController extends Controller
         }
 
         $receivables = $query
+            ->orderByRaw("
+             CASE 
+             WHEN status = 'unpaid' THEN 1
+             WHEN status = 'partial' THEN 2
+             WHEN status = 'paid' THEN 3
+             ELSE 4
+             END
+             ")
             ->orderBy('due_date', 'asc')
             ->get()
             ->map(function ($item) {

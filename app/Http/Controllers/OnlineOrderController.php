@@ -233,7 +233,7 @@ public function destroy($id)
         ]);
     }
 }
-private function simulateStock()
+public function simulateStock()
 {
     /*
     =========================
@@ -368,9 +368,11 @@ if ($request->status == 'done') {
 
                 foreach ($items as $item) {
 
-                    DB::table('warehouse_variant_stocks')
-                        ->where('product_variant_id', $item->product_variant_id)
-                        ->decrement('stock_qty', $item->qty);
+                    $this->updateWarehouseStock(
+                    $item->product_variant_id,
+                    $item->qty,
+                    'decrement'
+                    );
                 }
 
                 DB::table('online_orders')->where('id', $id)->update([
@@ -395,9 +397,11 @@ if ($request->status == 'done') {
 
                 foreach ($items as $item) {
 
-                    DB::table('warehouse_variant_stocks')
-                        ->where('product_variant_id', $item->product_variant_id)
-                        ->increment('stock_qty', $item->qty);
+                    $this->updateWarehouseStock(
+                    $item->product_variant_id,
+                    $item->qty,
+                    'increment'
+                    );
                 }
 
                 DB::table('online_orders')->where('id', $id)->update([
@@ -430,6 +434,35 @@ if ($request->status == 'done') {
     $this->simulateStock();
 
     return back()->with('success', 'Status berhasil diupdate');
+}
+
+public function updateWarehouseStock($variantId, $qty, $type = 'set')
+{
+    DB::transaction(function () use ($variantId, $qty, $type) {
+
+        if ($type == 'set') {
+            DB::table('warehouse_variant_stocks')
+                ->where('product_variant_id', $variantId)
+                ->update([
+                    'stock_qty' => $qty
+                ]);
+        }
+
+        if ($type == 'increment') {
+            DB::table('warehouse_variant_stocks')
+                ->where('product_variant_id', $variantId)
+                ->increment('stock_qty', $qty);
+        }
+
+        if ($type == 'decrement') {
+            DB::table('warehouse_variant_stocks')
+                ->where('product_variant_id', $variantId)
+                ->decrement('stock_qty', $qty);
+        }
+    });
+
+    // 🔥 PENTING: AUTO REBUILD FIFO
+    $this->simulateStock();
 }
 
 }

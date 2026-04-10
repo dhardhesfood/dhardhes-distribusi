@@ -9,6 +9,7 @@ use App\Models\WarehouseNote;
 use App\Models\User;
 use App\Models\Notification;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\OnlineOrderController;
 
 class WarehouseController extends Controller
 {
@@ -253,9 +254,13 @@ public function convertProcess(Request $request, $productId)
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+            
         }
 
     });
+
+    app(OnlineOrderController::class)->simulateStock();
+
     // 🔥 AUTO SET PRODUCT JADI ONLINE
 DB::table('products')
     ->where('id', $productId)
@@ -321,6 +326,8 @@ public function convertToOffline($productId)
                 'channel_type' => 'offline'
             ]);
     });
+
+    app(OnlineOrderController::class)->simulateStock();
 
     return redirect()->route('warehouse.index')
         ->with('success', 'Stok berhasil dikembalikan ke offline');

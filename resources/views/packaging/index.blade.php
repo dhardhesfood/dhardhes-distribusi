@@ -36,64 +36,27 @@
 
 </div>
 
-{{-- 🔥 ANALISA KEBUTUHAN KEMASAN --}}
-@if(!empty($packagingAnalysis))
+<div class="bg-white p-4 rounded-xl shadow">
 
-<div class="space-y-4">
+    <h2 class="text-lg font-bold mb-3">Analisa Kebutuhan Kemasan</h2>
 
-    <h2 class="text-xl font-bold">Analisa Kebutuhan Kemasan</h2>
+    <div class="flex gap-3">
 
-    @foreach($packagingAnalysis as $date => $productGroups)
+        <!-- OFFLINE -->
+        <a href="/packaging/analysis-offline"
+           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+            Analisa Kemasan Offline
+        </a>
 
-        <div class="bg-white p-4 rounded-xl shadow">
+        <!-- ONLINE -->
+        <a href="/packaging/analysis-online"
+           class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+            Analisa Kemasan Order Online
+        </a>
 
-            <div class="font-bold text-lg mb-3">
-                📅 {{ \Carbon\Carbon::parse($date)->format('d-m-Y') }}
-            </div>
-
-            @foreach($productGroups as $productName => $items)
-
-                <div class="mb-4">
-
-                    <div class="font-semibold mb-2">
-                        {{ $productName }}
-                    </div>
-
-                    <div class="space-y-1">
-
-                        @foreach($items as $item)
-
-                            <div class="flex justify-between border-b py-1 text-sm">
-
-                                <div class="text-red-600">
-                                    {{ $item['variant'] }}
-                                </div>
-
-                                <div>
-                                    butuh {{ $item['needed'] }} |
-                                    stok {{ $item['stock'] }} |
-                                    <span class="{{ $item['short'] > 0 ? 'text-red-600 font-bold' : 'text-green-600' }}">
-                                        {{ $item['short'] > 0 ? 'kurang '.$item['short'] : 'cukup' }}
-                                    </span>
-                                </div>
-
-                            </div>
-
-                        @endforeach
-
-                    </div>
-
-                </div>
-
-            @endforeach
-
-        </div>
-
-    @endforeach
+    </div>
 
 </div>
-
-@endif
 
     <!-- CARD INPUT -->
     <div class="bg-white p-6 rounded-xl shadow">

@@ -7,20 +7,32 @@
 
     <!-- HEADER -->
     <div class="flex justify-between items-center mb-6">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800">
-                Order Online
-            </h2>
-            <p class="text-sm text-gray-500">
-                Buat order paket usaha (bisa custom)
-            </p>
-        </div>
+    <div>
+        <h2 class="text-2xl font-bold text-gray-800">
+            Order Online
+        </h2>
+        <p class="text-sm text-gray-500">
+            Buat order paket usaha (bisa custom)
+        </p>
+    </div>
 
+    <div class="flex gap-2">
+
+        <!-- 🔥 CEK ORDER -->
+        <a href="/online-orders"
+           class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow">
+            Cek Order
+        </a>
+
+        <!-- KEMBALI -->
         <a href="{{ url('/dashboard') }}"
            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded shadow">
             Kembali
         </a>
+
     </div>
+</div>
+        
 
     <!-- SUCCESS -->
     @if(session('success'))
@@ -34,6 +46,14 @@
         @csrf
 
         <!-- CUSTOMER -->
+         <div class="mb-4">
+    <label class="block text-sm font-semibold mb-1">Tanggal Order</label>
+    <input type="date" name="order_date"
+        class="w-full border border-gray-300 rounded-lg px-3 py-2"
+        value="{{ date('Y-m-d') }}"
+        required>
+        </div>
+        
         <div class="mb-4">
             <label class="block text-sm font-semibold mb-1">Nama Customer</label>
             <input type="text" name="customer_name"
@@ -44,7 +64,7 @@
         <!-- TEMPLATE -->
         <div class="mb-4">
             <label class="block text-sm font-semibold mb-1">Pilih Paket</label>
-            <select id="template"
+            <select id="template" name="template_id"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white focus:ring focus:ring-blue-200">
                 <option value="">-- Pilih Paket --</option>
                 @foreach($templates as $t)

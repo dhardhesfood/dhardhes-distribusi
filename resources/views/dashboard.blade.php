@@ -342,7 +342,7 @@ else{
         // ================= ORDER ONLINE =================
 
         [
-            'route'=>'/online-orders/create',
+            'route'=>'/online-orders',
             'label'=>'Order Online',
             'tag'=>'Online',
             'color'=>'bg-amber-600 hover:bg-amber-700',

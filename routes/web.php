@@ -94,15 +94,24 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     */
 
+    Route::get('/online-orders', [OnlineOrderController::class, 'index']);
     Route::get('/online-orders/create', [OnlineOrderController::class, 'create']);
     Route::get('/online-orders/template/{id}', [OnlineOrderController::class, 'getTemplateItems']);
     Route::post('/online-orders/store', [OnlineOrderController::class, 'store']);
+    Route::post('/online-orders/{id}/update-status', [OnlineOrderController::class, 'updateStatus']);
+
+    Route::get('/online-orders/{id}/edit', [OnlineOrderController::class, 'edit']);
+    Route::put('/online-orders/{id}', [OnlineOrderController::class, 'update']);
+    Route::delete('/online-orders/{id}', [OnlineOrderController::class, 'destroy']);
     
     Route::get('/package-templates', [PackageTemplateController::class, 'index']);
     Route::get('/package-templates/create', [PackageTemplateController::class, 'create']);
     Route::post('/package-templates/store', [PackageTemplateController::class, 'store']);
     Route::get('/package-templates/variants/{id}', [PackageTemplateController::class, 'getVariants']);
     Route::delete('/package-templates/{id}', [PackageTemplateController::class, 'destroy']);
+
+    Route::get('/packaging/analysis-offline', [PackagingController::class, 'analysisOffline']);
+    Route::get('/packaging/analysis-online', [PackagingController::class, 'analysisOnline']);
         
 
     

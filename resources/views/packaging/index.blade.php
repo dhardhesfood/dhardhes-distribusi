@@ -117,6 +117,17 @@
         </form>
     </div>
 
+     <!-- HISTORY -->
+        <div class="mt-6">
+            <div class="mt-6">
+       <a href="{{ route('packaging.history') }}"
+       class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+        Lihat History Stok Kemasan
+       </a>
+       </div>
+
+        </div>
+
     <!-- TABLE -->
     <div class="bg-white p-6 rounded-xl shadow">
 
@@ -221,6 +232,29 @@
         <div class="mt-6">
             <h3 class="text-lg font-bold mb-3">Produksi Harian</h3>
 
+            <form method="GET" class="flex gap-2 mb-4">
+
+    <!-- FILTER TAHUN -->
+    <select name="year" class="border rounded p-2">
+        @for($y = now()->year; $y >= now()->year - 3; $y--)
+            <option value="{{ $y }}" {{ request('year', now()->year) == $y ? 'selected' : '' }}>
+                {{ $y }}
+            </option>
+        @endfor
+    </select>
+
+    <!-- FILTER BULAN -->
+    <select name="month" onchange="this.form.submit()" class="border rounded p-2">
+        <option value="">-- Pilih Bulan --</option>
+        @for($m=1; $m<=12; $m++)
+            <option value="{{ $m }}" {{ request('month', now()->month) == $m ? 'selected' : '' }}>
+                {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+            </option>
+        @endfor
+    </select>
+
+</form>
+
             <table class="w-full text-sm border border-gray-200">
                 <thead>
                     <tr class="bg-gray-100">
@@ -241,17 +275,6 @@
                     @endforeach
                 </tbody>
             </table>
-        </div>
-
-        <!-- HISTORY -->
-        <div class="mt-6">
-            <div class="mt-6">
-    <a href="{{ route('packaging.history') }}"
-       class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-        Lihat History Stok Kemasan
-    </a>
-</div>
-
         </div>
 
     </div>

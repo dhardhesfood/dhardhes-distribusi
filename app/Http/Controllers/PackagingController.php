@@ -12,8 +12,8 @@ class PackagingController extends Controller
     public function index()
 {
     $products = Product::where('is_active', true)->get();
-    $month = request('month');
-    $year = request('year') ?? now()->year;
+    $month = request('month', now()->month); // 🔥 default bulan sekarang
+    $year = request('year', now()->year);
 
     // 🔥 AMBIL STOK KEMASAN
     $stocks = DB::table('product_variants')

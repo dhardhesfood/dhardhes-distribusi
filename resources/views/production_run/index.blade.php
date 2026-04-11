@@ -284,8 +284,8 @@
         <input type="hidden" name="month" value="{{ $selectedMonth }}">
         <input type="hidden" name="year" value="{{ $selectedYear }}">
 
-        <button class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded">
-            🔒 Lock Reward Bulan Ini
+        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+        🔒 Lock Reward Bulan Ini
         </button>
     </form>
 

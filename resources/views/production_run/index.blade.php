@@ -200,6 +200,136 @@
         Ringkasan Upah Bulan Ini
     </h3>
 
+    <!-- 🔥 REWARD BULANAN -->
+<div class="bg-yellow-50 border border-yellow-300 p-4 rounded mb-4">
+
+    <h4 class="font-bold text-lg mb-2">🎁 Reward Bulanan</h4>
+
+    <div class="bg-white border border-gray-200 p-3 rounded mb-3 text-sm">
+
+    <div class="font-semibold mb-2 text-gray-700">
+        🎯 Target Reward Bulanan:
+    </div>
+
+    <ul class="list-disc pl-5 space-y-1">
+        <li>800.000 gram → <b>Rp 50.000</b></li>
+        <li>1.000.000 gram → <b>Rp 100.000</b></li>
+        <li>1.300.000 gram → <b>Rp 150.000</b></li>
+        <li>1.600.000 gram → <b>Rp 250.000</b></li>
+    </ul>
+
+    <div class="mt-3 text-gray-700">
+        💡 <b>Semakin tinggi produksi, semakin besar bonus yang didapat.</b>
+    </div>
+
+    <div class="mt-2 text-red-600 font-semibold">
+        ⚠ Reward hanya dihitung jika target tercapai.
+    </div>
+
+</div>
+
+    <div class="text-sm mb-2">
+        <b>Total Produksi:</b> {{ number_format($totalGram) }} gram
+    </div>
+
+    <div class="text-sm mt-2 mb-4">
+
+    @if($totalGram < 800000)
+        <span class="text-red-600 font-semibold">
+            🚨 Target pertama belum tercapai. Ayo tingkatkan produksi!
+        </span>
+    @elseif($totalGram < 1000000)
+        <span class="text-yellow-600 font-semibold">
+            🔥 Sedikit lagi tembus 1 juta gram!
+        </span>
+    @elseif($totalGram < 1300000)
+        <span class="text-blue-600 font-semibold">
+            💪 Mantap! Tinggal dorong lagi ke 1.3 juta!
+        </span>
+    @elseif($totalGram < 1600000)
+        <span class="text-green-600 font-semibold">
+            🚀 Hampir maksimal! Gas ke 1.6 juta!
+        </span>
+    @else
+        <span class="text-green-700 font-bold">
+            🏆 Target tertinggi tercapai! Pertahankan!
+        </span>
+    @endif
+
+</div>
+
+    <div class="text-sm mb-2">
+        <b>Reward:</b> 
+        <span class="font-bold text-green-600">
+            Rp {{ number_format($rewardAmount) }}
+        </span>
+    </div>
+
+    <div class="text-sm mb-3">
+        <b>Status:</b> 
+        @if($isLocked)
+            <span class="text-green-600 font-semibold">Terkunci</span>
+        @else
+            <span class="text-yellow-600 font-semibold">Belum Dikunci</span>
+        @endif
+    </div>
+
+    @auth
+    @if(auth()->user()->role === 'admin')
+       @if(!$isLocked)
+
+    <!-- 🔒 LOCK -->
+    <form method="POST" action="{{ route('production-reward.lock') }}">
+        @csrf
+        <input type="hidden" name="month" value="{{ $selectedMonth }}">
+        <input type="hidden" name="year" value="{{ $selectedYear }}">
+
+        <button class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded">
+            🔒 Lock Reward Bulan Ini
+        </button>
+    </form>
+
+@else
+
+    <!-- STATUS BAYAR -->
+    <div class="mb-3">
+        <b>Status Pembayaran:</b>
+        @if($isPaid)
+            <span class="text-green-600 font-semibold">Sudah Dibayar</span>
+        @else
+            <span class="text-red-600 font-semibold">Belum Dibayar</span>
+        @endif
+    </div>
+
+    @if(!$isPaid)
+    <!-- 💰 BAYAR -->
+    <form method="POST" action="{{ route('production-reward.pay') }}" class="mb-2">
+        @csrf
+        <input type="hidden" name="month" value="{{ $selectedMonth }}">
+        <input type="hidden" name="year" value="{{ $selectedYear }}">
+
+        <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+            💰 Tandai Sudah Dibayar
+        </button>
+    </form>
+    @endif
+
+    <!-- 🔓 UNLOCK -->
+    <form method="POST" action="{{ route('production-reward.unlock') }}">
+        @csrf
+        <input type="hidden" name="month" value="{{ $selectedMonth }}">
+        <input type="hidden" name="year" value="{{ $selectedYear }}">
+
+        <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">
+            🔓 Buka Kunci Reward
+        </button>
+    </form>
+
+@endif
+</div>
+@endif
+@endauth
+
     <table class="w-full text-sm border border-gray-200">
         <tr class="bg-gray-100">
             <th class="p-3 border text-left">Total Upah</th>

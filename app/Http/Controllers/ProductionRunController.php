@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Services\ProductionService;
 use App\Models\WorkerWithdrawal;
+use Illuminate\Support\Facades\DB;
 
 class ProductionRunController extends Controller
 {
@@ -44,6 +45,43 @@ $withdrawals = WorkerWithdrawal::whereMonth('withdraw_date', $selectedMonth)
     ->latest()
     ->get();
 
+    // =========================
+// 🔥 REWARD LOGIC
+// =========================
+$totalGram = $runs->sum('output_gram');
+
+// cek apakah sudah di-lock
+$rewardData = DB::table('production_rewards')
+    ->where('month', $selectedMonth)
+    ->where('year', $selectedYear)
+    ->first();
+
+if ($rewardData && $rewardData->is_locked) {
+
+    // 🔒 pakai data yang sudah dikunci
+    $rewardAmount = $rewardData->reward_amount;
+    $isLocked = true;
+    $isPaid = $rewardData->is_paid;
+
+} else {
+
+    // 🔥 hitung realtime (REAL MODE)
+    if ($totalGram >= 1600000) {
+        $rewardAmount = 250000;
+    } elseif ($totalGram >= 1300000) {
+        $rewardAmount = 150000;
+    } elseif ($totalGram >= 1000000) {
+        $rewardAmount = 100000;
+    } elseif ($totalGram >= 800000) {
+        $rewardAmount = 50000;
+    } else {
+        $rewardAmount = 0;
+    }
+
+    $isLocked = false;
+    $isPaid = false;
+}
+
     return view('production_run.index', compact(
         'products',
         'runs',
@@ -52,7 +90,11 @@ $withdrawals = WorkerWithdrawal::whereMonth('withdraw_date', $selectedMonth)
         'sisa',
         'withdrawals',
         'selectedMonth',
-        'selectedYear'
+        'selectedYear',
+        'totalGram',
+        'rewardAmount',
+        'isLocked',
+        'isPaid'
     ));
 }
 
@@ -199,6 +241,119 @@ public function destroy($id)
     $run->delete();
 
     return back()->with('success','Data berhasil dihapus');
+}
+
+public function lockReward(Request $request)
+{
+    $month = (int) $request->month;
+    $year  = (int) $request->year;
+
+    // 🔒 cek sudah ada & sudah lock
+    $existing = DB::table('production_rewards')
+        ->where('month', $month)
+        ->where('year', $year)
+        ->first();
+
+    if ($existing && $existing->is_locked) {
+        return back()->with('error', 'Reward bulan ini sudah dikunci.');
+    }
+
+    // 🔥 hitung total produksi (pakai created_at sesuai keputusan)
+    $totalGram = \App\Models\ProductionRun::whereMonth('created_at', $month)
+        ->whereYear('created_at', $year)
+        ->sum('output_gram');
+
+    // 🔥 hitung reward (REAL MODE)
+    if ($totalGram >= 1600000) {
+        $rewardAmount = 250000;
+    } elseif ($totalGram >= 1300000) {
+        $rewardAmount = 150000;
+    } elseif ($totalGram >= 1000000) {
+        $rewardAmount = 100000;
+    } elseif ($totalGram >= 800000) {
+        $rewardAmount = 50000;
+    } else {
+        $rewardAmount = 0;
+    }
+
+    // 🔥 simpan / update
+    DB::table('production_rewards')->updateOrInsert(
+        [
+            'month' => $month,
+            'year'  => $year,
+        ],
+        [
+            'total_gram'    => $totalGram,
+            'reward_amount' => $rewardAmount,
+            'is_locked'     => true,
+            'locked_at'     => now(),
+            'updated_at'    => now(),
+            'created_at'    => now(),
+        ]
+    );
+
+    return back()->with('success', 'Reward berhasil dikunci.');
+}
+
+public function payReward(Request $request)
+{
+    $month = (int) $request->month;
+    $year  = (int) $request->year;
+
+    $reward = DB::table('production_rewards')
+        ->where('month', $month)
+        ->where('year', $year)
+        ->first();
+
+    if (!$reward || !$reward->is_locked) {
+        return back()->with('error', 'Reward belum dikunci.');
+    }
+
+    if ($reward->is_paid) {
+        return back()->with('error', 'Reward sudah dibayar.');
+    }
+
+    DB::table('production_rewards')
+        ->where('month', $month)
+        ->where('year', $year)
+        ->update([
+            'is_paid' => true,
+            'paid_at' => now(),
+            'updated_at' => now()
+        ]);
+
+    return back()->with('success', 'Reward berhasil ditandai sudah dibayar.');
+}
+
+public function unlockReward(Request $request)
+{
+    $month = (int) $request->month;
+    $year  = (int) $request->year;
+
+    $reward = DB::table('production_rewards')
+        ->where('month', $month)
+        ->where('year', $year)
+        ->first();
+
+    if (!$reward) {
+        return back()->with('error', 'Data reward tidak ditemukan.');
+    }
+
+    DB::table('production_rewards')
+        ->where('month', $month)
+        ->where('year', $year)
+        ->update([
+    'is_locked' => false,
+    'locked_at' => null,
+
+    // 🔥 RESET PEMBAYARAN
+    'is_paid' => false,
+    'paid_at' => null,
+
+    'updated_at' => now()
+]);
+
+    return back()->with('success', 'Reward berhasil dibuka kembali.');
 }
 
 }

@@ -74,7 +74,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/produksi-mie/store', [ProductionRunController::class, 'store'])->name('production-run.store');
     Route::post('/produksi-mie/withdraw', [ProductionRunController::class, 'withdraw'])->name('production-run.withdraw');
     Route::post('/withdraw/approve/{id}', [ProductionRunController::class, 'approve'])->name('withdraw.approve');
+    Route::post('/production-reward/lock', [App\Http\Controllers\ProductionRunController::class, 'lockReward'])
+    ->name('production-reward.lock');
     
+    Route::post('/production-reward/pay', [App\Http\Controllers\ProductionRunController::class, 'payReward'])
+    ->name('production-reward.pay');
+
+    Route::post('/production-reward/unlock', [App\Http\Controllers\ProductionRunController::class, 'unlockReward'])
+    ->name('production-reward.unlock');
 
     Route::get('/areas/create', [AreaController::class, 'create'])
         ->name('areas.create');

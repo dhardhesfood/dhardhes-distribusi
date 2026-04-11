@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Carbon\Carbon;
 
 class OnlineOrderController extends Controller
 {
@@ -121,7 +123,7 @@ public function update(Request $request, $id)
 
         // rerun simulasi
         $this->simulateStock();
-
+        $this->sendWhatsAppNotification($orderId);
     
 
     return redirect('/online-orders')->with('success', 'Order berhasil diupdate');
@@ -179,9 +181,12 @@ public function destroy($id)
 
     // ✅ JALANKAN DI LUAR TRANSACTION
     $this->simulateStock();
+    $this->sendWhatsAppNotification($orderId);
+    
 
     // ⛔ MATIKAN DULU (biar aman)
-    // $this->simulatePackaging($orderId);
+    $this->simulatePackaging($orderId);
+    $this->sendPackagingNotification($orderId);
 
     return redirect('/online-orders/create')
         ->with('success', 'Order berhasil disimpan');
@@ -432,6 +437,8 @@ if ($request->status == 'done') {
 
     // 🔥 WAJIB: rerun FIFO
     $this->simulateStock();
+    $this->sendWhatsAppNotification($id);
+
 
     return back()->with('success', 'Status berhasil diupdate');
 }
@@ -463,6 +470,196 @@ public function updateWarehouseStock($variantId, $qty, $type = 'set')
 
     // 🔥 PENTING: AUTO REBUILD FIFO
     $this->simulateStock();
+    
+}
+
+private function sendWhatsAppNotification($orderId)
+{
+    $order = DB::table('online_orders as o')
+    ->leftJoin('package_templates as t', 't.id', '=', 'o.package_template_id')
+    ->where('o.id', $orderId)
+    ->select('o.*', 't.name as package_name')
+    ->first();
+
+    if (!$order) return;
+
+    // deadline H+1
+    $deadline = Carbon::parse($order->order_date)->addDay()->format('d-m-Y');
+
+    $orderItems = DB::table('online_order_items')
+    ->join('products', 'products.id', '=', 'online_order_items.product_id')
+    ->join('product_variants', 'product_variants.id', '=', 'online_order_items.product_variant_id')
+    ->where('online_order_id', $orderId)
+    ->select(
+        'products.name as product_name',
+        'product_variants.name as variant_name',
+        'qty'
+    )
+    ->get();
+
+    // FIFO PRODUK (GUDANG)
+    $checks = DB::table('online_order_item_checks')
+        ->join('products', 'products.id', '=', 'online_order_item_checks.product_id')
+        ->join('product_variants', 'product_variants.id', '=', 'online_order_item_checks.product_variant_id')
+        ->where('online_order_id', $orderId)
+        ->select(
+            'products.name as product_name',
+            'product_variants.name as variant_name',
+            'required_qty',
+            'available_qty',
+            'shortage_qty'
+        )
+        ->get();
+
+    if ($checks->isEmpty()) return;
+
+    // =========================
+    // FORMAT PESAN
+    // =========================
+$message = "📦 ORDER ONLINE BARU\n\n";
+$message .= "Customer: {$order->customer_name}\n";
+$message .= "Paket: " . ($order->package_name ?? '-') . "\n";
+$message .= "Tanggal: {$order->order_date}\n";
+$message .= "Deadline: {$deadline}\n\n";
+
+$message .= "🧾 DETAIL ORDER:\n";
+
+foreach ($orderItems as $item) {
+    $message .= "- {$item->product_name} {$item->variant_name} ({$item->qty} pcs)\n";
+}
+
+$message .= "\n📊 STATUS PRODUK:\n";
+
+    $hasShortage = false;
+
+    foreach ($checks as $c) {
+        if ($c->shortage_qty > 0) {
+            $hasShortage = true;
+            $message .= "- {$c->product_name} {$c->variant_name} ❌ kurang {$c->shortage_qty}\n";
+        } else {
+            $message .= "- {$c->product_name} {$c->variant_name} ✔ cukup\n";
+        }
+    }
+
+    if ($hasShortage) {
+    $message .= "\n⚠️ PRODUK KURANG → SEGERA PRODUKSI";
+    } else {
+    $message .= "\n✅ STOK AMAN → SIAP DIPROSES";
+    }$message .= $hasShortage
+        ? "\n⚠️ PERLU PRODUKSI"
+        : "\n✅ SIAP DIPROSES";
+
+    // =========================
+    // KIRIM WA TIM PRODUKSI
+    // =========================
+    $phones = [
+        '6287854527492@c.us',
+        '6288989393804@c.us', // BU WATI
+        '62895808077030@c.us', // BU INTAN
+        // tambah nomor lain
+    ];
+
+    foreach ($phones as $phone) {
+
+        try {
+            $response = Http::withHeaders([
+                'X-API-KEY' => 'c07522d03e6b4c8e91785b62e4e7676f'
+            ])->post('http://localhost:3000/api/sendText', [
+                'session' => 'MindhesRara',
+                'chatId' => $phone,
+                'text' => $message
+            ]);
+
+            // log response (biar kalau error kelihatan)
+            \Log::info('WA RESPONSE', [
+                'phone' => $phone,
+                'response' => $response->body()
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('WA ERROR', [
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+}
+
+private function sendPackagingNotification($orderId)
+{
+    $order = DB::table('online_orders')->where('id', $orderId)->first();
+    if (!$order) return;
+
+    $deadline = Carbon::parse($order->order_date)->addDay()->format('d-m-Y');
+    $orderItems = DB::table('online_order_items')
+    ->join('products', 'products.id', '=', 'online_order_items.product_id')
+    ->join('product_variants', 'product_variants.id', '=', 'online_order_items.product_variant_id')
+    ->where('online_order_id', $orderId)
+    ->select(
+        'products.name as product_name',
+        'product_variants.name as variant_name',
+        'qty'
+    )
+    ->get();
+
+    $items = DB::table('packaging_analysis_online')
+        ->join('products', 'products.id', '=', 'packaging_analysis_online.product_id')
+        ->join('product_variants', 'product_variants.id', '=', 'packaging_analysis_online.product_variant_id')
+        ->where('online_order_id', $orderId)
+        ->select(
+            'products.name as product_name',
+            'product_variants.name as variant_name',
+            'required_qty',
+            'shortage_qty',
+            'status'
+        )
+        ->get();
+
+    if ($items->isEmpty()) return;
+
+    $message = "📦 KEBUTUHAN KEMASAN\n\n";
+$message .= "Customer: {$order->customer_name}\n";
+$message .= "Deadline: {$deadline}\n\n";
+
+$message .= "🧾 DETAIL ORDER:\n";
+
+foreach ($orderItems as $item) {
+    $message .= "- {$item->product_name} {$item->variant_name} ({$item->qty} pcs)\n";
+}
+
+$message .= "\n📦 KEMASAN KURANG:\n";
+
+    $hasShortage = false;
+
+    foreach ($items as $item) {
+        if ($item->shortage_qty > 0) {
+            $hasShortage = true;
+            $message .= "- {$item->product_name} {$item->variant_name} ❌ kurang {$item->shortage_qty}\n";
+        }
+    }
+
+    if (!$hasShortage) return; // 🔥 kalau semua cukup, gak usah spam WA
+
+    $message .= "\n⚠️ SEGERA SIAPKAN KEMASAN";
+
+    // =========================
+    // KIRIM WA TIM KEMASAN
+    // =========================
+
+    $phones = [
+        '6287854527492@c.us',
+        '6289632217755@c.us', // Anam
+        '6282113101340@c.us', // Hafid
+    ];
+
+    foreach ($phones as $phone) {
+        Http::withHeaders([
+            'X-API-KEY' => 'c07522d03e6b4c8e91785b62e4e7676f'
+        ])->post('http://localhost:3000/api/sendText', [
+            'session' => 'MindhesRara',
+            'chatId' => $phone,
+            'text' => $message
+        ]);
+    }
 }
 
 }

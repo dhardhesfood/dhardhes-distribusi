@@ -60,6 +60,7 @@
 
     <!-- CARD INPUT -->
     <div class="bg-white p-6 rounded-xl shadow">
+        @if(auth()->user()->role !== 'admin_gudang')
         <h2 class="text-xl font-bold mb-4">Produksi Kemasan</h2>
 
         <form method="POST" action="{{ route('packaging.store') }}">
@@ -91,6 +92,7 @@
                 Simpan Kemasan
             </button>
         </form>
+        @endif
 
         <hr class="my-6">
 

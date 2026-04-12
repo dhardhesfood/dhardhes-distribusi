@@ -208,6 +208,9 @@ ksort($packagingAnalysis);
 
     public function store(Request $request)
     {
+        if(auth()->user()->role === 'admin_gudang'){
+        abort(403);
+    }
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'tanggal' => 'required|date',

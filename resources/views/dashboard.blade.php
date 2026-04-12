@@ -416,7 +416,7 @@ else{
                 'stock.requests.create',
                 'packaging.index',
                 'warehouse.index',
-                '/online-orders/create'
+                '/online-orders'
             ]);
         })->values()->toArray();
     }

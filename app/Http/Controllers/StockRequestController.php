@@ -297,6 +297,9 @@ foreach($grouped as $date => $rows){
 // PENUTUP HALUS
 $messageSales .= "🙏 Silakan menyesuaikan pengiriman dengan stok ready di gudang agar pengiriman tetap lancar\n";
 
+$messageSales .= "🔗 Untuk cek perubahan atau update stok silakan kunjungi *update stok untuk sales*:\n";
+$messageSales .= "https://distribusi.dhardhes.com/stock-requests/create\n";
+
 
 // =========================
 // KIRIM WA (WAHA)

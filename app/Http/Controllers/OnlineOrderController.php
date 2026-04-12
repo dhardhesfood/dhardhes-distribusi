@@ -553,7 +553,6 @@ $message .= "\n📊 STATUS PRODUK:\n";
     // KIRIM WA TIM PRODUKSI
     // =========================
     $phones = [
-        '6287854527492@c.us',
         '6288989393804@c.us', // BU WATI
         '62895808077030@c.us', // BU INTAN
         // tambah nomor lain
@@ -581,6 +580,9 @@ $message .= "\n📊 STATUS PRODUK:\n";
                 'message' => $e->getMessage()
             ]);
         }
+
+        // 🔥 TAMBAHAN JEDA AMAN
+    sleep(rand(1,2)); // 1–2 detik (random)
     }
 }
 
@@ -646,7 +648,6 @@ $message .= "\n📦 KEMASAN KURANG:\n";
     // =========================
 
     $phones = [
-        '6287854527492@c.us',
         '6289632217755@c.us', // Anam
         '6282113101340@c.us', // Hafid
     ];
@@ -659,6 +660,9 @@ $message .= "\n📦 KEMASAN KURANG:\n";
             'chatId' => $phone,
             'text' => $message
         ]);
+
+        // 🔥 TAMBAHAN JEDA AMAN
+    sleep(rand(1,2)); // 1–2 detik (random)
     }
 }
 

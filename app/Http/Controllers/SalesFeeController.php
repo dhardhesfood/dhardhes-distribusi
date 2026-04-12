@@ -283,6 +283,33 @@ $rewardAmount = $rewardStatus === 'gugur'
     ? 0
     : ($totalGeneratedMonthly * $rewardPercent / 100);
 
+// =========================
+// APPLY DISIPLIN REQUEST STOK
+// =========================
+$discipline = DB::table('sales_discipline_monthly')
+    ->where('user_id', $row->id)
+    ->where('month', $month)
+    ->where('year', $year)
+    ->first();
+
+$lateCount = $discipline ? $discipline->late_count : 0;
+
+$penaltyRate = 0;
+
+if ($lateCount >= 9) {
+    $penaltyRate = 30;
+} elseif ($lateCount >= 7) {
+    $penaltyRate = 20;
+} elseif ($lateCount >= 5) {
+    $penaltyRate = 10;
+} elseif ($lateCount >= 3) {
+    $penaltyRate = 5;
+}
+
+if ($rewardAmount > 0 && $penaltyRate > 0) {
+    $rewardAmount = $rewardAmount * (1 - ($penaltyRate / 100));
+}
+
 /*
 |--------------------------------------------------------------------------
 | CEK APAKAH REWARD BULAN INI SUDAH DI LOCK
@@ -685,8 +712,37 @@ public function lockReward(Request $request)
     // HITUNG FINAL REWARD
     // =========================
     $rewardAmount = $rewardStatus === 'gugur'
-        ? 0
-        : ($totalGeneratedMonthly * $rewardPercent / 100);
+    ? 0
+    : ($totalGenerated * $rewardPercent / 100);
+
+// =========================
+// APPLY DISIPLIN REQUEST STOK
+// =========================
+$discipline = DB::table('sales_discipline_monthly')
+    ->where('user_id', $s->id)
+    ->where('month', $month)
+    ->where('year', $year)
+    ->first();
+
+$lateCount = $discipline ? $discipline->late_count : 0;
+
+$penaltyRate = 0;
+
+if ($lateCount >= 9) {
+    $penaltyRate = 30;
+} elseif ($lateCount >= 7) {
+    $penaltyRate = 20;
+} elseif ($lateCount >= 5) {
+    $penaltyRate = 10;
+} elseif ($lateCount >= 3) {
+    $penaltyRate = 5;
+}
+
+if ($rewardAmount > 0 && $penaltyRate > 0) {
+    $rewardAmount = $rewardAmount * (1 - ($penaltyRate / 100));
+}
+
+
 
     // =========================
     // SIMPAN KE DB

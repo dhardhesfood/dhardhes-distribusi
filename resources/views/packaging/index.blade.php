@@ -158,6 +158,24 @@
 
 @forelse($groupedStocks as $productName => $variants)
 
+@php
+    $excludeProducts = [
+        'Mie Lidi Mentah 13-15 cm',
+        'Mie lidi 20gr'
+    ];
+
+    $isExcluded = false;
+
+    foreach ($excludeProducts as $exclude) {
+        if (str_contains($productName, $exclude)) {
+            $isExcluded = true;
+            break;
+        }
+    }
+@endphp
+
+@if(!$isExcluded)
+
 <div class="border rounded-lg p-4 shadow-sm">
 
     <!-- NAMA PRODUK -->
@@ -177,9 +195,27 @@
 
             <div class="flex items-center gap-2">
 
-                <div class="text-center w-10">
-                    {{ $v->stock_qty }}
-                </div>
+                @php
+                $qty = $v->stock_qty;
+
+                if ($qty == 0) {
+                $colorClass = 'bg-red-100 text-red-700 font-bold px-2 py-1 rounded';
+                } elseif ($qty < 20) {
+                $colorClass = 'bg-yellow-100 text-yellow-700 font-semibold px-2 py-1 rounded';
+                } else {
+                $colorClass = '';
+                }
+                @endphp
+
+<div class="text-center w-10 {{ $colorClass }} flex items-center justify-center gap-1">
+
+    @if($qty == 0)
+        <span>⚠️</span>
+    @endif
+
+    {{ $qty }}
+
+</div>
 
                 @if(auth()->user()->role === 'admin')
                 <form method="POST" action="{{ route('packaging.update') }}" class="flex items-center gap-1">
@@ -221,12 +257,14 @@
     </div>
 
 </div>
-
+@endif
 @empty
 <div class="text-center text-gray-500 py-4">
     Belum ada data produk
 </div>
+
 @endforelse
+
 
 </div>
 
@@ -267,14 +305,59 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($daily as $d)
-                        <tr class="border-t hover:bg-gray-50">
-                            <td class="p-2 border">{{ $d->tanggal }}</td>
-                            <td class="p-2 border">{{ $d->product_name }}</td>
-                            <td class="p-2 border text-red-600">{{ $d->variant_name }}</td>
-                            <td class="p-2 border text-green-600 font-semibold">{{ $d->total_qty }}</td>
-                        </tr>
-                    @endforeach
+                    @php
+    $groupedDaily = collect($daily)->groupBy('tanggal');
+@endphp
+
+@foreach($groupedDaily as $tanggal => $items)
+
+    <!-- HEADER TANGGAL -->
+    <tr class="bg-gray-200">
+        <td colspan="4" class="p-2 font-bold">
+            {{ $tanggal }}
+        </td>
+    </tr>
+
+    @php
+        $groupedProduct = collect($items)->groupBy('product_name');
+    @endphp
+
+    @foreach($groupedProduct as $productName => $variants)
+
+        <!-- HEADER PRODUK -->
+        @php $first = true; @endphp
+
+@foreach($variants as $d)
+<tr class="border-t hover:bg-gray-50">
+
+    <!-- TANGGAL -->
+    <td class="p-2 border pl-6"></td>
+
+    <!-- PRODUK (HANYA SEKALI) -->
+    <td class="p-2 border font-semibold">
+        @if($first)
+            {{ $productName }}
+        @endif
+    </td>
+
+    <!-- VARIAN -->
+    <td class="p-2 border text-red-600">
+        {{ $d->variant_name }}
+    </td>
+
+    <!-- QTY -->
+    <td class="p-2 border text-green-600 font-semibold">
+        {{ $d->total_qty }}
+    </td>
+
+</tr>
+
+@php $first = false; @endphp
+@endforeach
+
+    @endforeach
+
+@endforeach
                 </tbody>
             </table>
         </div>

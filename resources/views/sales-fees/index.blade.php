@@ -259,51 +259,63 @@ onchange="this.form.submit()">
 
 </form>
 
-<table class="min-w-full text-sm border">
+@php
+    $user = auth()->user();
 
-<thead class="bg-gray-100">
-<tr>
-<th class="p-2 border text-left">Tanggal</th>
-<th class="p-2 border text-left">Sales</th>
-<th class="p-2 border text-right">Fee Konsinyasi</th>
-<th class="p-2 border text-right">Fee Tunai</th>
-<th class="p-2 border text-right">Total Fee</th>
-</tr>
-</thead>
+    // FILTER: kalau sales, hanya ambil datanya sendiri
+    if($user->role === 'sales'){
+        $dailyFee = collect($dailyFee)->filter(function($item) use ($user){
+            return $item->name === $user->name;
+        });
+    }
 
-<tbody>
+    // GROUPING per sales
+    $groupedDailyFee = collect($dailyFee)->groupBy('name');
+@endphp
 
-@foreach($dailyFee as $row)
 
-<tr>
+@foreach($groupedDailyFee as $salesName => $rows)
 
-<td class="p-2 border">
-{{ $row->tanggal ? \Carbon\Carbon::parse($row->tanggal)->format('d-m-Y') : '-' }}
-</td>
+    <h4 class="mt-6 mb-2 font-semibold text-gray-700">
+        {{ $salesName }}
+    </h4>
 
-<td class="p-2 border">
-{{ $row->name }}
-</td>
+    <table class="min-w-full text-sm border mb-6">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="p-2 border text-left">Tanggal</th>
+                <th class="p-2 border text-right">Fee Konsinyasi</th>
+                <th class="p-2 border text-right">Fee Tunai</th>
+                <th class="p-2 border text-right">Total Fee</th>
+            </tr>
+        </thead>
 
-<td class="p-2 border text-right">
-Rp {{ number_format($row->fee_konsinyasi,0,',','.') }}
-</td>
+        <tbody>
 
-<td class="p-2 border text-right">
-Rp {{ number_format($row->fee_tunai,0,',','.') }}
-</td>
+        @foreach($rows as $row)
+            <tr>
+                <td class="p-2 border">
+                    {{ $row->tanggal ? \Carbon\Carbon::parse($row->tanggal)->format('d-m-Y') : '-' }}
+                </td>
 
-<td class="p-2 border text-right font-semibold">
-Rp {{ number_format($row->total_fee,0,',','.') }}
-</td>
+                <td class="p-2 border text-right">
+                    Rp {{ number_format($row->fee_konsinyasi,0,',','.') }}
+                </td>
 
-</tr>
+                <td class="p-2 border text-right">
+                    Rp {{ number_format($row->fee_tunai,0,',','.') }}
+                </td>
+
+                <td class="p-2 border text-right font-semibold">
+                    Rp {{ number_format($row->total_fee,0,',','.') }}
+                </td>
+            </tr>
+        @endforeach
+
+        </tbody>
+    </table>
 
 @endforeach
-
-</tbody>
-
-</table>
 
 </div>
 
@@ -387,6 +399,37 @@ Rekap Fee Sales
                             </tr>
                         </thead>
                         <tbody>
+                            @php
+                            $user = auth()->user();
+
+                            if($user->role === 'sales'){
+                            $sales = collect($sales)->filter(function($item) use ($user){
+                            return $item['name'] === $user->name;
+                            })->values();
+                            }
+                            @endphp
+                            @if($user->role === 'admin')
+
+@php
+    $adminData = DB::table('users')
+        ->where('role','admin')
+        ->get()
+        ->map(function($u){
+            return [
+                'name' => $u->name,
+                'total_generated' => DB::table('sales_transactions')->where('user_id',$u->id)->sum('total_fee'),
+                'total_paid' => 0,
+                'kasbon_remaining' => 0,
+                'net_fee' => DB::table('sales_transactions')->where('user_id',$u->id)->sum('total_fee'),
+                'is_minus' => false,
+                'user_id' => $u->id
+            ];
+        });
+
+    $sales = collect($sales)->merge($adminData);
+@endphp
+
+@endif
                             @forelse($sales as $row)
                                 <tr class="border-t">
                                     <td class="p-2 sm:p-3 border font-medium">

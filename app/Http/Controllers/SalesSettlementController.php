@@ -20,6 +20,10 @@ class SalesSettlementController extends Controller
     public function index(Request $request)
     {
         $visitsQuery = Visit::where('status', 'approved');
+        // 🔒 FILTER ROLE
+        if(auth()->user()->role === 'sales'){
+        $visitsQuery->where('user_id', auth()->id());
+        }
 
         if ($request->filled('tanggal_dari')) {
             $visitsQuery->whereDate('visit_date','>=',$request->tanggal_dari);

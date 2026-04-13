@@ -23,10 +23,12 @@
             <select name="user_id" class="border p-2 rounded">
                 <option value="">Semua Sales</option>
                 @foreach($users as $user)
+                @if(auth()->user()->role === 'admin' || $user->id === auth()->id())
                     <option value="{{ $user->id }}"
                         {{ request('user_id') == $user->id ? 'selected' : '' }}>
                         {{ $user->name }}
                     </option>
+                    @endif
                 @endforeach
             </select>
 

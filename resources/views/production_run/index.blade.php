@@ -364,18 +364,36 @@
         </div>
     @endif
 
+    @php
+    $isEmpty = $sisa <= 0;
+    @endphp
+
     <form method="POST" action="{{ route('production-run.withdraw') }}">
         @csrf
 
-        <div class="mb-3">
+            <div class="mb-3">
             <label>Jumlah Pencairan</label>
-            <input type="number" name="amount" class="border w-full p-2" required>
-        </div>
+            @if($isEmpty)
+            <div class="bg-yellow-100 text-yellow-700 p-2 mb-3 rounded">
+            ⚠️ Tidak ada sisa upah yang bisa dicairkan
+            </div>
+            @endif
+            <input type="number" name="amount"
+                   max="{{ $sisa }}" 
+                   class="border w-full p-2 {{ $isEmpty ? 'bg-gray-100 cursor-not-allowed' : '' }}" 
+                   {{ $isEmpty ? 'disabled' : '' }}
+                   required>
+                   
+           </div>
 
-        <button class="bg-red-600 text-white px-4 py-2 rounded">
-            Cairkan
-        </button>
-    </form>
+            <button 
+                  class="px-4 py-2 rounded text-white
+                  {{ $isEmpty ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700' }}"
+                  {{ $isEmpty ? 'disabled' : '' }}
+                  >
+                 Cairkan
+            </button>
+       </form>
 
 </div>
 

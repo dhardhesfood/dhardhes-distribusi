@@ -159,6 +159,24 @@ $this->service->store(
         'amount' => 'required|numeric|min:1'
     ]);
 
+    // 🔥 HITUNG SISA UPAH
+$totalUpah = \App\Models\ProductionRun::sum('total_labor_cost');
+
+$totalPencairan = WorkerWithdrawal::where('status', 'approved')
+    ->sum('approved_amount');
+
+$sisa = $totalUpah - $totalPencairan;
+
+// ❌ CEK JIKA TIDAK ADA SISA
+if ($sisa <= 0) {
+    return back()->with('error', 'Tidak ada sisa upah untuk dicairkan');
+}
+
+// ❌ CEK JIKA MELEBIHI SISA
+if ($data['amount'] > $sisa) {
+    return back()->with('error', 'Jumlah melebihi sisa upah');
+}
+
     WorkerWithdrawal::create([
         'requested_amount' => $data['amount'],
         'withdraw_date' => now(),

@@ -313,6 +313,7 @@ $session = 'MindhesRara';
 
 // 🏭 PRODUKSI
 $targetsProduksi = [
+    '6285736167569@c.us', // BU ANI
     '6288989393804@c.us', // BU WATI
     '62895808077030@c.us', // BU INTAN
 ];

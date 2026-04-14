@@ -495,7 +495,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/product-variants', [\App\Http\Controllers\ProductVariantController::class, 'store'])->name('product-variants.store');
 
     Route::delete('/product-variants/{id}', [\App\Http\Controllers\ProductVariantController::class, 'destroy'])->name('product-variants.destroy');
-
+    
+    Route::post('/online-orders/{id}/send-wa', [OnlineOrderController::class, 'sendManualWA'])
+    ->name('online-orders.send-wa');
     
     /*
     |--------------------------------------------------------------------------

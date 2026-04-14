@@ -68,7 +68,7 @@ value="{{ $stock->ready_pack ?? 0 }}"
 class="border rounded p-1 w-24 text-center">
 
 {{-- 🔥 TOMBOL CONVERT (ADMIN ONLY + OFFLINE ONLY) --}}
-@if(auth()->user()->role === 'admin' && ($stock->channel_type ?? 'offline') === 'offline')
+@if(auth()->user()->role === 'admin' && $stock->stock > 0)
 <div class="mt-2">
     <a href="{{ route('warehouse.convert.form', $stock->id) }}"
        style="font-size:12px;background:#2563eb;color:white;padding:4px 8px;border-radius:6px;text-decoration:none;">

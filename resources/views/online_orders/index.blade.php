@@ -122,10 +122,10 @@
                 @php
                     $stokAwal = $check->stock_before ?? 0;
                     $stokSisa = $check->stock_after ?? 0;
-                    $dipakai = $check->available_qty;
+                    $dipakai = ($check->stock_before ?? 0) - ($check->stock_after ?? 0);
                 @endphp
 
-                @if($check->status == 'cukup')
+                @if(($check->shortage_qty ?? 0) <= 0)
                     <span class="text-green-600 font-semibold">
                         ✔ cukup
                     </span>
@@ -163,6 +163,17 @@
 
     <!-- AKSI -->
     <div class="flex justify-end gap-2 mt-3">
+
+        <!-- 🔥 TOMBOL WA -->
+    <form action="{{ route('online-orders.send-wa', $order->id) }}"
+          method="POST"
+          onsubmit="return confirm('Kirim notifikasi WA untuk order ini?')">
+        @csrf
+        <button
+            class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs">
+            WA
+        </button>
+    </form>
 
         <a href="/online-orders/{{ $order->id }}/edit"
            class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs">

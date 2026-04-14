@@ -38,6 +38,7 @@ class OnlineOrderController extends Controller
 
     public function index()
 {
+    $this->simulateStock();
     $orders = DB::table('online_orders as o')
     ->leftJoin('package_templates as t', 't.id', '=', 'o.package_template_id')
     ->select(
@@ -123,7 +124,7 @@ public function update(Request $request, $id)
 
         // rerun simulasi
         $this->simulateStock();
-        $this->sendWhatsAppNotification($orderId);
+        // $this->sendWhatsAppNotification($orderId);
     
 
     return redirect('/online-orders')->with('success', 'Order berhasil diupdate');
@@ -181,12 +182,12 @@ public function destroy($id)
 
     // ✅ JALANKAN DI LUAR TRANSACTION
     $this->simulateStock();
-    $this->sendWhatsAppNotification($orderId);
+    // $this->sendWhatsAppNotification($orderId);
     
 
-    // ⛔ MATIKAN DULU (biar aman)
+    
     $this->simulatePackaging($orderId);
-    $this->sendPackagingNotification($orderId);
+   // $this->sendPackagingNotification($orderId);
 
     return redirect('/online-orders/create')
         ->with('success', 'Order berhasil disimpan');
@@ -195,6 +196,7 @@ public function destroy($id)
    private function simulatePackaging($orderId)
 {
     $checks = DB::table('online_order_item_checks')
+    ->where('online_order_id', $orderId) // 🔥 WAJIB
     ->where('status', 'kurang')
     ->get();
 
@@ -340,6 +342,7 @@ public function updateStatus(Request $request, $id)
     // =========================
 // VALIDASI: CEK FIFO DULU
 // =========================
+$this->simulateStock(); // 🔥 pastikan FIFO fresh
 if ($request->status == 'done') {
 
     $hasShortage = DB::table('online_order_item_checks')
@@ -437,7 +440,7 @@ if ($request->status == 'done') {
 
     // 🔥 WAJIB: rerun FIFO
     $this->simulateStock();
-    $this->sendWhatsAppNotification($id);
+    //$this->sendWhatsAppNotification($id);
 
 
     return back()->with('success', 'Status berhasil diupdate');
@@ -545,14 +548,13 @@ $message .= "\n📊 STATUS PRODUK:\n";
     $message .= "\n⚠️ PRODUK KURANG → SEGERA PRODUKSI";
     } else {
     $message .= "\n✅ STOK AMAN → SIAP DIPROSES";
-    }$message .= $hasShortage
-        ? "\n⚠️ PERLU PRODUKSI"
-        : "\n✅ SIAP DIPROSES";
+    }
 
     // =========================
     // KIRIM WA TIM PRODUKSI
     // =========================
     $phones = [
+        '6285736167569@c.us', // BU ANI
         '6288989393804@c.us', // BU WATI
         '62895808077030@c.us', // BU INTAN
         // tambah nomor lain
@@ -588,6 +590,7 @@ $message .= "\n📊 STATUS PRODUK:\n";
 
 private function sendPackagingNotification($orderId)
 {
+    
     $order = DB::table('online_orders')->where('id', $orderId)->first();
     if (!$order) return;
 
@@ -664,6 +667,19 @@ $message .= "\n📦 KEMASAN KURANG:\n";
         // 🔥 TAMBAHAN JEDA AMAN
     sleep(rand(1,2)); // 1–2 detik (random)
     }
+}
+
+public function sendManualWA($id)
+{
+    // pastikan data fresh
+    $this->simulateStock();
+    $this->simulatePackaging($id);
+
+    // kirim WA
+    $this->sendWhatsAppNotification($id);
+    $this->sendPackagingNotification($id);
+
+    return back()->with('success', 'WA berhasil dikirim');
 }
 
 }

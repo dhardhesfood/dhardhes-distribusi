@@ -23,6 +23,7 @@ class WarehouseController extends Controller
         ->update(['is_read' => true]);
 
         $stocks = DB::table('products')
+       ->where('products.channel_type', 'offline')
        ->leftJoin('stock_movements', 'products.id', '=', 'stock_movements.product_id')
        ->leftJoin('warehouse_ready_packs', 'products.id', '=', 'warehouse_ready_packs.product_id')
             ->select(
@@ -106,8 +107,12 @@ class WarehouseController extends Controller
 
             foreach ($request->products as $productId => $qty) {
 
-                if ($qty <= 0) {
-                    continue;
+                if ($qty <= 0) continue;
+
+                $product = Product::find($productId);
+
+                if ($product->channel_type === 'online') {
+                continue; // ❌ blok produk online
                 }
 
                 StockMovement::create([

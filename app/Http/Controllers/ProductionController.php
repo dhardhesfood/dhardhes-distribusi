@@ -132,16 +132,20 @@ if ($product->channel_type === 'online') {
 }
 
             // 2. Tambah stok gudang (ledger)
-            StockMovement::create([
-                'product_id' => $request->product_id,
-                'quantity' => $totalQty,
-                'type' => 'warehouse_in',
-                'reference_id' => $production->id,
-                'reference_type' => 'production_batch',
-                'session_id' => null,
-                'notes' => 'Produksi batch #' . $production->id,
-                'created_by' => auth()->id(),
-            ]);
+    if ($product->channel_type !== 'online') {
+
+    StockMovement::create([
+        'product_id' => $request->product_id,
+        'quantity' => $totalQty,
+        'type' => 'warehouse_in',
+        'reference_id' => $production->id,
+        'reference_type' => 'production_batch',
+        'session_id' => null,
+        'notes' => 'Produksi batch #' . $production->id,
+        'created_by' => auth()->id(),
+    ]);
+
+}
 
             // 🔥 KURANGI KEMASAN
 foreach ($filteredVariants as $variant) {
@@ -199,16 +203,20 @@ foreach ($filteredVariants as $variant) {
     }
 
             // 1. BALIKKAN STOK (WAJIB)
-            StockMovement::create([
-                'product_id' => $production->product_id,
-                'quantity' => $production->quantity,
-                'type' => 'warehouse_out',
-                'reference_id' => $production->id,
-                'reference_type' => 'production_delete',
-                'session_id' => null,
-                'notes' => 'Hapus produksi #' . $production->id,
-                'created_by' => auth()->id(),
-            ]);
+    if ($product->channel_type !== 'online') {
+
+    StockMovement::create([
+        'product_id' => $production->product_id,
+        'quantity' => $production->quantity,
+        'type' => 'warehouse_out',
+        'reference_id' => $production->id,
+        'reference_type' => 'production_delete',
+        'session_id' => null,
+        'notes' => 'Hapus produksi #' . $production->id,
+        'created_by' => auth()->id(),
+    ]);
+
+}
 
             // 🔥 KEMBALIKAN KEMASAN
 foreach ($items as $item) {

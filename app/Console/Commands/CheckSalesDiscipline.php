@@ -9,51 +9,43 @@ use Carbon\Carbon;
 
 class CheckSalesDiscipline extends Command
 {
-    /**
-     * The name and signature of the console command.
-     */
     protected $signature = 'app:check-sales-discipline';
 
-    /**
-     * The console command description.
-     */
     protected $description = 'Check daily sales discipline (request stok H-3)';
 
-    /**
-     * Execute the console command.
-     */
     public function handle()
-    {
-        $today = Carbon::today();
-        $month = $today->month;
-        $year  = $today->year;
+{
+    $today = Carbon::today();
+    $start = $today->copy()->startOfMonth();
 
-        // 🔹 Ambil semua sales
-        $salesUsers = User::where('role', 'sales')->get();
+    $salesUsers = User::where('role', 'sales')->get();
 
-        foreach ($salesUsers as $user) {
+    foreach ($salesUsers as $user) {
 
-            // 🔹 Hitung coverage (jumlah hari unik ke depan)
+        // 🔥 reset monthly dulu
+        DB::table('sales_discipline_monthly')
+            ->where('user_id', $user->id)
+            ->where('month', $today->month)
+            ->where('year', $today->year)
+            ->update([
+                'late_count' => 0
+            ]);
+
+        for ($date = $start->copy(); $date->lte($today); $date->addDay()) {
+
             $coverage = DB::table('sales_stock_requests')
                 ->where('user_id', $user->id)
-                ->whereDate('request_date', '>=', Carbon::today())
+                ->whereDate('request_date', '>=', $date)
                 ->distinct()
                 ->count('request_date');
 
-            // 🔹 Tentukan telat / tidak
             $isLate = $coverage < 3 ? 1 : 0;
 
-            // 🔹 Cek apakah sudah ada record hari ini
-            $existing = DB::table('sales_discipline_daily')
-                ->where('user_id', $user->id)
-                ->whereDate('date', $today)
-                ->first();
-
-            // 🔹 Insert / Update daily
+            // 🔥 update daily
             DB::table('sales_discipline_daily')->updateOrInsert(
                 [
                     'user_id' => $user->id,
-                    'date' => $today
+                    'date' => $date
                 ],
                 [
                     'coverage_days' => $coverage,
@@ -63,24 +55,23 @@ class CheckSalesDiscipline extends Command
                 ]
             );
 
-            // 🔹 Update monthly (hanya jika belum pernah dihitung hari ini)
-            if (!$existing && $isLate) {
-
+            // 🔥 hitung monthly
+            if ($isLate) {
                 DB::table('sales_discipline_monthly')->updateOrInsert(
                     [
                         'user_id' => $user->id,
-                        'month' => $month,
-                        'year' => $year
+                        'month' => $today->month,
+                        'year' => $today->year
                     ],
                     [
                         'late_count' => DB::raw('late_count + 1'),
-                        'created_at' => now(),
                         'updated_at' => now()
                     ]
                 );
             }
         }
-
-        $this->info('Sales discipline checked successfully.');
     }
+
+    $this->info('RECOMPUTE FULL SUCCESS');
+}
 }

@@ -333,4 +333,93 @@ public function convertToOffline($productId)
         ->with('success', 'Stok berhasil dikembalikan ke offline');
 }
 
+public function history()
+{
+    $movements = DB::table('stock_movements')
+    ->leftJoin('products', 'products.id', '=', 'stock_movements.product_id')
+    ->leftJoin('users', 'users.id', '=', 'stock_movements.created_by')
+
+    ->where(function ($q) {
+
+        // ✅ MURNI GUDANG
+        $q->where('stock_movements.type', 'warehouse_in')
+
+        // ✅ warehouse_out tapi BUKAN sales
+        ->orWhere(function ($q2) {
+            $q2->where('stock_movements.type', 'warehouse_out')
+               ->whereNotIn('stock_movements.reference_type', [
+                   'sales_stock_session'
+               ]);
+        })
+
+        // ✅ adjustment khusus gudang
+        ->orWhere(function ($q2) {
+            $q2->where('stock_movements.type', 'adjustment')
+               ->whereIn('stock_movements.reference_type', [
+                   'warehouse_adjustment',
+                   'warehouse_reset_test'
+               ]);
+        })
+
+        // ✅ lainnya yang memang gudang
+        ->orWhereIn('stock_movements.type', [
+            'damage',
+            'return_from_store'
+        ]);
+
+    })
+
+    ->select(
+        'stock_movements.*',
+        'products.name as product_name',
+        'users.name as created_by_name'
+    )
+    ->orderByDesc('stock_movements.created_at')
+    ->paginate(20);
+
+    return view('warehouse.history', compact('movements'));
+}
+
+public function historyOnline()
+{
+    // 🔥 1. DATA CONVERT
+    $convert = DB::table('stock_movements')
+        ->select(
+            'product_id',
+            'quantity',
+            'reference_type',
+            'created_at'
+        )
+        ->whereIn('reference_type', [
+            'convert_to_online',
+            'convert_to_offline'
+        ]);
+
+    // 🔥 2. DATA ORDER (AMBIL DARI ORDER ITEMS)
+    $orders = DB::table('online_order_items')
+        ->join('online_orders', 'online_orders.id', '=', 'online_order_items.online_order_id')
+        ->select(
+            'online_order_items.product_id',
+            DB::raw('-online_order_items.qty as quantity'),
+            DB::raw("'online order done (Terkirim)' as reference_type"),
+            'online_orders.updated_at as created_at'
+        )
+        ->where('online_orders.status', 'done');
+
+    // 🔥 UNION
+    $movements = $convert
+        ->unionAll($orders);
+
+    $result = DB::query()
+        ->fromSub($movements, 'm')
+        ->leftJoin('products', 'products.id', '=', 'm.product_id')
+        ->select('m.*', 'products.name as product_name')
+        ->orderByDesc('m.created_at')
+        ->paginate(20);
+
+    return view('warehouse.history_online', [
+        'movements' => $result
+    ]);
+}
+
 }

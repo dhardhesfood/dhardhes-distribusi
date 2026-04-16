@@ -31,6 +31,13 @@
         </a>
     @endif
 
+   
+
+   <a href="{{ route('warehouse.history') }}"
+      class="bg-red-600 hover:bg-gray-700 text-white px-4 py-2 rounded shadow-sm">
+        📊 History
+    </a>
+
    </div>
 
             <table class="w-full border">
@@ -86,7 +93,7 @@ class="border rounded p-1 w-24 text-center">
 </tbody>
 </table>
 
-<div class="mt-4">
+<div class="flex gap-2 mt-3">
 <button
 type="submit"
 class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow-sm">
@@ -157,6 +164,14 @@ Update Ready Pack
     </tbody>
     
 </table>
+
+<div class="mt-6">
+    <a href="{{ route('warehouse.history.online') }}"
+       class="bg-red-600 hover:bg-gray-700 text-white px-4 py-2 rounded shadow-sm">
+        📊 History Stok Online
+    </a>
+</div>
+
 
                 <div class="mt-6 space-y-3">
 

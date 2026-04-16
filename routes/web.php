@@ -254,7 +254,14 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/warehouse/convert-offline/{product}', [WarehouseController::class, 'convertToOffline'])
     ->name('warehouse.convert.offline');
+    
+    Route::get('/warehouse/history', [WarehouseController::class, 'history'])
+    ->name('warehouse.history');
 
+    Route::get('/warehouse/history-online', [WarehouseController::class, 'historyOnline'])
+    ->name('warehouse.history.online');
+
+    
     /*
     |--------------------------------------------------------------------------
     | WAREHOUSE → SALES TRANSFER

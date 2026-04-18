@@ -112,12 +112,13 @@ else {
             abort(403, 'Settlement tanggal ini sudah ditutup.');
         }
         $session = SalesStockSession::where('user_id', $targetUserId)
-            ->where('status', 'open')
-            ->whereDate('start_date', now()->toDateString())
-            ->first();
+       ->where('status', 'open')
+       ->whereDate('start_date', now()->toDateString())
+        ->first();
+
         if (!$session) {
-            abort(403, 'Anda belum memulai session stok.');
-        }
+        abort(403, 'Anda belum memulai session stok.');
+    }
         try {
             $visit = Visit::create([
                 'store_id'   => $store->id,

@@ -354,8 +354,15 @@ public function history()
             $q2->where('stock_movements.type', 'warehouse_out')
                ->whereNotIn('stock_movements.reference_type', [
                    'sales_stock_session'
+                   
                ]);
         })
+
+          // 🔥 TAMBAHAN: STOK KE SALES (SESSION OPEN)
+    ->orWhere(function ($q3) {
+        $q3->where('stock_movements.type', 'warehouse_out')
+           ->where('stock_movements.reference_type', 'sales_stock_session');
+    })
 
         // ✅ adjustment khusus gudang
         ->orWhere(function ($q2) {

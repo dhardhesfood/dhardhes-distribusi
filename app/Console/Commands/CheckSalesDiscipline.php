@@ -14,64 +14,96 @@ class CheckSalesDiscipline extends Command
     protected $description = 'Check daily sales discipline (request stok H-3)';
 
     public function handle()
-{
-    $today = Carbon::today();
-    $start = $today->copy()->startOfMonth();
+    {
+        $today = Carbon::today();
+        $start = $today->copy()->startOfMonth();
 
-    $salesUsers = User::where('role', 'sales')->get();
+        $salesUsers = User::where('role', 'sales')->get();
 
-    foreach ($salesUsers as $user) {
+        foreach ($salesUsers as $user) {
 
-        // 🔥 reset monthly dulu
-        DB::table('sales_discipline_monthly')
-            ->where('user_id', $user->id)
-            ->where('month', $today->month)
-            ->where('year', $today->year)
-            ->update([
-                'late_count' => 0
-            ]);
+            /*
+            |--------------------------------------------------------------------------
+            | 1. HITUNG DAILY (FULL RECOMPUTE)
+            |--------------------------------------------------------------------------
+            */
 
-        for ($date = $start->copy(); $date->lte($today); $date->addDay()) {
+            for ($date = $start->copy(); $date->lte($today); $date->addDay()) {
 
-            $coverage = DB::table('sales_stock_requests')
-                ->where('user_id', $user->id)
-                ->whereDate('request_date', '>=', $date)
-                ->distinct()
-                ->count('request_date');
+                $coverage = DB::table('sales_stock_requests')
+                    ->where('user_id', $user->id)
+                    ->whereDate('request_date', '>=', $date)
+                    ->distinct()
+                    ->count('request_date');
 
-            $isLate = $coverage < 3 ? 1 : 0;
+                $isLate = $coverage < 3 ? 1 : 0;
 
-            // 🔥 update daily
-            DB::table('sales_discipline_daily')->updateOrInsert(
-                [
-                    'user_id' => $user->id,
-                    'date' => $date
-                ],
-                [
-                    'coverage_days' => $coverage,
-                    'is_late' => $isLate,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]
-            );
-
-            // 🔥 hitung monthly
-            if ($isLate) {
-                DB::table('sales_discipline_monthly')->updateOrInsert(
+                DB::table('sales_discipline_daily')->updateOrInsert(
                     [
                         'user_id' => $user->id,
-                        'month' => $today->month,
-                        'year' => $today->year
+                        'date' => $date->toDateString()
                     ],
                     [
-                        'late_count' => DB::raw('late_count + 1'),
-                        'updated_at' => now()
+                        'coverage_days' => $coverage,
+                        'is_late' => $isLate,
+                        'updated_at' => now(),
+                        'created_at' => now()
                     ]
                 );
             }
-        }
-    }
 
-    $this->info('RECOMPUTE FULL SUCCESS');
-}
+            /*
+            |--------------------------------------------------------------------------
+            | 2. HITUNG TOTAL TELAT (AKURAT)
+            |--------------------------------------------------------------------------
+            */
+
+            $lateCount = DB::table('sales_discipline_daily')
+                ->where('user_id', $user->id)
+                ->whereMonth('date', $today->month)
+                ->whereYear('date', $today->year)
+                ->where('is_late', 1)
+                ->count();
+
+            /*
+            |--------------------------------------------------------------------------
+            | 3. HITUNG PENALTY RATE
+            |--------------------------------------------------------------------------
+            */
+
+            $penaltyRate = 0;
+
+            if ($lateCount >= 9) {
+                $penaltyRate = 30;
+            } elseif ($lateCount >= 7) {
+                $penaltyRate = 20;
+            } elseif ($lateCount >= 5) {
+                $penaltyRate = 10;
+            } elseif ($lateCount >= 3) {
+                $penaltyRate = 5;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | 4. SIMPAN MONTHLY (FINAL)
+            |--------------------------------------------------------------------------
+            */
+
+            DB::table('sales_discipline_monthly')->updateOrInsert(
+                [
+                    'user_id' => $user->id,
+                    'month' => $today->month,
+                    'year' => $today->year
+                ],
+                [
+                    'late_count' => $lateCount,
+                    'penalty_rate' => $penaltyRate,
+                    'updated_at' => now(),
+                    'created_at' => now()
+                ]
+            );
+        }
+
+        $this->info('RECOMPUTE FULL SUCCESS');
+    }
 }

@@ -274,14 +274,29 @@ if ($heavyRate > 10) {
     $rewardNote = 'Toko terlambat berat > 10%';
 }
 
+$storePenaltyPercent = 0;
+
 if ($lateRate > 20) {
-    $rewardPercent *= 0.7;
     $rewardNote = 'Terlambat tinggi';
+    $storePenaltyPercent = 30;
 }
 
+// =========================
+// BASE REWARD (MURNI KPI)
+// =========================
+$baseReward = $totalGeneratedMonthly * $rewardPercent / 100;
+
+// =========================
+// APPLY PENALTY TOKO
+// =========================
+$rewardAfterStore = $baseReward * (1 - ($storePenaltyPercent / 100));
+
+// =========================
+// SET NILAI AWAL REWARD
+// =========================
 $rewardAmount = $rewardStatus === 'gugur'
     ? 0
-    : ($totalGeneratedMonthly * $rewardPercent / 100);
+    : $rewardAfterStore;
 
 // =========================
 // APPLY DISIPLIN REQUEST STOK
@@ -293,18 +308,9 @@ $discipline = DB::table('sales_discipline_monthly')
     ->first();
 
 $lateCount = $discipline ? $discipline->late_count : 0;
+$penaltyRate = $discipline ? $discipline->penalty_rate : 0;
 
-$penaltyRate = 0;
-
-if ($lateCount >= 9) {
-    $penaltyRate = 30;
-} elseif ($lateCount >= 7) {
-    $penaltyRate = 20;
-} elseif ($lateCount >= 5) {
-    $penaltyRate = 10;
-} elseif ($lateCount >= 3) {
-    $penaltyRate = 5;
-}
+$disciplinePenaltyPercent = $penaltyRate;
 
 if ($rewardAmount > 0 && $penaltyRate > 0) {
     $rewardAmount = $rewardAmount * (1 - ($penaltyRate / 100));
@@ -357,6 +363,12 @@ if ($rewardRemaining < 0) {
                 'previous_fee' => $previousFee,
                 'reward_percent' => $rewardPercent,
                 'reward_amount' => $rewardAmount,
+
+                'base_reward' => $baseReward,
+                'discipline_penalty_percent' => $disciplinePenaltyPercent,
+                'store_penalty_percent' => $storePenaltyPercent,
+                'late_count' => $lateCount,
+
                 'reward_paid' => $rewardPaid,
                 'reward_remaining' => $rewardRemaining,
                 'reward_status' => $rewardStatus,
@@ -704,16 +716,29 @@ public function lockReward(Request $request)
         $rewardStatus = 'gugur';
     }
 
+    $storePenaltyPercent = 0;
+
     if ($lateRate > 20) {
-        $rewardPercent *= 0.7;
+    $storePenaltyPercent = 30;
+    }
+
+    if ($withdrawRate > 5 || $heavyRate > 10) {
+    $storePenaltyPercent = 100;
     }
 
     // =========================
     // HITUNG FINAL REWARD
     // =========================
-    $rewardAmount = $rewardStatus === 'gugur'
+    // BASE
+    $baseReward = $totalGenerated * $rewardPercent / 100;
+
+    // APPLY PENALTY TOKO
+    $rewardAfterStore = $baseReward * (1 - ($storePenaltyPercent / 100));
+
+   // FINAL
+   $rewardAmount = $rewardStatus === 'gugur'
     ? 0
-    : ($totalGenerated * $rewardPercent / 100);
+    : $rewardAfterStore;
 
 // =========================
 // APPLY DISIPLIN REQUEST STOK
@@ -725,18 +750,9 @@ $discipline = DB::table('sales_discipline_monthly')
     ->first();
 
 $lateCount = $discipline ? $discipline->late_count : 0;
+$penaltyRate = $discipline ? $discipline->penalty_rate : 0;
 
-$penaltyRate = 0;
-
-if ($lateCount >= 9) {
-    $penaltyRate = 30;
-} elseif ($lateCount >= 7) {
-    $penaltyRate = 20;
-} elseif ($lateCount >= 5) {
-    $penaltyRate = 10;
-} elseif ($lateCount >= 3) {
-    $penaltyRate = 5;
-}
+$disciplinePenaltyPercent = $penaltyRate;
 
 if ($rewardAmount > 0 && $penaltyRate > 0) {
     $rewardAmount = $rewardAmount * (1 - ($penaltyRate / 100));

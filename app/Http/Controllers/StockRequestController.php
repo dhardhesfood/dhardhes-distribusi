@@ -131,8 +131,9 @@ public function store(Request $request)
     $request->validate([
     'area_id' => 'required|exists:areas,id',
     'request_date' => 'required|date',
-    'product_id' => 'required|exists:products,id',
-    'qty_pack' => 'required|integer|min:1'
+    'products' => 'required|array',
+    'products.*.product_id' => 'required|exists:products,id',
+    'products.*.qty_pack' => 'required|integer|min:1',
     ]);
 
 
@@ -148,14 +149,17 @@ public function store(Request $request)
     ]);
 
 
-        DB::table('sales_stock_request_items')
-            ->insert([
-                'request_id' => $requestId,
-                'product_id' => $request->product_id,
-                'qty_pack' => $request->qty_pack,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+        foreach ($request->products as $p) {
+
+        DB::table('sales_stock_request_items')->insert([
+        'request_id' => $requestId,
+        'product_id' => $p['product_id'],
+        'qty_pack' => $p['qty_pack'],
+        'created_at' => now(),
+        'updated_at' => now()
+        ]);
+
+    }
 
     });
 

@@ -543,6 +543,58 @@ Reward Sales Bulan
 
 <div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
 
+<div class="text-sm font-semibold text-gray-700 mb-3">
+Transparansi Perhitungan Reward
+</div>
+
+@foreach($sales as $row)
+
+<div class="mb-4 p-4 border rounded-lg bg-gray-50">
+
+<div class="font-semibold mb-2">
+{{ $row['name'] }}
+</div>
+
+<div class="text-sm space-y-1">
+
+<div>
+Reward awal :
+<b>Rp {{ number_format($row['base_reward'],0,',','.') }}</b>
+</div>
+
+@if($row['discipline_penalty_percent'] > 0)
+<div class="text-red-600">
+Penalty disiplin :
+-{{ $row['discipline_penalty_percent'] }}%
+({{ $row['late_count'] }}x telat)
+</div>
+@endif
+
+@if($row['store_penalty_percent'] > 0)
+<div class="text-red-600">
+Penalty toko :
+-{{ $row['store_penalty_percent'] }}%
+(kondisi toko)
+</div>
+@endif
+
+<div class="border-t pt-2 font-semibold">
+Reward akhir :
+<span class="text-green-600">
+Rp {{ number_format($row['reward_amount'],0,',','.') }}
+</span>
+</div>
+
+</div>
+
+</div>
+
+@endforeach
+
+</div>
+
+<div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
+
 <div class="overflow-x-auto">
 
 <table class="min-w-full text-xs sm:text-sm border">

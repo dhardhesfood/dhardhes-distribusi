@@ -55,30 +55,27 @@ class="border rounded w-full p-2">
 </div>
 
 <div class="mb-4">
-<label class="block text-sm font-medium mb-1">Produk</label>
+<label class="block text-sm font-medium mb-2">Produk</label>
 
-<select name="product_id"
-class="border rounded w-full p-2"
-required>
+<div id="products-wrapper">
 
-<option value="">-- pilih produk --</option>
+    <div class="product-row mb-2 flex gap-2">
+        <select name="products[0][product_id]" class="border rounded w-1/2 p-2" required>
+            <option value="">-- pilih produk --</option>
+            @foreach($products as $product)
+            <option value="{{ $product->id }}">{{ $product->name }}</option>
+            @endforeach
+        </select>
 
-@foreach($products as $product)
-<option value="{{ $product->id }}">
-{{ $product->name }}
-</option>
-@endforeach
+        <input type="number"
+            name="products[0][qty_pack]"
+            min="1"
+            required
+            placeholder="Qty"
+            class="border rounded w-1/2 p-2">
+    </div>
 
-</select>
 </div>
-
-<div class="mb-4">
-<label class="block text-sm font-medium mb-1">Jumlah Pack</label>
-<input type="number"
-name="qty_pack"
-min="1"
-required
-class="border rounded w-full p-2">
 </div>
 
 <div class="flex gap-2">
@@ -425,27 +422,33 @@ Prioritas Produksi
 
 <script>
 
+let index = 1;
+
 function addAnother() {
 
-    const form = document.querySelector('form');
+    const wrapper = document.getElementById('products-wrapper');
 
-    const date = document.querySelector('[name=request_date]').value;
+    const html = `
+    <div class="product-row mb-2 flex gap-2">
+        <select name="products[${index}][product_id]" class="border rounded w-1/2 p-2" required>
+            <option value="">-- pilih produk --</option>
+            @foreach($products as $product)
+            <option value="{{ $product->id }}">{{ $product->name }}</option>
+            @endforeach
+        </select>
 
-    if(!date){
-        alert('Isi tanggal dulu');
-        return;
-    }
+        <input type="number"
+            name="products[${index}][qty_pack]"
+            min="1"
+            required
+            placeholder="Qty"
+            class="border rounded w-1/2 p-2">
+    </div>
+    `;
 
-    const product = document.querySelector('[name=product_id]').value;
-    const qty = document.querySelector('[name=qty_pack]').value;
+    wrapper.insertAdjacentHTML('beforeend', html);
 
-    if(!product || !qty){
-        alert('Isi produk dan qty dulu');
-        return;
-    }
-
-    form.submit();
-
+    index++;
 }
 
 </script>

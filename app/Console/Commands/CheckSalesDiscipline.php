@@ -22,48 +22,53 @@ class CheckSalesDiscipline extends Command
 
         foreach ($salesUsers as $user) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | 1. HITUNG DAILY (FULL RECOMPUTE)
-            |--------------------------------------------------------------------------
-            */
+/*
+|--------------------------------------------------------------------------
+| 1. HITUNG DAILY (PER HARI, CEK KE DEPAN)
+|--------------------------------------------------------------------------
+*/
 
-            for ($date = $start->copy(); $date->lte($today); $date->addDay()) {
+for ($date = $start->copy(); $date->lte($today); $date->addDay()) {
 
-                $coverage = DB::table('sales_stock_requests')
-                    ->where('user_id', $user->id)
-                    ->whereDate('request_date', '>=', $date)
-                    ->distinct()
-                    ->count('request_date');
+    $coverage = DB::table('sales_stock_requests')
+        ->where('user_id', $user->id)
+        ->whereDate('request_date', '>=', $date->toDateString())
+        ->whereMonth('request_date', $today->month)
+        ->whereYear('request_date', $today->year)
+        ->distinct()
+        ->count('request_date');
 
-                $isLate = $coverage < 3 ? 1 : 0;
+    $isLate = $coverage < 3 ? 1 : 0;
 
-                DB::table('sales_discipline_daily')->updateOrInsert(
-                    [
-                        'user_id' => $user->id,
-                        'date' => $date->toDateString()
-                    ],
-                    [
-                        'coverage_days' => $coverage,
-                        'is_late' => $isLate,
-                        'updated_at' => now(),
-                        'created_at' => now()
-                    ]
-                );
-            }
+    DB::table('sales_discipline_daily')->updateOrInsert(
+        [
+            'user_id' => $user->id,
+            'date' => $date->toDateString()
+        ],
+        [
+            'coverage_days' => $coverage,
+            'is_late' => $isLate,
+            'updated_at' => now(),
+            'created_at' => now()
+        ]
+    );
+}
 
-            /*
-            |--------------------------------------------------------------------------
-            | 2. HITUNG TOTAL TELAT (AKURAT)
-            |--------------------------------------------------------------------------
-            */
+/*
+|--------------------------------------------------------------------------
+| 2. HITUNG TOTAL TELAT DARI DAILY
+|--------------------------------------------------------------------------
+*/
 
-            $lateCount = DB::table('sales_discipline_daily')
-                ->where('user_id', $user->id)
-                ->whereMonth('date', $today->month)
-                ->whereYear('date', $today->year)
-                ->where('is_late', 1)
-                ->count();
+$lateCount = DB::table('sales_discipline_daily')
+    ->where('user_id', $user->id)
+    ->whereMonth('date', $today->month)
+    ->whereYear('date', $today->year)
+    ->where('is_late', 1)
+    ->count();
+
+
+            
 
             /*
             |--------------------------------------------------------------------------

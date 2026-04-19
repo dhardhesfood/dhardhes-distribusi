@@ -340,6 +340,10 @@ onchange="this.form.submit()">
             <tbody>
 
                 @foreach($sales as $row)
+
+                @if(!isset($row['base_reward']))
+                @continue
+                @endif
                 <tr>
                     <td class="p-2 border">
                         {{ $row['name'] }}
@@ -548,6 +552,10 @@ Transparansi Perhitungan Reward
 </div>
 
 @foreach($sales as $row)
+
+@if(!isset($row['base_reward']))
+    @continue
+@endif
 
 <div class="mb-4 p-4 border rounded-lg bg-gray-50">
 

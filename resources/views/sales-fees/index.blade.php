@@ -515,7 +515,22 @@ Reward Sales Bulan
 {{ \Carbon\Carbon::create($year,$month,1)->translatedFormat('F Y') }}
 </h3>
 
+
+
 @if(auth()->user()->role === 'admin')
+
+{{-- 🔥 TOMBOL HITUNG DISIPLIN --}}
+    <form method="POST" action="{{ route('sales-discipline.run') }}" class="mb-3">
+        @csrf
+
+        <button
+            onclick="return confirm('Hitung ulang disiplin sales sekarang?')"
+            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+
+            HITUNG DISIPLIN SEKARANG
+
+        </button>
+    </form>
 
     @if(!$rewardLocked)
 

@@ -557,6 +557,7 @@ $message .= "\n📊 STATUS PRODUK:\n";
         '6285736167569@c.us', // BU ANI
         '6288989393804@c.us', // BU WATI
         '62895808077030@c.us', // BU INTAN
+        '62859176866956@c.us', // BU NITA
         // tambah nomor lain
     ];
 

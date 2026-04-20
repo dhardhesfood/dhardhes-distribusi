@@ -505,6 +505,9 @@ Route::middleware(['auth'])->group(function () {
     
     Route::post('/online-orders/{id}/send-wa', [OnlineOrderController::class, 'sendManualWA'])
     ->name('online-orders.send-wa');
+
+    Route::post('/sales-discipline/run', [App\Http\Controllers\SalesDisciplineController::class, 'run'])
+    ->name('sales-discipline.run');
     
     /*
     |--------------------------------------------------------------------------

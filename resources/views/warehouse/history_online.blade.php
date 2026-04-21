@@ -48,10 +48,6 @@
         $qty = -$qty;
     }
 
-    // 🔥 ORDER DONE (KELUAR DARI ONLINE)
-    if ($m->reference_type == 'online_order_done') {
-        $qty = -$qty;
-    }
 @endphp
 
                         <tr class="hover:bg-gray-50">
@@ -81,10 +77,10 @@
                                         
                                     </span>
 
-                                    @elseif($m->reference_type == 'online order done (Terkirim)')
-                                <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs">
-                                Order Online Terkirim
-                               </span>
+                                    @elseif($m->reference_type == 'online_order_done')
+                                   <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs">
+                                   Order Online Terkirim ke {{ $m->customer_name ?? '-' }}
+                                   </span>
                                
                             
                                 @elseif($m->reference_type == 'convert_to_offline')
@@ -99,7 +95,11 @@
 
                             {{-- KETERANGAN --}}
                             <td class="px-4 py-2">
+                                @if($m->reference_type == 'online_order_done')
+                                online order done (Terkirim ke {{ $m->customer_name ?? '-' }})
+                                 @else
                                 {{ $m->reference_type }}
+                                @endif
                             </td>
 
                             {{-- USER --}}

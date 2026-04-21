@@ -110,6 +110,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/online-orders/{id}/edit', [OnlineOrderController::class, 'edit']);
     Route::put('/online-orders/{id}', [OnlineOrderController::class, 'update']);
     Route::delete('/online-orders/{id}', [OnlineOrderController::class, 'destroy']);
+
+    Route::get('/online-orders/{id}/send-resi', [OnlineOrderController::class, 'sendResi']);
     
     Route::get('/package-templates', [PackageTemplateController::class, 'index']);
     Route::get('/package-templates/create', [PackageTemplateController::class, 'create']);

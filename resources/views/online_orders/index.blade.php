@@ -164,6 +164,12 @@
     <!-- AKSI -->
     <div class="flex justify-end gap-2 mt-3">
 
+     <a href="/online-orders/{{ $order->id }}/send-resi"
+       target="_blank"
+       class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs">
+            Update Resi
+     </a>
+
         <!-- 🔥 TOMBOL WA -->
     <form action="{{ route('online-orders.send-wa', $order->id) }}"
           method="POST"

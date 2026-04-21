@@ -358,8 +358,13 @@ public function history()
                ]);
         })
 
+        ->orWhereIn('stock_movements.reference_type', [
+        'production_batch',
+        'production_delete'
+        ])
+
           // 🔥 TAMBAHAN: STOK KE SALES (SESSION OPEN)
-    ->orWhere(function ($q3) {
+        ->orWhere(function ($q3) {
         $q3->where('stock_movements.type', 'warehouse_out')
            ->where('stock_movements.reference_type', 'sales_stock_session');
     })
@@ -394,14 +399,14 @@ public function history()
 
 public function historyOnline()
 {
-    // 🔥 1. DATA CONVERT
     $convert = DB::table('stock_movements')
-        ->select(
-            'product_id',
-            'quantity',
-            'reference_type',
-            'created_at'
-        )
+    ->select(
+        'product_id',
+        'quantity',
+        'reference_type',
+        'created_at',
+        DB::raw("NULL as customer_name") // 🔥 WAJIB ADA
+    )
         ->whereIn('reference_type', [
             'convert_to_online',
             'convert_to_offline'
@@ -409,14 +414,16 @@ public function historyOnline()
 
     // 🔥 2. DATA ORDER (AMBIL DARI ORDER ITEMS)
     $orders = DB::table('online_order_items')
-        ->join('online_orders', 'online_orders.id', '=', 'online_order_items.online_order_id')
-        ->select(
-            'online_order_items.product_id',
-            DB::raw('-online_order_items.qty as quantity'),
-            DB::raw("'online order done (Terkirim)' as reference_type"),
-            'online_orders.updated_at as created_at'
-        )
-        ->where('online_orders.status', 'done');
+    ->join('online_orders', 'online_orders.id', '=', 'online_order_items.online_order_id')
+    ->leftJoin('customers', 'customers.id', '=', 'online_orders.customer_id') // 🔥 TAMBAH INI
+    ->select(
+        'online_order_items.product_id',
+        DB::raw('-online_order_items.qty as quantity'),
+        DB::raw("'online_order_done' as reference_type"),
+        'online_orders.updated_at as created_at',
+        'customers.name as customer_name' // 🔥 INI KUNCI
+    )
+    ->where('online_orders.status', 'done');
 
     // 🔥 UNION
     $movements = $convert

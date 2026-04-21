@@ -53,13 +53,31 @@
         value="{{ date('Y-m-d') }}"
         required>
         </div>
-        
-        <div class="mb-4">
-            <label class="block text-sm font-semibold mb-1">Nama Customer</label>
-            <input type="text" name="customer_name"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-200"
-                required>
-        </div>
+
+        <label>Customer</label>
+        <select id="customerSelect" name="customer_id" class="w-full border p-2">
+        <option value="">-- Pilih Customer --</option>
+        @foreach($customers as $c)
+        <option value="{{ $c->id }}">{{ $c->name }} - {{ $c->phone }}</option>
+        @endforeach
+        </select>
+
+        <div class="mt-3 p-3 border rounded bg-gray-50">
+    <p class="text-sm font-semibold mb-2">Atau Tambah Customer Baru</p>
+
+    <input type="text" name="new_customer_name"
+        placeholder="Nama Customer"
+        class="w-full border border-gray-300 rounded px-3 py-2 mb-2">
+
+    <input type="text" id="inputPhone" name="new_customer_phone"
+    placeholder="No WA (62xxxx)"
+    class="w-full border border-gray-300 rounded px-3 py-2">
+
+        <label>Jenis Pembayaran</label>
+        <select name="payment_type" class="w-full border p-2">
+        <option value="transfer">Transfer</option>
+        <option value="cod">COD</option>
+        </select>
 
         <!-- TEMPLATE -->
         <div class="mb-4">
@@ -102,6 +120,13 @@
 </div>
 </div>
 </div>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
 
@@ -161,6 +186,31 @@ function addRow(item = null) {
     document.getElementById('items').insertAdjacentHTML('beforeend', html);
     index++;
 }
+
+// AUTO FORMAT NOMOR HP
+document.getElementById('inputPhone').addEventListener('blur', function() {
+
+    let val = this.value.replace(/\D/g, '');
+
+    if (val.startsWith('0')) {
+        val = '62' + val.substring(1);
+    }
+
+    if (!val.startsWith('62')) {
+        val = '62' + val;
+    }
+
+    this.value = val;
+});
+
+// AKTIFKAN SEARCH CUSTOMER
+$(document).ready(function() {
+    $('#customerSelect').select2({
+        placeholder: "Cari customer...",
+        allowClear: true,
+        width: '100%'
+    });
+});
 
 </script>
 

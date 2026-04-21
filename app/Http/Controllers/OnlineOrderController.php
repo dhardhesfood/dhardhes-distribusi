@@ -14,8 +14,9 @@ class OnlineOrderController extends Controller
         $templates = DB::table('package_templates')
             ->orderBy('name')
             ->get();
+        $customers = DB::table('customers')->get();
 
-        return view('online_orders.create', compact('templates'));
+        return view('online_orders.create', compact('templates', 'customers'));
     }
 
     public function getTemplateItems($templateId)
@@ -41,9 +42,12 @@ class OnlineOrderController extends Controller
     $this->simulateStock();
     $orders = DB::table('online_orders as o')
     ->leftJoin('package_templates as t', 't.id', '=', 'o.package_template_id')
+    ->leftJoin('customers as c', 'c.id', '=', 'o.customer_id') // 🔥 tambah JOIN
     ->select(
-        'o.*',
-        't.name as package_name'
+    'o.*',
+    't.name as package_name',
+    'c.phone as customer_phone', // 🔥 tambah
+    'c.name as customer_real_name' // 🔥 tambah
     )
     ->orderByDesc('o.id')
     ->get();
@@ -92,9 +96,15 @@ public function update(Request $request, $id)
 {
     DB::transaction(function () use ($request, $id) {
 
-        // update order
+        $order = DB::table('online_orders')->where('id', $id)->first();
+
+        if (!$order) return;
+
+        // 🔥 ambil dari customer_id
+        $customer = DB::table('customers')->where('id', $order->customer_id)->first();
+
         DB::table('online_orders')->where('id', $id)->update([
-            'customer_name' => $request->customer_name,
+            'customer_name' => $customer->name,
             'order_date' => $request->order_date,
             'notes' => $request->notes,
             'updated_at' => now(),
@@ -105,7 +115,7 @@ public function update(Request $request, $id)
             ->where('online_order_id', $id)
             ->delete();
 
-        // insert ulang item
+        // insert ulang
         foreach ($request->items as $item) {
 
             if (($item['qty'] ?? 0) <= 0) continue;
@@ -120,12 +130,9 @@ public function update(Request $request, $id)
             ]);
         }
 
-        });
+    });
 
-        // rerun simulasi
-        $this->simulateStock();
-        // $this->sendWhatsAppNotification($orderId);
-    
+    $this->simulateStock();
 
     return redirect('/online-orders')->with('success', 'Order berhasil diupdate');
 }
@@ -153,8 +160,32 @@ public function destroy($id)
 
     DB::transaction(function () use ($request, &$orderId) {
 
+        // ======================
+        // HANDLE CUSTOMER
+        // ======================
+        if ($request->new_customer_name && $request->new_customer_phone) {
+
+            $customerId = DB::table('customers')->insertGetId([
+                'name' => $request->new_customer_name,
+                'phone' => $this->normalizePhone($request->new_customer_phone),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+        } else {
+            $customerId = $request->customer_id;
+        }
+
+        // 🔥 AMBIL DATA CUSTOMER (INI KUNCI)
+        $customer = DB::table('customers')->where('id', $customerId)->first();
+
+        // ======================
+        // INSERT ORDER
+        // ======================
         $orderId = DB::table('online_orders')->insertGetId([
-            'customer_name' => $request->customer_name,
+            'customer_id' => $customerId,
+            'customer_name' => $customer->name, // ✅ dari DB, bukan input
+            'payment_type' => $request->payment_type,
             'order_date' => $request->order_date,
             'status' => 'on_process',
             'notes' => $request->notes,
@@ -164,6 +195,9 @@ public function destroy($id)
             'updated_at' => now(),
         ]);
 
+        // ======================
+        // INSERT ITEMS
+        // ======================
         foreach ($request->items as $item) {
 
             if (($item['qty'] ?? 0) <= 0) continue;
@@ -180,14 +214,11 @@ public function destroy($id)
 
     });
 
-    // ✅ JALANKAN DI LUAR TRANSACTION
+    // ======================
+    // AFTER PROCESS
+    // ======================
     $this->simulateStock();
-    // $this->sendWhatsAppNotification($orderId);
-    
-
-    
     $this->simulatePackaging($orderId);
-   // $this->sendPackagingNotification($orderId);
 
     return redirect('/online-orders/create')
         ->with('success', 'Order berhasil disimpan');
@@ -374,14 +405,28 @@ if ($request->status == 'done') {
                     ->where('online_order_id', $id)
                     ->get();
 
-                foreach ($items as $item) {
+    foreach ($items as $item) {
 
-                    $this->updateWarehouseStock(
-                    $item->product_variant_id,
-                    $item->qty,
-                    'decrement'
-                    );
-                }
+    // 🔻 KURANGI STOK
+    $this->updateWarehouseStock(
+        $item->product_variant_id,
+        $item->qty,
+        'decrement'
+    );
+
+    // 🔥 CATAT KE STOCK MOVEMENTS
+    DB::table('stock_movements')->insert([
+        'product_id' => $item->product_id,
+        'quantity' => -$item->qty,
+        'type' => 'warehouse_out',
+        'reference_id' => $id,
+        'reference_type' => 'online_order_done',
+        'notes' => 'Order Online',
+        'created_by' => auth()->id(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+}
 
                 DB::table('online_orders')->where('id', $id)->update([
                     'is_stock_deducted' => 1,
@@ -681,6 +726,204 @@ public function sendManualWA($id)
     $this->sendPackagingNotification($id);
 
     return back()->with('success', 'WA berhasil dikirim');
+}
+
+private function generateWhatsAppLink($order)
+{
+    // ======================
+    // 1. AMBIL NOMOR
+    // ======================
+    $phone = $order->customer_phone;
+
+    // ======================
+    // 2. NORMALISASI NOMOR
+    // ======================
+    $phone = preg_replace('/[^0-9]/', '', $phone);
+
+    if (substr($phone, 0, 1) == '0') {
+        $phone = '62' . substr($phone, 1);
+    }
+
+    // ======================
+    // 3. CEK JENIS PAKET
+    // ======================
+    $name = strtolower($order->package_name);
+
+    $name = strtolower($order->package_name);
+
+    if (str_contains($name, '15') && str_contains($name, '40')) {
+    $type = 'bundling';
+    } elseif (str_contains($name, '15')) {
+    $type = '15';
+    } elseif (str_contains($name, '40')) {
+    $type = '40';
+    } else {
+    $type = 'bundling';
+    }
+
+    // ======================
+    // 4. CEK PAYMENT
+    // ======================
+    $payment = $order->payment_type;
+
+    // ======================
+    // 5. PILIH TEMPLATE (ORIGINAL)
+    // ======================
+
+    if ($payment == 'cod' && $type == '15') {
+
+$message = "Hallo kak, berikut update Resi nya yaa 👏🏻
+Dan sekalian Felicia mau reminder yaa 😉
+Bahwa kakak menggunakan pembayaran sistem COD / bayar ditempat 
+
+Maka dari itu ketika barang datang mohon kakak sudah menyiapkan Uang COD nya.
+
+Dan apabila kakak bepergian atau tidak dirumah mohon untuk Uang COD nya dititipkan ke orang yang ada di rumah ya kak agar ketika kurir datang, ada yang menerima paket tersebut.
+
+*PENTING JIKA PAKET SUDAH DITERIMA*
+- Kirimkan foto paket yang menampakkan No RESI dengan jelas *(Syarat klaim jika ada produk rusak/produk kurang) dan (Syarat GRATIS/SUBSIDI ONGKIR)* dipesanan berikutnya.
+
+Berikut Link Untuk Bahan Promosi Produk Extra Ekonomis 15gr : https://drive.google.com/drive/folders/1XIvDDy-H3QDSEV8VCGnYyKh16vGChDDd?usp=sharing
+
+Terimakasih banyak kak
+Semoga berkah dan laris jualannya, aminn..🤲";
+
+    } elseif ($payment == 'transfer' && $type == '15') {
+
+$message = "Felicia ijin update resinya yaa kak 👏🏻
+
+Pastikan memvideo unboxing saat membuka paket
+Jika ada produk rusak / Lolos QC akan kita ganti dengan produk baru atau kita refund dana sesuai dengan produk yang rusak (dengan menyertakan bukti video unboxing)
+.
+
+Berikut Link Untuk Bahan Promosi Produk Extra Ekonomis 15gr : https://drive.google.com/drive/folders/1XIvDDy-H3QDSEV8VCGnYyKh16vGChDDd?usp=sharing
+
+Terimakasih atas kepercayaannya bermitra dengan Dhardhes food 🥰🙏🏻
+
+Semoga kakak sekeluarga selalu diberikan kesehatan dan rejeki yang barokah
+.
+Dan semoga laris jualannya ya kak dan semoga berkah.. aminn 🤲";
+
+    } elseif ($payment == 'cod' && $type == '40') {
+
+$message = "Hallo kak, berikut update Resi nya yaa 👏🏻
+Dan sekalian Felicia mau reminder yaa 😉
+Bahwa kakak menggunakan pembayaran sistem COD / bayar ditempat 
+
+Maka dari itu ketika barang datang mohon kakak sudah menyiapkan Uang COD nya.
+
+Dan apabila kakak bepergian atau tidak dirumah mohon untuk Uang COD nya dititipkan ke orang yang ada di rumah ya kak agar ketika kurir datang, ada yang menerima paket tersebut.
+
+*PENTING JIKA PAKET SUDAH DITERIMA*
+- Kirimkan foto paket yang menampakkan No RESI dengan jelas 
+*(Syarat klaim jika ada produk rusak/produk kurang dan (Syarat GRATIS/SUBSIDI ONGKIR)* dipesanan berikutnya.
+
+Berikut Link Untuk Bahan Promosi Produk Extra Ekonomis 40gr : https://drive.google.com/drive/folders/1TpnKEIiAGTVx3yjxI_uFx4MH3lNhXL3Q?usp=sharing
+
+
+Terimakasih banyak kak
+Semoga berkah dan laris jualannya, aminn..🤲";
+
+    } elseif ($payment == 'transfer' && $type == '40') {
+
+$message = "Felicia ijin update resinya yaa kak 👏🏻
+
+Pastikan memvideo unboxing saat membuka paket
+Jika ada produk rusak / Lolos QC akan kita ganti dengan produk baru atau kita refund dana sesuai dengan produk yang rusak (dengan menyertakan bukti video unboxing)
+.
+
+Berikut Link Untuk Bahan Promosi Produk Extra Ekonomis 40gr : https://drive.google.com/drive/folders/1TpnKEIiAGTVx3yjxI_uFx4MH3lNhXL3Q?usp=sharing
+
+Terimakasih atas kepercayaannya bermitra dengan Dhardhes food 🥰🙏🏻
+
+Semoga kakak sekeluarga selalu diberikan kesehatan dan rejeki yang barokah
+.
+Dan semoga laris jualannya ya kak dan semoga berkah.. aminn 🤲";
+
+    } elseif ($payment == 'cod' && $type == 'bundling') {
+
+$message = "Hallo kak, berikut update Resi nya yaa 👏🏻
+Dan sekalian Felicia mau reminder yaa 😉
+Bahwa kakak menggunakan pembayaran sistem COD / bayar ditempat 
+
+Maka dari itu ketika barang datang mohon kakak sudah menyiapkan Uang COD nya.
+
+Dan apabila kakak bepergian atau tidak dirumah mohon untuk Uang COD nya dititipkan ke orang yang ada di rumah ya kak agar ketika kurir datang, ada yang menerima paket tersebut.
+
+*PENTING JIKA PAKET SUDAH DITERIMA*
+- Kirimkan foto paket yang menampakkan No RESI dengan jelas 
+*(Syarat klaim jika ada produk rusak/produk kurang dan (Syarat GRATIS/SUBSIDI ONGKIR)* dipesanan berikutnya.+B6
+
+Berikut Link Untuk Bahan Promosi Produk Extra Ekonomis 40gr : https://drive.google.com/drive/folders/1TpnKEIiAGTVx3yjxI_uFx4MH3lNhXL3Q?usp=sharing
+
+Berikut Link Untuk Bahan Promosi Produk Extra Ekonomis 15gr : https://drive.google.com/drive/folders/1XIvDDy-H3QDSEV8VCGnYyKh16vGChDDd?usp=sharing
+
+Terimakasih banyak kak
+Semoga berkah dan laris jualannya, aminn..🤲";
+
+    } else {
+
+$message = "Felicia ijin update resinya yaa kak 👏🏻
+
+Pastikan memvideo unboxing saat membuka paket
+Jika ada produk rusak / Lolos QC akan kita ganti dengan produk baru atau kita refund dana sesuai dengan produk yang rusak (dengan menyertakan bukti video unboxing)
+.
+
+Berikut Link Untuk Bahan Promosi Produk Extra Ekonomis 40gr : https://drive.google.com/drive/folders/1TpnKEIiAGTVx3yjxI_uFx4MH3lNhXL3Q?usp=sharing
+
+Berikut Link Untuk Bahan Promosi Produk Extra Ekonomis 15gr : https://drive.google.com/drive/folders/1XIvDDy-H3QDSEV8VCGnYyKh16vGChDDd?usp=sharing
+
+
+Terimakasih atas kepercayaannya bermitra dengan Dhardhes food 🥰🙏🏻
+
+Semoga kakak sekeluarga selalu diberikan kesehatan dan rejeki yang barokah
+.
+Dan semoga laris jualannya ya kak dan semoga berkah.. aminn 🤲";
+
+    }
+
+    // ======================
+    // 6. GENERATE LINK WA
+    // ======================
+    return "https://wa.me/" . $phone . "?text=" . rawurlencode($message);
+
+}
+
+public function sendResi($id)
+{
+    $order = DB::table('online_orders as o')
+        ->leftJoin('package_templates as t', 't.id', '=', 'o.package_template_id')
+        ->leftJoin('customers as c', 'c.id', '=', 'o.customer_id')
+        ->where('o.id', $id)
+        ->select(
+            'o.*',
+            't.name as package_name',
+            'c.phone as customer_phone'
+        )
+        ->first();
+
+    if (!$order) {
+        return back()->with('error', 'Order tidak ditemukan');
+    }
+
+    $link = $this->generateWhatsAppLink($order);
+
+    return redirect($link);
+}
+
+private function normalizePhone($phone)
+{
+    $phone = preg_replace('/[^0-9]/', '', $phone);
+
+    if (substr($phone, 0, 1) == '0') {
+        $phone = '62' . substr($phone, 1);
+    }
+
+    if (substr($phone, 0, 2) != '62') {
+        $phone = '62' . $phone;
+    }
+
+    return $phone;
 }
 
 }

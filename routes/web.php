@@ -112,6 +112,9 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/online-orders/{id}', [OnlineOrderController::class, 'destroy']);
 
     Route::get('/online-orders/{id}/send-resi', [OnlineOrderController::class, 'sendResi']);
+
+    Route::get('/customers-data', [OnlineOrderController::class, 'customersData'])
+    ->name('customers.data');
     
     Route::get('/package-templates', [PackageTemplateController::class, 'index']);
     Route::get('/package-templates/create', [PackageTemplateController::class, 'create']);

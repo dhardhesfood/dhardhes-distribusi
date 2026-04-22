@@ -31,12 +31,12 @@ class CheckSalesDiscipline extends Command
 for ($date = $start->copy(); $date->lte($today); $date->addDay()) {
 
     $coverage = DB::table('sales_stock_requests')
-        ->where('user_id', $user->id)
-        ->whereDate('request_date', '>=', $date->toDateString())
-        ->whereMonth('request_date', $today->month)
-        ->whereYear('request_date', $today->year)
-        ->distinct()
-        ->count('request_date');
+    ->where('user_id', $user->id)
+    ->whereBetween('request_date', [
+        $date->toDateString(),
+        $date->copy()->addDays(2)->toDateString()
+        ])
+    ->count();
 
     $isLate = $coverage < 3 ? 1 : 0;
 

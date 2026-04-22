@@ -6,18 +6,56 @@
 <div class="bg-white shadow rounded-lg p-6">
 
     <!-- HEADER -->
-    <div class="flex justify-between items-center mb-6">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800">
-                List Order Online
-            </h2>
-        </div>
+    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3 mb-6">
 
+    <!-- KIRI -->
+    <div>
+        <h2 class="text-2xl font-bold text-gray-800">
+            List Order Online
+        </h2>
+    </div>
+
+    <!-- KANAN -->
+    <div class="flex flex-wrap items-center gap-2 justify-end">
+
+        <!-- FILTER -->
+        <form method="GET" class="flex gap-2">
+
+            <!-- TAHUN -->
+            <select name="year" onchange="this.form.submit()" class="border rounded p-2">
+                @for($y = now()->year; $y >= now()->year - 3; $y--)
+                    <option value="{{ $y }}" {{ request('year', now()->year) == $y ? 'selected' : '' }}>
+                        {{ $y }}
+                    </option>
+                @endfor
+            </select>
+
+            <!-- BULAN -->
+            <select name="month" onchange="this.form.submit()" class="border rounded p-2">
+                @for($m = 1; $m <= 12; $m++)
+                    <option value="{{ $m }}" {{ request('month', now()->month) == $m ? 'selected' : '' }}>
+                        {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+                    </option>
+                @endfor
+            </select>
+
+        </form>
+
+        <!-- CUSTOMER -->
+        <a href="{{ route('customers.data') }}"
+           class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded shadow font-semibold">
+            Customer
+        </a>
+
+        <!-- BUAT ORDER -->
         <a href="/online-orders/create"
            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
-            + Buat Order
+            + Order
         </a>
+
     </div>
+
+</div>
 
     <!-- TABLE -->
      @if(session('error'))

@@ -40,6 +40,8 @@ class OnlineOrderController extends Controller
     public function index()
 {
     $this->simulateStock();
+    $month = request('month', now()->month);
+    $year  = request('year', now()->year);
     $orders = DB::table('online_orders as o')
     ->leftJoin('package_templates as t', 't.id', '=', 'o.package_template_id')
     ->leftJoin('customers as c', 'c.id', '=', 'o.customer_id') // 🔥 tambah JOIN
@@ -49,6 +51,8 @@ class OnlineOrderController extends Controller
     'c.phone as customer_phone', // 🔥 tambah
     'c.name as customer_real_name' // 🔥 tambah
     )
+    ->whereMonth('o.order_date', $month)
+    ->whereYear('o.order_date', $year)
     ->orderByDesc('o.id')
     ->get();
 
@@ -924,6 +928,35 @@ private function normalizePhone($phone)
     }
 
     return $phone;
+}
+
+public function customersData()
+{
+    $customers = DB::table('customers as c')
+
+        // ambil order terakhir tiap customer
+        ->leftJoin('online_orders as o', function ($join) {
+            $join->on('o.customer_id', '=', 'c.id')
+                 ->whereRaw('o.id = (
+                     SELECT MAX(id)
+                     FROM online_orders
+                     WHERE customer_id = c.id
+                 )');
+        })
+
+        ->leftJoin('package_templates as t', 't.id', '=', 'o.package_template_id')
+
+        ->select(
+            'c.name',
+            'c.phone',
+            't.name as last_package',
+            'o.order_date as last_order_date'
+        )
+
+        ->orderByDesc('o.order_date')
+        ->get();
+
+    return view('customers.index', compact('customers'));
 }
 
 }

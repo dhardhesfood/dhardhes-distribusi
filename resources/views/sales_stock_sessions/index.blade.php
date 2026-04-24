@@ -32,6 +32,7 @@
                         <th class="border px-2 py-2 text-center">Mulai</th>
                         <th class="border px-2 py-2 text-center">Selesai</th>
                         <th class="border px-2 py-2 text-center">Status</th>
+                        <th class="border px-2 py-2 text-center">Foto</th>
                         <th class="border px-2 py-2 text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -90,6 +91,16 @@
                                         -
                                     </span>
                                 @endif
+                            </td>
+
+                            <td class="border px-2 py-2">
+                            @if($session->photo)
+                            <a href="{{ asset('storage/'.$session->photo) }}" target="_blank">
+                            <img src="{{ asset('storage/'.$session->photo) }}" width="50" class="mx-auto">
+                            </a>
+                            @else
+                            -
+                            @endif
                             </td>
 
                             <td class="border px-2 py-2 whitespace-nowrap">

@@ -28,7 +28,8 @@
         @if(in_array(auth()->user()->role, ['admin','admin_gudang']))
 
         <form method="POST"
-              action="{{ route('sales-stock-sessions.close', $session->id) }}">
+              action="{{ route('sales-stock-sessions.close', $session->id) }}"
+              enctype="multipart/form-data">
             @csrf
 
             <div class="overflow-x-auto">
@@ -88,6 +89,25 @@ class="damage-input border px-2 py-1 rounded w-14 md:w-16 text-center">
                     @endforeach
                 </tbody>
             </table>
+
+<div class="mt-6">
+    <label class="block text-sm font-semibold mb-2">
+        Foto Stok (WAJIB)
+    </label>
+
+    <input 
+        type="file" 
+        name="photo" 
+        accept="image/*" 
+        capture="environment"
+        required
+        class="border p-2 rounded w-full"
+    >
+
+    <p class="text-xs text-gray-500 mt-1">
+        Ambil foto langsung dari kamera
+    </p>
+</div>
 
             <div class="mt-6 text-right">
                 <button type="submit"

@@ -59,10 +59,25 @@ class SalesStockSessionController extends Controller
         }
 
         $request->validate([
-            'user_id'     => 'required|exists:users,id',
-            'opening_qty' => 'required|array',
-            'start_date'  => 'nullable|date',
-        ]);
+        'user_id'    => 'required|exists:users,id',
+        'product_id' => 'required|array',
+        'qty'        => 'required|array',
+        'start_date' => 'nullable|date',
+    ]);
+
+        $totalQty = collect($request->qty)->sum();
+
+        if (count($request->product_id) !== count(array_unique($request->product_id))) {
+        return back()
+        ->withErrors('Produk tidak boleh duplikat')
+        ->withInput();
+    }
+
+        if ($totalQty <= 0) {
+        return back()
+        ->withErrors('Minimal harus ada 1 produk dengan qty > 0')
+        ->withInput();
+    }
 
         if (SalesStockSession::hasOpenSession($request->user_id)) {
             return back()->withErrors('Sales masih memiliki session stok yang belum ditutup.');
@@ -81,10 +96,16 @@ class SalesStockSessionController extends Controller
                 'status'     => 'open',
             ]);
 
-            foreach ($request->opening_qty as $productId => $qty) {
+            $productIds = $request->product_id;
+            $qtys       = $request->qty;
 
-                $qty = (int) $qty;
-                if ($qty <= 0) continue;
+            for ($i = 0; $i < count($productIds); $i++) {
+
+            $productId = $productIds[$i];
+            $qty       = (int) $qtys[$i];
+
+            if ($qty <= 0) continue;
+
                 // CEK STOK GUDANG
             $warehouseStock = DB::table('stock_movements')
                 ->select(DB::raw("
@@ -290,7 +311,10 @@ foreach($users as $user){
     }
 
     public function close(Request $request, $id)
-{
+{   
+    $request->validate([
+    'photo' => 'required|image|mimes:jpg,jpeg,png|max:5120'
+    ]);
     if (!in_array(auth()->user()->role, ['admin','admin_gudang'])) {
         abort(403);
     }
@@ -300,7 +324,11 @@ foreach($users as $user){
         ->findOrFail($id);
 
     DB::transaction(function () use ($request, $session) {
+        $photoPath = null;
 
+    if ($request->hasFile('photo')) {
+    $photoPath = $request->file('photo')->store('session_photos', 'public');
+    }
         $hasMinus = false;
 
         foreach ($session->items as $item) {
@@ -371,9 +399,10 @@ foreach($users as $user){
         }
 
         $session->update([
-            'status'   => $hasMinus ? 'minus' : 'done',
-            'end_date' => now(),
-        ]);
+       'status'   => $hasMinus ? 'minus' : 'done',
+       'end_date' => now(),
+       'photo'    => $photoPath
+       ]);
 
         $link = '/sales-stock-sessions/'.$session->id;
 

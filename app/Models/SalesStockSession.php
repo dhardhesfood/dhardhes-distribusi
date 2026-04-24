@@ -14,6 +14,7 @@ class SalesStockSession extends Model
         'end_date',
         'status',
         'notes',
+        'photo',
     ];
 
     protected $casts = [

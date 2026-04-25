@@ -429,6 +429,120 @@ foreach($users as $user){
         ->with('success','Session berhasil ditutup & saldo direset.');
 }
 
+public function editOpening($id)
+{
+    // 🔐 HANYA ADMIN
+    if (auth()->user()->role !== 'admin') {
+        abort(403);
+    }
+
+    // ambil session + item
+    $session = SalesStockSession::with('items.product')
+        ->where('status', 'open') // hanya boleh edit saat OPEN
+        ->findOrFail($id);
+
+    return view('sales_stock_sessions.edit_opening', compact('session'));
+}
+
+public function updateOpening(Request $request, $id)
+{
+    // 🔐 ADMIN ONLY
+    if (auth()->user()->role !== 'admin') {
+        abort(403);
+    }
+
+    $session = SalesStockSession::with('items.product')
+        ->where('status', 'open')
+        ->findOrFail($id);
+
+    DB::transaction(function () use ($request, $session) {
+
+        foreach ($session->items as $item) {
+
+            $productId = $item->product_id;
+
+            $oldQty = (int) $item->opening_qty;
+            $newQty = (int) ($request->opening[$productId] ?? $oldQty);
+
+            // skip kalau tidak berubah
+            if ($newQty === $oldQty) continue;
+
+            $diff = $newQty - $oldQty;
+
+            /*
+            -----------------------------------------
+            🔴 JIKA TAMBAH STOK KE SALES
+            -----------------------------------------
+            */
+            if ($diff > 0) {
+
+                // cek stok gudang
+                $warehouseStock = DB::table('stock_movements')
+                    ->select(DB::raw("
+                        SUM(
+                            CASE
+                                WHEN type = 'warehouse_in' THEN quantity
+                                WHEN type = 'warehouse_out' THEN -quantity
+                                WHEN type = 'adjustment' THEN quantity
+                                ELSE 0
+                            END
+                        ) as stock
+                    "))
+                    ->where('product_id', $productId)
+                    ->lockForUpdate()
+                    ->value('stock') ?? 0;
+
+                if ($diff > $warehouseStock) {
+                    throw new \Exception(
+                        'Stok gudang tidak cukup untuk produk: ' . $item->product->name
+                    );
+                }
+
+                // movement keluar gudang
+                StockMovement::create([
+                    'product_id'     => $productId,
+                    'quantity'       => $diff,
+                    'type'           => 'warehouse_out',
+                    'reference_id'   => $session->id,
+                    'reference_type' => 'sales_stock_session_adjustment',
+                    'session_id'     => $session->id,
+                    'notes'          => 'Penambahan opening stock (koreksi admin)',
+                ]);
+            }
+
+            /*
+            -----------------------------------------
+            🔵 JIKA DIKURANGI (BALIK KE GUDANG)
+            -----------------------------------------
+            */
+            if ($diff < 0) {
+
+                $qtyBack = abs($diff);
+
+                StockMovement::create([
+                    'product_id'     => $productId,
+                    'quantity'       => $qtyBack,
+                    'type'           => 'warehouse_in',
+                    'reference_id'   => $session->id,
+                    'reference_type' => 'sales_stock_session_adjustment',
+                    'session_id'     => $session->id,
+                    'notes'          => 'Pengurangan opening stock (koreksi admin)',
+                ]);
+            }
+
+            // update opening_qty
+            $item->update([
+                'opening_qty' => $newQty
+            ]);
+        }
+
+    });
+
+    return redirect()
+        ->route('sales-stock-sessions.show', $session->id)
+        ->with('success', 'Opening stock berhasil dikoreksi.');
+}
+
 public function reopen($id)
 {
     if (auth()->user()->role !== 'admin') {

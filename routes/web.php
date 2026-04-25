@@ -513,6 +513,14 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/sales-discipline/run', [App\Http\Controllers\SalesDisciplineController::class, 'run'])
     ->name('sales-discipline.run');
+
+    Route::get('/sales-stock-sessions/{id}/edit-opening', 
+    [SalesStockSessionController::class, 'editOpening'])
+    ->name('sales-stock-sessions.edit-opening');
+
+    Route::post('/sales-stock-sessions/{id}/update-opening', 
+    [SalesStockSessionController::class, 'updateOpening'])
+    ->name('sales-stock-sessions.update-opening');
     
     /*
     |--------------------------------------------------------------------------

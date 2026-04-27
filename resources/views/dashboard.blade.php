@@ -338,6 +338,18 @@ else{
             'color'=>'bg-violet-600 hover:bg-violet-700',
             'emoji'=>'📦'
         ],
+        
+
+        // ================= DATA IKLAN =================
+
+            [
+            'route'=>'/ads',
+            'label'=>'Ads & KPI Online',
+            'tag'=>'Marketing',
+            'color' => 'bg-blue-600 hover:bg-blue-700',
+            'emoji'=>'📣',
+            'roles'=>['admin']
+            ],
 
         // ================= ORDER ONLINE =================
 

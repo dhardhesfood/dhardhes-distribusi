@@ -526,6 +526,7 @@ Route::middleware(['auth'])->group(function () {
     [SalesStockSessionController::class, 'updateOpening'])
     ->name('sales-stock-sessions.update-opening');
     
+    
     /*
     |--------------------------------------------------------------------------
     | KOMPOSISI PRODUK PACK (ADMIN ONLY)
@@ -602,8 +603,27 @@ Route::get('/ai/business-analysis', [AIController::class, 'businessAnalysis'])
 
     Route::post('/system/backups/restore/{filename}', [SystemBackupController::class, 'restore'])
     ->name('system.backups.restore');
-    
+
+    /*
+|--------------------------------------------------------------------------
+| ADS MANAGEMENT (ADMIN ONLY)
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/ads/create', [App\Http\Controllers\AdsController::class, 'create'])
+    ->name('ads.create');
+
+Route::post('/ads/store', [App\Http\Controllers\AdsController::class, 'store'])
+    ->name('ads.store');
+
+    Route::get('/ads', [App\Http\Controllers\AdsController::class, 'index'])
+    ->name('ads.index');
+
+Route::post('/ads/{id}/update-real', [App\Http\Controllers\AdsController::class, 'updateReal'])
+    ->name('ads.update.real');
+
 });
+
 
     /*
     |--------------------------------------------------------------------------

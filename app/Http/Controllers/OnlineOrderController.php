@@ -42,6 +42,53 @@ class OnlineOrderController extends Controller
     $this->simulateStock();
     $month = request('month', now()->month);
     $year  = request('year', now()->year);
+
+    // =========================
+// AMBIL PARAM
+// =========================
+$month  = request('month', now()->month);
+$year   = request('year', now()->year);
+$filter = request('filter');
+$date   = request('date');
+
+// =========================
+// PRIORITAS FILTER
+// =========================
+if ($date) {
+
+    // 🔥 PRIORITAS 1: TANGGAL MANUAL
+    $startDate = Carbon::parse($date)->startOfDay();
+    $endDate   = Carbon::parse($date)->endOfDay();
+
+} elseif ($filter == 'today') {
+
+    $startDate = now()->startOfDay();
+    $endDate   = now()->endOfDay();
+
+} elseif ($filter == 'yesterday') {
+
+    $startDate = now()->subDay()->startOfDay();
+    $endDate   = now()->subDay()->endOfDay();
+
+} elseif ($filter == '7days') {
+
+    $startDate = now()->subDays(6)->startOfDay();
+    $endDate   = now()->endOfDay();
+
+} elseif ($filter == '30days') {
+
+    $startDate = now()->subDays(29)->startOfDay();
+    $endDate   = now()->endOfDay();
+
+} else {
+
+    // 🔥 FALLBACK: BULAN & TAHUN
+    $startDate = Carbon::create($year, $month, 1)->startOfMonth();
+    $endDate   = Carbon::create($year, $month, 1)->endOfMonth();
+
+}
+
+
     $orders = DB::table('online_orders as o')
     ->leftJoin('package_templates as t', 't.id', '=', 'o.package_template_id')
     ->leftJoin('customers as c', 'c.id', '=', 'o.customer_id') // 🔥 tambah JOIN
@@ -51,10 +98,10 @@ class OnlineOrderController extends Controller
     'c.phone as customer_phone', // 🔥 tambah
     'c.name as customer_real_name' // 🔥 tambah
     )
-    ->whereMonth('o.order_date', $month)
-    ->whereYear('o.order_date', $year)
+    ->whereBetween('o.order_date', [$startDate, $endDate])
     ->orderByDesc('o.id')
     ->get();
+
 
     $items = DB::table('online_order_items')
         ->join('products', 'products.id', '=', 'online_order_items.product_id')
@@ -74,7 +121,17 @@ class OnlineOrderController extends Controller
     ->get()
     ->groupBy('online_order_id');
 
-       return view('online_orders.index', compact('orders', 'items', 'checks'));
+    $statusCounts = DB::table('online_orders')
+    ->select(
+        DB::raw("SUM(CASE WHEN status = 'on_process' THEN 1 ELSE 0 END) as on_process"),
+        DB::raw("SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) as done"),
+        DB::raw("SUM(CASE WHEN status = 'returned' THEN 1 ELSE 0 END) as returned"),
+        DB::raw("SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled")
+    )
+    ->whereBetween('order_date', [$startDate, $endDate])
+    ->first();
+
+       return view('online_orders.index', compact('orders', 'items', 'checks', 'statusCounts'));
 
 }
 
@@ -107,12 +164,21 @@ public function update(Request $request, $id)
         // 🔥 ambil dari customer_id
         $customer = DB::table('customers')->where('id', $order->customer_id)->first();
 
-        DB::table('online_orders')->where('id', $id)->update([
-            'customer_name' => $customer->name,
-            'order_date' => $request->order_date,
-            'notes' => $request->notes,
-            'updated_at' => now(),
-        ]);
+// 🔥 FIX: fallback ke nama lama kalau customer null
+$customerName = $customer->name ?? $order->customer_name;
+
+// 🔥 FIX: bersihkan format harga 750.000 → 750000
+$totalPrice = str_replace('.', '', $request->total_price);
+$shippingSubsidy = str_replace('.', '', $request->shipping_subsidy ?? 0);
+
+DB::table('online_orders')->where('id', $id)->update([
+    'customer_name' => $customerName,
+    'order_date' => $request->order_date,
+    'total_price' => $totalPrice,
+    'shipping_subsidy' => $shippingSubsidy,
+    'notes' => $request->notes,
+    'updated_at' => now(),
+]);
 
         // hapus item lama
         DB::table('online_order_items')
@@ -190,6 +256,8 @@ public function destroy($id)
             'customer_id' => $customerId,
             'customer_name' => $customer->name, // ✅ dari DB, bukan input
             'payment_type' => $request->payment_type,
+            'total_price' => str_replace('.', '', $request->total_price),
+            'shipping_subsidy' => str_replace('.', '', $request->shipping_subsidy ?? 0),
             'order_date' => $request->order_date,
             'status' => 'on_process',
             'notes' => $request->notes,
@@ -957,6 +1025,38 @@ public function customersData()
         ->get();
 
     return view('customers.index', compact('customers'));
+}
+
+public function omzet(Request $request)
+{
+    $month = $request->month ?? now()->month;
+    $year  = $request->year ?? now()->year;
+
+    // 🔒 VALIDASI ADMIN
+    if ((auth()->user()->role ?? null) !== 'admin') {
+        abort(403);
+    }
+
+    $totalOmzet = DB::table('online_orders')
+        ->where('status', 'done')
+        ->whereMonth('order_date', $month)
+        ->whereYear('order_date', $year)
+        ->select(DB::raw('SUM(COALESCE(total_price,0) - COALESCE(shipping_subsidy,0)) as total'))
+        ->value('total');
+
+    $perHari = DB::table('online_orders')
+        ->select(
+            DB::raw('DATE(order_date) as date'),
+            DB::raw('SUM(COALESCE(total_price,0) - COALESCE(shipping_subsidy,0)) as total')
+        )
+        ->where('status', 'done')
+        ->whereMonth('order_date', $month)
+        ->whereYear('order_date', $year)
+        ->groupBy('date')
+        ->orderBy('date')
+        ->get();
+
+    return view('online_orders.omzet', compact('totalOmzet', 'perHari', 'month', 'year'));
 }
 
 }

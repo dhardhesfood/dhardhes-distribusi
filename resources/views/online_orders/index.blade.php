@@ -6,6 +6,32 @@
 <div class="bg-white shadow rounded-lg p-6">
 
     <!-- HEADER -->
+
+    {{-- ✅ TARUH DI SINI --}}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+
+    <div class="bg-yellow-100 text-yellow-800 p-3 rounded text-center">
+        <div class="text-xs">On Process</div>
+        <div class="text-xl font-bold">{{ $statusCounts->on_process ?? 0 }}</div>
+    </div>
+
+    <div class="bg-green-100 text-green-800 p-3 rounded text-center">
+        <div class="text-xs">Done</div>
+        <div class="text-xl font-bold">{{ $statusCounts->done ?? 0 }}</div>
+    </div>
+
+    <div class="bg-blue-100 text-blue-800 p-3 rounded text-center">
+        <div class="text-xs">Return</div>
+        <div class="text-xl font-bold">{{ $statusCounts->returned ?? 0 }}</div>
+    </div>
+
+    <div class="bg-red-100 text-red-800 p-3 rounded text-center">
+        <div class="text-xs">Cancel</div>
+        <div class="text-xl font-bold">{{ $statusCounts->cancelled ?? 0 }}</div>
+    </div>
+
+</div>
+
     <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3 mb-6">
 
     <!-- KIRI -->
@@ -19,27 +45,117 @@
     <div class="flex flex-wrap items-center gap-2 justify-end">
 
         <!-- FILTER -->
-        <form method="GET" class="flex gap-2">
+        <form method="GET" class="w-full">
 
-            <!-- TAHUN -->
-            <select name="year" onchange="this.form.submit()" class="border rounded p-2">
-                @for($y = now()->year; $y >= now()->year - 3; $y--)
-                    <option value="{{ $y }}" {{ request('year', now()->year) == $y ? 'selected' : '' }}>
-                        {{ $y }}
-                    </option>
-                @endfor
-            </select>
+        <div class="grid md:grid-cols-3 gap-4 w-full">
 
-            <!-- BULAN -->
-            <select name="month" onchange="this.form.submit()" class="border rounded p-2">
+    <!-- CARD 1 -->
+    <div class="bg-gray-50 border rounded-lg p-3">
+        <div class="text-xs text-gray-500 mb-2">Filter Cepat</div>
+
+        <div class="flex flex-wrap gap-2">
+
+            <a href="{{ request()->fullUrlWithQuery(['filter' => 'today', 'date' => null]) }}"
+               class="px-3 py-1 rounded text-xs font-semibold
+               {{ request('filter')=='today'
+               ? 'bg-blue-600 text-white'
+               : 'bg-white border hover:bg-gray-100' }}">
+                Hari Ini
+            </a>
+
+            <a href="{{ request()->fullUrlWithQuery(['filter' => 'yesterday', 'date' => null]) }}"
+               class="px-3 py-1 rounded text-xs font-semibold
+               {{ request('filter')=='yesterday'
+               ? 'bg-blue-600 text-white'
+               : 'bg-white border hover:bg-gray-100' }}">
+                Kemarin
+            </a>
+
+            <a href="{{ request()->fullUrlWithQuery(['filter' => '7days', 'date' => null]) }}"
+               class="px-3 py-1 rounded text-xs font-semibold
+               {{ request('filter')=='7days'
+               ? 'bg-blue-600 text-white'
+               : 'bg-white border hover:bg-gray-100' }}">
+                7 Hari
+            </a>
+
+            <a href="{{ request()->fullUrlWithQuery(['filter' => '30days', 'date' => null]) }}"
+               class="px-3 py-1 rounded text-xs font-semibold
+               {{ request('filter')=='30days'
+               ? 'bg-blue-600 text-white'
+               : 'bg-white border hover:bg-gray-100' }}">
+                30 Hari
+            </a>
+
+        </div>
+    </div>
+
+    <!-- CARD 2 -->
+    <div class="bg-gray-50 border rounded-lg p-3">
+        <div class="text-xs text-gray-500 mb-2">Tanggal</div>
+
+        <div class="flex gap-2">
+            <input type="date"
+                   name="date"
+                   value="{{ request('date') }}"
+                   class="border rounded px-2 py-1 text-sm w-full">
+
+            <button type="submit"
+                    class="bg-gray-800 text-white px-3 py-1 rounded text-sm">
+                OK
+            </button>
+        </div>
+    </div>
+
+    <!-- CARD 3 -->
+    <div class="bg-gray-50 border rounded-lg p-3">
+        <div class="text-xs text-gray-500 mb-2">Bulanan</div>
+
+        <div class="flex gap-2">
+
+            <select name="month"
+                onchange="this.form.submit()"
+                class="border rounded px-2 py-1 text-sm w-full">
+
                 @for($m = 1; $m <= 12; $m++)
-                    <option value="{{ $m }}" {{ request('month', now()->month) == $m ? 'selected' : '' }}>
+                    <option value="{{ $m }}"
+                        {{ request('month', now()->month) == $m ? 'selected' : '' }}>
                         {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
                     </option>
                 @endfor
+
             </select>
 
+            <select name="year"
+                onchange="this.form.submit()"
+                class="border rounded px-2 py-1 text-sm">
+
+                @for($y = now()->year; $y >= now()->year - 3; $y--)
+                    <option value="{{ $y }}"
+                        {{ request('year', now()->year) == $y ? 'selected' : '' }}>
+                        {{ $y }}
+                    </option>
+                @endfor
+
+            </select>
+
+        </div>
+    </div>
+
+</div>
+
         </form>
+
+           @php
+           $isAdmin = auth()->user()->role ?? null; // sesuaikan kalau nama kolom beda
+           @endphp
+
+            @if($isAdmin === 'admin')
+           <a href="{{ route('online-orders.omzet') }}"
+              class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded shadow font-semibold">
+            Omzet
+          </a>
+            @endif
 
         <!-- CUSTOMER -->
         <a href="{{ route('customers.data') }}"
@@ -76,6 +192,12 @@
             <div class="font-bold text-lg">
                 {{ $order->customer_name }}
             </div>
+
+            @if($order->total_price)
+           <div class="text-sm text-emerald-600 font-semibold">
+            Rp {{ number_format($order->total_price, 0, ',', '.') }}
+           </div>
+            @endif
 
             @php
     $orderDate = \Carbon\Carbon::parse($order->order_date);

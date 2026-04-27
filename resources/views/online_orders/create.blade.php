@@ -42,7 +42,7 @@
     @endif
 
     <!-- FORM -->
-    <form method="POST" action="/online-orders/store">
+    <form method="POST" action="/online-orders/store" onsubmit="cleanPrice()">
         @csrf
 
         <!-- CUSTOMER -->
@@ -90,6 +90,24 @@
                 @endforeach
             </select>
         </div>
+
+        <div class="mb-4">
+       <label class="block text-sm font-semibold mb-1">Harga Jual Paket</label>
+       
+       <input type="text" id="total_price"
+            name="total_price"
+            placeholder="Masukkan harga jual paket"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2"
+            required>
+       </div>
+
+       <div class="mb-4">
+       <label class="block text-sm font-semibold mb-1">Subsidi Ongkir</label>
+       <input type="text" id="shipping_subsidy"
+              name="shipping_subsidy"
+              placeholder="Masukkan subsidi ongkir"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2">
+       </div>
 
         <!-- ITEMS -->
         <div id="items" class="mb-4 space-y-2"></div>
@@ -211,6 +229,31 @@ $(document).ready(function() {
         width: '100%'
     });
 });
+
+function formatRupiah(angka) {
+    return angka.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+document.getElementById('total_price').addEventListener('input', function(e) {
+
+    let value = this.value.replace(/\D/g, '');
+
+    this.value = formatRupiah(value);
+
+});
+
+document.getElementById('shipping_subsidy').addEventListener('input', function(e) {
+    let value = this.value.replace(/\D/g, '');
+    this.value = formatRupiah(value);
+});
+
+function cleanPrice() {
+    let price = document.getElementById('total_price');
+    let ongkir = document.getElementById('shipping_subsidy');
+
+    if(price) price.value = price.value.replace(/\./g, '');
+    if(ongkir) ongkir.value = ongkir.value.replace(/\./g, '');
+}
 
 </script>
 

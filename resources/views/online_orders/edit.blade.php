@@ -11,9 +11,32 @@
 @method('PUT')
 
 <div class="mb-4">
+    <label>Tanggal Order</label>
+    <input type="date" name="order_date"
+        value="{{ $order->order_date }}"
+        class="border p-2 w-full">
+</div>
+
+<div class="mb-4">
     <label>Customer</label>
     <input type="text" name="customer_name"
         value="{{ $order->customer_name }}"
+        class="border p-2 w-full">
+</div>
+
+<div class="mb-4">
+    <label>Harga Jual Paket</label>
+    <input type="text" id="total_price"
+        name="total_price"
+        value="{{ number_format($order->total_price ?? 0, 0, ',', '.') }}"
+        class="border p-2 w-full">
+</div>
+
+<div class="mb-4">
+    <label>Subsidi Ongkir</label>
+    <input type="text" id="shipping_subsidy"
+        name="shipping_subsidy"
+        value="{{ number_format($order->shipping_subsidy ?? 0, 0, ',', '.') }}"
         class="border p-2 w-full">
 </div>
 
@@ -52,5 +75,39 @@
 
 </div>
 </div>
+
+<script>
+function formatRupiah(angka) {
+    return angka.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+let priceInput = document.getElementById('total_price');
+
+if(priceInput){
+    priceInput.addEventListener('input', function() {
+        let val = this.value.replace(/\D/g, '');
+        this.value = formatRupiah(val);
+    });
+}
+
+let ongkirInput = document.getElementById('shipping_subsidy');
+
+if(ongkirInput){
+    ongkirInput.addEventListener('input', function() {
+        let val = this.value.replace(/\D/g, '');
+        this.value = formatRupiah(val);
+    });
+}
+
+// bersihin sebelum submit
+document.querySelector('form').addEventListener('submit', function(){
+    if(priceInput){
+        priceInput.value = priceInput.value.replace(/\./g, '');
+    }
+    if(ongkirInput){
+        ongkirInput.value = ongkirInput.value.replace(/\./g, '');
+    }
+});
+</script>
 
 </x-app-layout>

@@ -259,16 +259,6 @@ $cpClosing = $ad->closing > 0
 
         <div class="flex flex-col md:flex-row gap-3 w-full">
 
-            <!-- REAL CHAT -->
-            <div class="w-full">
-                <label class="text-xs text-gray-500">
-                    Real Chat WA
-                </label>
-                <input type="number" name="real_chat"
-                    class="border rounded px-2 py-1 w-full"
-                    placeholder="Contoh: 20">
-            </div>
-
             <!-- CLOSING -->
             <div class="w-full">
                 <label class="text-xs text-gray-500">
@@ -320,19 +310,15 @@ $cpClosing = $ad->closing > 0
 
             <div class="flex gap-2">
 
-                <input type="number" name="real_chat"
-                    value="{{ $ad->real_chat }}"
-                    class="border rounded px-2 py-1 w-full">
+               <input type="number" name="closing"
+                      value="{{ $ad->closing }}"
+                      class="border rounded px-2 py-1 w-full">
 
-                <input type="number" name="closing"
-                    value="{{ $ad->closing }}"
-                    class="border rounded px-2 py-1 w-full">
+               <button class="bg-blue-600 text-white px-3 py-1 rounded">
+                           Update
+               </button>
 
-                <button class="bg-blue-600 text-white px-3 py-1 rounded">
-                    Update
-                </button>
-
-            </div>
+             </div>
 
         </form>
 

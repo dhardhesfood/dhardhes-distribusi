@@ -28,21 +28,48 @@ class AdsController extends Controller
     $budget = str_replace('.', '', $request->budget);
     $budgetWithTax = round($budget * 1.11);
 
-    DB::table('ads_reports')->insert([
-        'report_date' => $request->report_date,
-        'budget' => $budgetWithTax,
-        'tayangan_konten' => $request->tayangan_konten,
-        'klik_tautan' => $request->klik_tautan,
-        'hasil' => $request->hasil,
+    // ======================
+    // CEK SUDAH ADA DATA HARI INI?
+    // ======================
+    $existing = DB::table('ads_reports')
+        ->whereDate('report_date', $request->report_date)
+        ->first();
 
-        // manual (belum diisi)
-        'real_chat' => 0,
-        'closing' => 0,
+    if ($existing) {
 
-        'platform' => 'facebook',
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+        // ======================
+        // UPDATE (JANGAN SENTUH real_chat)
+        // ======================
+        DB::table('ads_reports')
+            ->where('id', $existing->id)
+            ->update([
+                'budget' => $budgetWithTax,
+                'tayangan_konten' => $request->tayangan_konten,
+                'klik_tautan' => $request->klik_tautan,
+                'hasil' => $request->hasil,
+                'platform' => 'facebook',
+                'updated_at' => now(),
+            ]);
+
+    } else {
+
+        // ======================
+        // INSERT BARU
+        // ======================
+        DB::table('ads_reports')->insert([
+            'report_date' => $request->report_date,
+            'budget' => $budgetWithTax,
+            'tayangan_konten' => $request->tayangan_konten,
+            'klik_tautan' => $request->klik_tautan,
+            'hasil' => $request->hasil,
+            'real_chat' => 0,
+            'closing' => 0,
+            'platform' => 'facebook',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+    }
 
     return back()->with('success', 'Data iklan berhasil disimpan');
 }
@@ -98,12 +125,11 @@ public function index()
 public function updateReal(Request $request, $id)
 {
     DB::table('ads_reports')->where('id', $id)->update([
-        'real_chat' => $request->real_chat ?? 0,
         'closing' => $request->closing ?? 0,
         'updated_at' => now()
     ]);
 
-    return back()->with('success', 'Data real berhasil diupdate');
+    return back()->with('success', 'Closing berhasil diupdate');
 }
 
 

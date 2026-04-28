@@ -43,14 +43,64 @@
 
     <div class="bg-white border rounded p-5 mb-4 shadow">
 
+    <div class="bg-yellow-50 border rounded p-4 mb-4">
+
+    <div class="text-sm font-semibold mb-2">
+        🔎 Analisa Otomatis (Agregat)
+    </div>
+
+    <ul class="text-sm list-disc pl-5 space-y-1">
+        @foreach($analysis as $item)
+            <li>{{ $item }}</li>
+        @endforeach
+    </ul>
+
+</div>
+
     <div class="text-sm mb-3 font-semibold">
         Summary KPI (Filter Aktif)
     </div>
 
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mb-3">
+
+    <div class="bg-gray-100 p-2 rounded text-center">
+    Klik → LP<br>
+    <b>{{ number_format($summary['rate_lp'],1) }}%</b>
+    <div class="text-[11px] mt-1">
+        {{ $status['lp'] }}
+    </div>
+    </div>
+
+    <div class="bg-gray-100 p-2 rounded text-center">
+        LP → WA<br>
+        <b>{{ number_format($summary['rate_wa'],1) }}%</b>
+        <div class="text-[11px] mt-1">
+        {{ $status['wa'] }}
+    </div>
+    </div>
+
+    <div class="bg-gray-100 p-2 rounded text-center">
+        WA → Chat<br>
+        <b>{{ number_format($summary['rate_chat'],1) }}%</b>
+        <div class="text-[11px] mt-1">
+            {{ $status['chat'] }}
+       </div>
+    </div>
+
+    <div class="bg-gray-100 p-2 rounded text-center">
+        Chat → Closing<br>
+        <b>{{ number_format($summary['rate_closing'],1) }}%</b>
+        <div class="text-[11px] mt-1">
+           {{ $status['closing'] }}
+    </div>
+    </div>
+
+</div>
+
     <div class="grid grid-cols-2 md:grid-cols-6 gap-3 text-sm">
 
         <div>
-            Budget<br>
+            Budget + PPN 11%<br>
             <b class="text-lg">Rp {{ number_format($summary['budget'],0,',','.') }}</b>
         </div>
 
@@ -156,16 +206,68 @@ $cpClosing = $ad->closing > 0
         <div class="border rounded p-4">
 
             <!-- HEADER -->
-            <div class="flex justify-between mb-2">
+            <div class="flex justify-between mb-2 items-center">
                 <div>
                     <div class="font-bold">
                         {{ $ad->report_date }}
                     </div>
                     <div class="text-sm text-gray-500">
-                        Budget: Rp {{ number_format($ad->budget,0,',','.') }}
+                        Budget + PPN 11%: Rp {{ number_format($ad->budget,0,',','.') }}
                     </div>
                 </div>
-            </div>
+
+                   <button type="button"
+    onclick="toggleEditDaily({{ $ad->id }})"
+    class="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-semibold whitespace-nowrap">
+    Edit Iklan
+</button>
+</div>
+
+<!-- FORM EDIT DAILY -->
+<div id="edit-daily-{{ $ad->id }}" class="hidden mb-3 bg-yellow-50 p-3 rounded border">
+
+    <form method="POST" action="{{ route('ads.update.daily', $ad->id) }}">
+        @csrf
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+
+    <div>
+        <label class="text-gray-600">Budget</label>
+        <input type="number" name="budget"
+            value="{{ $ad->budget }}"
+            class="border rounded px-2 py-1 w-full">
+    </div>
+
+    <div>
+        <label class="text-gray-600">Tayangan Konten (LP)</label>
+        <input type="number" name="tayangan_konten"
+            value="{{ $ad->tayangan_konten }}"
+            class="border rounded px-2 py-1 w-full">
+    </div>
+
+    <div>
+        <label class="text-gray-600">Klik Tautan (Iklan)</label>
+        <input type="number" name="klik_tautan"
+            value="{{ $ad->klik_tautan }}"
+            class="border rounded px-2 py-1 w-full">
+    </div>
+
+    <div>
+        <label class="text-gray-600">WA Klik</label>
+        <input type="number" name="hasil"
+            value="{{ $ad->hasil }}"
+            class="border rounded px-2 py-1 w-full">
+    </div>
+
+</div>
+
+        <button class="mt-2 bg-blue-600 text-white px-3 py-1 rounded">
+            Update Iklan
+        </button>
+
+    </form>
+
+</div>
 
             <!-- DATA FUNNEL -->
             <div class="text-sm mb-3">
@@ -188,28 +290,28 @@ $cpClosing = $ad->closing > 0
     <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
 
         <div class="bg-white border rounded p-2 text-center">
-            <div class="text-gray-400">Klik → Landing</div>
+            <div class="text-gray-400">Klik Tautan → LP</div>
             <div class="font-bold text-blue-600">
                 {{ number_format($tayanganRate,1) }}%
             </div>
         </div>
 
         <div class="bg-white border rounded p-2 text-center">
-            <div class="text-gray-400">Landing → WA</div>
+            <div class="text-gray-400">LP → Klik WA</div>
             <div class="font-bold text-indigo-600">
                 {{ number_format($waRate,1) }}%
             </div>
         </div>
 
         <div class="bg-white border rounded p-2 text-center">
-            <div class="text-gray-400">WA → Chat</div>
+            <div class="text-gray-400">Klik WA → Real Chat</div>
             <div class="font-bold text-yellow-600">
                 {{ number_format($realChatRate,1) }}%
             </div>
         </div>
 
         <div class="bg-white border rounded p-2 text-center">
-            <div class="text-gray-400">Chat → Closing</div>
+            <div class="text-gray-400">Real Chat → Closing</div>
             <div class="font-bold text-green-600">
                 {{ number_format($closingRate,1) }}%
             </div>
@@ -339,6 +441,13 @@ $cpClosing = $ad->closing > 0
 <script>
 function toggleEdit(id) {
     let form = document.getElementById('edit-form-' + id);
+    form.classList.toggle('hidden');
+}
+</script>
+
+<script>
+function toggleEditDaily(id) {
+    let form = document.getElementById('edit-daily-' + id);
     form.classList.toggle('hidden');
 }
 </script>

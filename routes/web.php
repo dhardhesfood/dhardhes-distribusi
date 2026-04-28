@@ -29,6 +29,7 @@ use App\Http\Controllers\PackagingController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\OnlineOrderController;
 use App\Http\Controllers\PackageTemplateController;
+use App\Http\Controllers\AdsController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -525,6 +526,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/sales-stock-sessions/{id}/update-opening', 
     [SalesStockSessionController::class, 'updateOpening'])
     ->name('sales-stock-sessions.update-opening');
+
+    Route::post('/ads/{id}/update-daily', [AdsController::class, 'updateDaily'])
+    ->name('ads.update.daily');
     
     
     /*

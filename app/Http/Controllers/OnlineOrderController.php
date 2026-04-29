@@ -131,7 +131,53 @@ if ($date) {
     ->whereBetween('order_date', [$startDate, $endDate])
     ->first();
 
-       return view('online_orders.index', compact('orders', 'items', 'checks', 'statusCounts'));
+    // =========================
+    // 🔥 AGREGASI FIFO (ON PROCESS)
+    // =========================
+$aggregation = DB::table('online_order_item_checks as c')
+    ->join('online_orders as o', 'o.id', '=', 'c.online_order_id')
+    ->where('o.status', 'on_process')
+    ->select(
+        DB::raw('SUM(c.required_qty) as total_required'),
+        DB::raw('SUM(c.available_qty) as total_available'),
+        DB::raw('SUM(c.shortage_qty) as total_shortage')
+    )
+    ->first();
+
+    // =========================
+// 🔥 DETAIL PER PRODUK + VARIAN
+// =========================
+$aggregationDetails = DB::table('online_order_item_checks as c')
+    ->join('online_orders as o', 'o.id', '=', 'c.online_order_id')
+    ->join('products as p', 'p.id', '=', 'c.product_id')
+    ->join('product_variants as v', 'v.id', '=', 'c.product_variant_id')
+    ->where('o.status', 'on_process')
+    ->select(
+        'c.product_id',
+        'c.product_variant_id',
+        'p.name as product_name',
+        'v.name as variant_name',
+        DB::raw('SUM(c.required_qty) as total_required'),
+        DB::raw('SUM(c.available_qty) as total_available'),
+        DB::raw('SUM(c.shortage_qty) as total_shortage')
+    )
+    ->groupBy(
+        'c.product_id',
+        'c.product_variant_id',
+        'p.name',
+        'v.name'
+    )
+    ->orderByDesc('total_shortage') // biar yang paling kurang di atas
+    ->get();
+
+       return view('online_orders.index', compact(
+    'orders',
+    'items',
+    'checks',
+    'statusCounts',
+    'aggregation',
+    'aggregationDetails'
+));
 
 }
 
@@ -798,6 +844,156 @@ public function sendManualWA($id)
     $this->sendPackagingNotification($id);
 
     return back()->with('success', 'WA berhasil dikirim');
+}
+
+public function sendGlobalProductionWA()
+{
+    $this->simulateStock(); // pastikan FIFO fresh
+
+    $data = DB::table('online_order_item_checks as c')
+        ->join('online_orders as o', 'o.id', '=', 'c.online_order_id')
+        ->join('products as p', 'p.id', '=', 'c.product_id')
+        ->join('product_variants as v', 'v.id', '=', 'c.product_variant_id')
+        ->where('o.status', 'on_process')
+        ->select(
+            'p.name as product_name',
+            'v.name as variant_name',
+            DB::raw('SUM(c.required_qty) as total_required'),
+            DB::raw('SUM(c.available_qty) as total_available'),
+            DB::raw('SUM(c.shortage_qty) as total_shortage')
+        )
+        ->groupBy(
+            'c.product_id',
+            'c.product_variant_id',
+            'p.name',
+            'v.name'
+        )
+        ->orderByDesc('total_shortage')
+        ->get();
+
+    if ($data->isEmpty()) return back()->with('error', 'Tidak ada data');
+
+    // ======================
+    // FORMAT PESAN
+    // ======================
+    $message = "📊 *KEBUTUHAN PRODUK ORDER ONLINE (ON PROCESS)*\n\n";
+
+    // TOTAL
+    $totalRequired = $data->sum('total_required');
+    $totalAvailable = $data->sum('total_available');
+    $totalShortage = $data->sum('total_shortage');
+
+    $message .= "Total Kebutuhan: {$totalRequired} pcs\n";
+    $message .= "Stok Tersedia: {$totalAvailable} pcs\n";
+    $message .= "Stok Kurang: {$totalShortage} pcs\n\n";
+
+    // ======================
+    // DETAIL KEBUTUHAN
+    // ======================
+    $message .= "━━━━━━━━━━━━━━━\n";
+    $message .= "📦 KEBUTUHAN PRODUK\n";
+    $message .= "━━━━━━━━━━━━━━━\n";
+
+    foreach ($data as $d) {
+        $message .= "- {$d->product_name} ({$d->variant_name}) → {$d->total_required} pcs\n";
+    }
+
+    // ======================
+    // STOK TERSEDIA
+    // ======================
+    $message .= "\n━━━━━━━━━━━━━━━\n";
+    $message .= "📦 STOK TERSEDIA\n";
+    $message .= "━━━━━━━━━━━━━━━\n";
+
+    foreach ($data as $d) {
+        $message .= "- {$d->product_name} ({$d->variant_name}) → {$d->total_available} pcs\n";
+    }
+
+    // ======================
+    // PRODUK AMAN
+    // ======================
+    $message .= "\n━━━━━━━━━━━━━━━\n";
+    $message .= "✅ PRODUK AMAN\n";
+    $message .= "━━━━━━━━━━━━━━━\n";
+
+    $hasSafe = false;
+
+    foreach ($data as $d) {
+        if ($d->total_shortage <= 0) {
+            $hasSafe = true;
+            $message .= "- {$d->product_name} ({$d->variant_name})\n";
+        }
+    }
+
+    if (!$hasSafe) {
+        $message .= "Tidak ada\n";
+    }
+
+    // ======================
+    // PRIORITAS
+    // ======================
+    $message .= "\n━━━━━━━━━━━━━━━\n";
+    $message .= "❌ PRIORITAS PRODUKSI\n";
+    $message .= "━━━━━━━━━━━━━━━\n";
+
+    $hasShortage = false;
+
+    foreach ($data as $d) {
+        if ($d->total_shortage > 0) {
+            $hasShortage = true;
+            $message .= "- {$d->product_name} ({$d->variant_name}) → kurang {$d->total_shortage} pcs\n";
+        }
+    }
+
+    if (!$hasShortage) {
+        $message .= "Semua aman\n";
+    }
+
+    // ======================
+    // NOTE
+    // ======================
+    $message .= "\n━━━━━━━━━━━━━━━\n";
+    $message .= "⚠️ NOTE\n";
+    $message .= "Fokus produksi pada produk yang kurang terlebih dahulu.\n";
+
+    // ======================
+    // KIRIM WA
+    // ======================
+    $phones = [
+        '6285736167569@c.us',
+        '6288989393804@c.us',
+        '62895808077030@c.us',
+        '62859176866956@c.us',
+    ];
+
+    foreach ($phones as $phone) {
+
+        try {
+
+            $response = Http::withHeaders([
+                'X-API-KEY' => 'c07522d03e6b4c8e91785b62e4e7676f'
+            ])->post('http://localhost:3000/api/sendText', [
+                'session' => 'MindhesRara',
+                'chatId' => $phone,
+                'text' => $message
+            ]);
+
+            \Log::info('WA GLOBAL RESPONSE', [
+                'phone' => $phone,
+                'response' => $response->body()
+            ]);
+
+        } catch (\Exception $e) {
+
+            \Log::error('WA GLOBAL ERROR', [
+                'message' => $e->getMessage()
+            ]);
+        }
+
+        sleep(rand(1,2));
+    }
+
+    return back()->with('success', 'WA produksi terkirim');
 }
 
 private function generateWhatsAppLink($order)

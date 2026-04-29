@@ -32,6 +32,88 @@
 
 </div>
 
+<!-- ========================= -->
+<!-- 🔥 AGREGASI FIFO -->
+<!-- ========================= -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
+
+    <div class="bg-gray-100 p-3 rounded text-center">
+        <div class="text-xs">Total Kebutuhan</div>
+        <div class="text-lg font-bold">
+            {{ number_format($aggregation->total_required ?? 0) }}
+        </div>
+    </div>
+
+    <div class="bg-green-100 text-green-800 p-3 rounded text-center">
+        <div class="text-xs">Stok Cukup</div>
+        <div class="text-lg font-bold">
+            {{ number_format($aggregation->total_available ?? 0) }}
+        </div>
+    </div>
+
+    <div class="bg-red-100 text-red-800 p-3 rounded text-center">
+        <div class="text-xs">Stok Kurang</div>
+        <div class="text-lg font-bold">
+            {{ number_format($aggregation->total_shortage ?? 0) }}
+        </div>
+    </div>
+
+    <div class="flex items-center justify-center">
+        <form action="{{ route('online-orders.send-wa-global') }}" method="POST">
+            @csrf
+            <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow">
+                Kirim WA Produksi
+            </button>
+        </form>
+    </div>
+
+</div>
+
+<!-- ========================= -->
+<!-- 🔥 DETAIL PRODUK -->
+<!-- ========================= -->
+<div class="bg-white border rounded-lg p-4 mb-6">
+
+    <div class="font-bold text-gray-700 mb-3">
+        Detail Kebutuhan Produksi
+    </div>
+
+    <div class="space-y-2 text-sm">
+
+        @foreach($aggregationDetails as $d)
+
+        <div class="flex justify-between border-b pb-1">
+
+            <div>
+                {{ $d->product_name }} ({{ $d->variant_name }})
+            </div>
+
+            <div class="text-right">
+
+                @if($d->total_shortage > 0)
+                    <span class="text-red-600 font-semibold">
+                        kurang {{ $d->total_shortage }}
+                    </span>
+                @else
+                    <span class="text-green-600 font-semibold">
+                        cukup
+                    </span>
+                @endif
+
+                <div class="text-xs text-gray-500">
+                    {{ $d->total_available }} / {{ $d->total_required }}
+                </div>
+
+            </div>
+
+        </div>
+
+        @endforeach
+
+    </div>
+
+</div>
+
     <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3 mb-6">
 
     <!-- KIRI -->

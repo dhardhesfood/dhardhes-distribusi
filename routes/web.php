@@ -204,6 +204,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/sales-stock-warehouse-in', [SalesStockController::class, 'storeWarehouseIn'])
         ->name('sales.stock.warehouse_in.store');
 
+        Route::post('/online-orders/send-wa-global', [OnlineOrderController::class, 'sendGlobalProductionWA'])
+    ->name('online-orders.send-wa-global');
+
     /*
     |--------------------------------------------------------------------------
     | PRODUCTIONS (GUDANG)

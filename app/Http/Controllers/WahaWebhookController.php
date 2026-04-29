@@ -22,6 +22,45 @@ class WahaWebhookController extends Controller
         }
 
         $payload = $data['payload'] ?? [];
+        // =========================
+// PARSING PESAN
+// =========================
+$message = $payload['body'] ?? null;
+$hasMedia = $payload['hasMedia'] ?? false;
+
+// handle kalau kirim gambar/video
+if (!$message && $hasMedia) {
+    $message = '[MEDIA]';
+}
+
+// normalize text
+$messageLower = strtolower($message ?? '');
+
+// =========================
+// FILTER IKLAN
+// =========================
+$isFromAds = false;
+
+// PRIORITAS 1: kode FB-
+if (strpos($messageLower, 'fb-') !== false) {
+    $isFromAds = true;
+}
+
+// PRIORITAS 2: hallo
+elseif (strpos($messageLower, 'hallo') !== false) {
+    $isFromAds = true;
+}
+
+// =========================
+// JIKA BUKAN DARI IKLAN → SKIP
+// =========================
+if (!$isFromAds) {
+    Log::info('CHAT BUKAN IKLAN - SKIP', [
+        'message' => $message
+    ]);
+
+    return response()->json(['status' => 'not_ads']);
+}
 
         $isFromMe = $payload['fromMe'] ?? true;
 

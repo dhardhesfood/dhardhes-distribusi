@@ -228,6 +228,16 @@ $kasbonMonthly = DB::table('kasbons')
     ->whereYear('created_at', $year)
     ->sum(DB::raw('amount_total - amount_paid'));
 
+// =========================
+// BIAYA MAKAN BULAN INI
+// =========================
+$biayaMakanMonthly = DB::table('sales_expenses')
+    ->where('user_id', $row->id)
+    ->where('type', 'makan')
+    ->whereMonth('expense_date', $month)
+    ->whereYear('expense_date', $year)
+    ->sum('amount');
+
             $totalGeneratedMonthly = 0;
             $totalGenerated = (float)$row->total_konsinyasi + (float)$row->total_tunai;
             $totalPaid      = (float)$row->total_fee_paid;
@@ -345,7 +355,7 @@ if ($rewardRemaining < 0) {
             $previousFee = $totalGeneratedPrev - $totalPaidPrev - $kasbonPrev;
             $previousFee = max(0, $previousFee);
 
-            $netFee = $previousFee + $totalGeneratedMonthly - $kasbonMonthly;
+            $netFee = $previousFee + $totalGeneratedMonthly - $kasbonMonthly - $biayaMakanMonthly;
             $netFee = max(0, $netFee);
 
             
@@ -357,6 +367,7 @@ if ($rewardRemaining < 0) {
                 'total_paid' => $totalPaid,
                 'kasbon_remaining' => $kasbon,
                 'kasbon_monthly' => $kasbonMonthly,
+                'biaya_makan_monthly' => $biayaMakanMonthly,
                 'net_fee' => $netFee,
                 'is_minus' => $netFee < 0 ? true : false,
                 'monthly_fee' => $totalGeneratedMonthly,

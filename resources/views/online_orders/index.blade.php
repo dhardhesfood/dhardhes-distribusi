@@ -172,6 +172,30 @@
         </div>
     </div>
 
+
+    <!-- CARD SEARCH -->
+<div class="bg-gray-50 border rounded-lg p-3">
+    <div class="text-xs text-gray-500 mb-2">Cari Nama Customer</div>
+
+    <div class="flex gap-2">
+        <div class="relative w-full">
+    <input type="text"
+           id="searchInput"
+           placeholder="Ketik nama..."
+           class="border rounded px-2 py-1 text-sm w-full">
+
+    <div id="searchDropdown"
+         class="absolute z-50 bg-white border w-full rounded shadow mt-1 hidden max-h-60 overflow-y-auto">
+    </div>
+</div>
+
+        <button type="submit"
+                class="bg-blue-600 text-white px-3 py-1 rounded text-sm">
+            Cari
+        </button>
+    </div>
+</div>
+
     <!-- CARD 2 -->
     <div class="bg-gray-50 border rounded-lg p-3">
         <div class="text-xs text-gray-500 mb-2">Tanggal</div>
@@ -265,7 +289,7 @@
 
 @forelse($orders as $order)
 
-<div class="bg-white border rounded-lg shadow p-4">
+<div id="order-{{ $order->id }}" class="bg-white border rounded-lg shadow p-4">
 
     <!-- HEADER -->
     <div class="flex justify-between items-start mb-2">
@@ -457,5 +481,74 @@
 </div>
 </div>
 </div>
+
+<script>
+const input = document.getElementById('searchInput');
+const dropdown = document.getElementById('searchDropdown');
+
+let timeout = null;
+
+input.addEventListener('keyup', function () {
+    clearTimeout(timeout);
+
+    let query = this.value;
+
+    if (query.length < 2) {
+        dropdown.classList.add('hidden');
+        return;
+    }
+
+    timeout = setTimeout(() => {
+
+        fetch(`/online-orders/search?search=${query}`)
+            .then(res => res.json())
+            .then(data => {
+
+                dropdown.innerHTML = '';
+
+                if (data.length === 0) {
+                    dropdown.innerHTML = `<div class="p-2 text-sm text-gray-500">Tidak ditemukan</div>`;
+                }
+
+                data.forEach(item => {
+                    dropdown.innerHTML += `
+                        <div class="p-2 hover:bg-gray-100 cursor-pointer text-sm"
+                             onclick="goToOrder(${item.id})">
+                            <div class="font-semibold">${item.customer_name}</div>
+                            <div class="text-xs text-gray-500">Order ID: ${item.id}</div>
+                        </div>
+                    `;
+                });
+
+                dropdown.classList.remove('hidden');
+
+            });
+
+    }, 300); // debounce biar nggak brutal ke server
+});
+
+function goToOrder(id) {
+    window.location.href = `/online-orders?highlight=${id}`;
+}
+</script>
+
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const highlightId = urlParams.get('highlight');
+
+if (highlightId) {
+    const el = document.getElementById('order-' + highlightId);
+
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        el.classList.add('ring', 'ring-green-500');
+
+        setTimeout(() => {
+            el.classList.remove('ring', 'ring-green-500');
+        }, 3000);
+    }
+}
+</script>
 
 </x-app-layout>

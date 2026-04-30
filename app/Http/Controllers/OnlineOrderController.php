@@ -88,7 +88,7 @@ if ($date) {
 
 }
 
-
+    $search = request('search');
     $orders = DB::table('online_orders as o')
     ->leftJoin('package_templates as t', 't.id', '=', 'o.package_template_id')
     ->leftJoin('customers as c', 'c.id', '=', 'o.customer_id') // 🔥 tambah JOIN
@@ -99,8 +99,16 @@ if ($date) {
     'c.name as customer_real_name' // 🔥 tambah
     )
     ->whereBetween('o.order_date', [$startDate, $endDate])
+    ->when($search, function ($q) use ($search) {
+    $q->where(function ($sub) use ($search) {
+        $sub->where('o.customer_name', 'like', "%$search%")
+            ->orWhere('c.name', 'like', "%$search%");
+    });
+})
     ->orderByDesc('o.id')
     ->get();
+
+    
 
 
     $items = DB::table('online_order_items')
@@ -1253,6 +1261,32 @@ public function omzet(Request $request)
         ->get();
 
     return view('online_orders.omzet', compact('totalOmzet', 'perHari', 'month', 'year'));
+}
+
+public function searchCustomer(Request $request)
+{
+    $search = $request->search;
+
+    if (!$search) {
+        return response()->json([]);
+    }
+
+    $results = DB::table('online_orders as o')
+        ->leftJoin('customers as c', 'c.id', '=', 'o.customer_id')
+        ->select(
+            'o.id',
+            'o.customer_name',
+            'o.order_date'
+        )
+        ->where(function ($q) use ($search) {
+            $q->where('o.customer_name', 'like', "%$search%")
+              ->orWhere('c.name', 'like', "%$search%");
+        })
+        ->orderByDesc('o.id')
+        ->limit(10) // 🔥 penting biar ringan
+        ->get();
+
+    return response()->json($results);
 }
 
 }

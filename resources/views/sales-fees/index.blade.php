@@ -330,10 +330,10 @@ onchange="this.form.submit()">
             <thead class="bg-gray-100">
                 <tr>
                     <th class="p-2 border text-left">Nama Sales</th>
-                    <th class="p-2 border text-right">Total Fee (Semua Waktu)</th>
                     <th class="p-2 border text-right">Fee Bulan Ini</th>
                     <th class="p-2 border text-right">Sisa Fee Bulan Sebelumnya</th>
                     <th class="p-2 border text-right">Kasbon Bulan Ini</th>
+                    <th class="p-2 border text-right text-red-600">Biaya Makan Bulan Ini</th>
                     <th class="p-2 border text-right">Sisa Fee Sekarang</th>
                 </tr>
             </thead>
@@ -349,10 +349,6 @@ onchange="this.form.submit()">
                         {{ $row['name'] }}
                     </td>
 
-                    <td class="p-2 border text-right">
-                        Rp {{ number_format($row['total_generated'],0,',','.') }}
-                    </td>
-
                     <td class="p-2 border text-right text-blue-600 font-semibold">
                         Rp {{ number_format($row['monthly_fee'],0,',','.') }}
                     </td>
@@ -363,6 +359,10 @@ onchange="this.form.submit()">
 
                     <td class="p-2 border text-right text-orange-600 font-semibold">
                        Rp {{ number_format($row['kasbon_monthly'] ?? 0,0,',','.') }}
+                    </td>
+
+                    <td class="p-2 border text-right text-red-600 font-semibold">
+                       Rp {{ number_format($row['biaya_makan_monthly'] ?? 0,0,',','.') }}
                     </td>
 
                     <td class="p-2 border text-right text-green-600 font-semibold">
@@ -384,6 +384,47 @@ onchange="this.form.submit()">
 <h3 class="font-semibold mt-8 mb-3 text-gray-700">
 Rekap Fee Sales
 </h3>
+
+@if(auth()->user()->role === 'admin')
+
+<div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
+
+<div class="text-sm font-semibold text-gray-700 mb-3">
+Input Biaya Makan Sales
+</div>
+
+<form method="POST" action="{{ route('sales-expenses.store') }}"
+class="flex flex-col sm:flex-row gap-2 items-center">
+
+@csrf
+
+<select name="user_id" required class="border px-2 py-1 rounded">
+@foreach($sales as $s)
+<option value="{{ $s['user_id'] }}">{{ $s['name'] }}</option>
+@endforeach
+</select>
+
+<input type="number"
+name="amount"
+placeholder="Nominal"
+required
+class="border px-2 py-1 rounded w-32">
+
+<input type="date"
+name="expense_date"
+value="{{ date('Y-m-d') }}"
+required
+class="border px-2 py-1 rounded">
+
+<button class="px-4 py-1 bg-red-600 text-white rounded">
+Simpan
+</button>
+
+</form>
+
+</div>
+
+@endif
             {{-- ======================== TABEL FEE ======================== --}}
             <div class="bg-white shadow sm:rounded-lg p-4 sm:p-6 mb-6">
 
@@ -395,6 +436,7 @@ Rekap Fee Sales
                                 <th class="p-2 sm:p-3 text-right border">Total Fee</th>
                                 <th class="p-2 sm:p-3 text-right border">Sudah Dibayar</th>
                                 <th class="p-2 sm:p-3 text-right border">Sisa Kasbon</th>
+                                <th class="p-2 sm:p-3 text-right border text-red-600">Biaya Makan</th>
                                 <th class="p-2 sm:p-3 text-right border">Sisa Fee</th>
 
                                 @if(auth()->user()->role === 'admin')
@@ -450,6 +492,10 @@ Rekap Fee Sales
 
                                     <td class="p-2 sm:p-3 border text-right">
                                         {{ number_format($row['kasbon_remaining'], 0, ',', '.') }}
+                                    </td>
+
+                                    <td class="p-2 sm:p-3 border text-right text-red-600">
+                                        {{ number_format($row['biaya_makan_monthly'] ?? 0, 0, ',', '.') }}
                                     </td>
 
                                     <td class="p-2 sm:p-3 border text-right font-semibold">

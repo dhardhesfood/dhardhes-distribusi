@@ -107,6 +107,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/online-orders/template/{id}', [OnlineOrderController::class, 'getTemplateItems']);
     Route::post('/online-orders/store', [OnlineOrderController::class, 'store']);
     Route::post('/online-orders/{id}/update-status', [OnlineOrderController::class, 'updateStatus']);
+    Route::get('/online-orders/search', [OnlineOrderController::class, 'searchCustomer']);
 
     Route::get('/online-orders/{id}/edit', [OnlineOrderController::class, 'edit']);
     Route::put('/online-orders/{id}', [OnlineOrderController::class, 'update']);
@@ -428,6 +429,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/sales-fees/pay', [SalesFeeController::class, 'pay'])
         ->name('sales-fees.pay');
+
+        Route::post('/sales-expenses/store', [App\Http\Controllers\SalesExpenseController::class, 'store'])
+    ->name('sales-expenses.store');
 
         Route::post('/sales-rewards/pay', [SalesFeeController::class, 'payReward'])
     ->name('sales-rewards.pay');

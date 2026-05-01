@@ -218,6 +218,12 @@ $kasbonPrev = DB::table('kasbons')
     ->where('created_at', '<=', $prevEndDate)
     ->sum(DB::raw('amount_total - amount_paid'));
 
+    $biayaMakanPrev = DB::table('sales_expenses')
+    ->where('user_id', $row->id)
+    ->where('type', 'makan')
+    ->where('expense_date', '<=', $prevEndDate)
+    ->sum('amount');
+
     // =========================
 // KASBON BULAN INI
 // =========================
@@ -352,7 +358,11 @@ if ($rewardRemaining < 0) {
 }
 
            // 🔥 HITUNG SISA BULAN SEBELUMNYA (SETELAH NET ADA)
-            $previousFee = $totalGeneratedPrev - $totalPaidPrev - $kasbonPrev;
+            $previousFee = $totalGeneratedPrev 
+             - $totalPaidPrev 
+             - $kasbonPrev 
+             - $biayaMakanPrev;
+
             $previousFee = max(0, $previousFee);
 
             $netFee = $previousFee + $totalGeneratedMonthly - $kasbonMonthly - $biayaMakanMonthly;

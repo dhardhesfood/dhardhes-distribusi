@@ -58,14 +58,18 @@
         <select id="customerSelect" name="customer_id" class="w-full border p-2">
         <option value="">-- Pilih Customer --</option>
         @foreach($customers as $c)
-        <option value="{{ $c->id }}">{{ $c->name }} - {{ $c->phone }}</option>
+        <option value="{{ $c->id }}"
+                data-name="{{ $c->name }}"
+                data-phone="{{ $c->phone }}">
+                {{ $c->name }} - {{ $c->phone }}
+        </option>
         @endforeach
         </select>
 
         <div class="mt-3 p-3 border rounded bg-gray-50">
     <p class="text-sm font-semibold mb-2">Atau Tambah Customer Baru</p>
 
-    <input type="text" name="new_customer_name"
+    <input type="text" id="inputName" name="new_customer_name"
         placeholder="Nama Customer"
         class="w-full border border-gray-300 rounded px-3 py-2 mb-2">
 
@@ -228,6 +232,23 @@ $(document).ready(function() {
         allowClear: true,
         width: '100%'
     });
+});
+
+$('#customerSelect').on('change', function() {
+
+    let selected = $(this).find(':selected');
+
+    let name = selected.data('name');
+    let phone = selected.data('phone');
+
+    if(name){
+        $('#inputName').val(name);
+    }
+
+    if(phone){
+        $('#inputPhone').val(phone);
+    }
+
 });
 
 function formatRupiah(angka) {

@@ -78,10 +78,20 @@ public function index()
 {
     $query = DB::table('ads_reports');
 
+// ======================
+// FILTER BULAN & TAHUN (PRIORITAS)
+// ======================
+    if(request('month') && request('year')){
+        $query->whereMonth('report_date', request('month'))
+          ->whereYear('report_date', request('year'));
+}
+
     // ======================
     // FILTER
     // ======================
-    if(request('filter') == 'today'){
+    
+
+    elseif(request('filter') == 'today'){
         $query->whereDate('report_date', now());
     }
     elseif(request('filter') == '7days'){

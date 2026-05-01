@@ -351,6 +351,15 @@ else{
             'roles'=>['admin']
             ],
 
+        [
+            'route'=>'/dashboard-marketing',
+            'label'=>'Dashboard Marketing',
+            'tag'=>'Marketing',
+            'color'=>'bg-emerald-600 hover:bg-emerald-700',
+            'emoji'=>'📊',
+            'roles'=>['admin']
+            ],    
+
         // ================= ORDER ONLINE =================
 
         [

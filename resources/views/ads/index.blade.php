@@ -13,6 +13,32 @@
 
     <form method="GET" class="flex flex-wrap gap-2 mb-4">
 
+    <select name="month"
+    class="border rounded px-2 py-1 text-xs"
+    onchange="this.form.submit()">
+
+    @foreach(range(1,12) as $m)
+        <option value="{{ $m }}"
+            {{ request('month') == $m ? 'selected' : '' }}>
+            {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+        </option>
+    @endforeach
+
+</select>
+
+<select name="year"
+    class="border rounded px-2 py-1 text-xs"
+    onchange="this.form.submit()">
+
+    @foreach(range(now()->year-2, now()->year+1) as $y)
+        <option value="{{ $y }}"
+            {{ request('year', now()->year) == $y ? 'selected' : '' }}>
+            {{ $y }}
+        </option>
+    @endforeach
+
+</select>
+
     <a href="?filter=today"
         class="px-3 py-1 rounded text-xs font-semibold
         {{ request('filter')=='today' ? 'bg-blue-600 text-white' : 'bg-white border' }}">

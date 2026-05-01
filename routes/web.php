@@ -30,6 +30,7 @@ use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\OnlineOrderController;
 use App\Http\Controllers\PackageTemplateController;
 use App\Http\Controllers\AdsController;
+use App\Http\Controllers\DashboardMarketingController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -536,6 +537,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/ads/{id}/update-daily', [AdsController::class, 'updateDaily'])
     ->name('ads.update.daily');
+
+    Route::get('/dashboard-marketing', [DashboardMarketingController::class, 'index'])
+    ->name('dashboard.marketing');
     
     
     /*

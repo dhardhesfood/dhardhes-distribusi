@@ -127,6 +127,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/packaging/analysis-offline', [PackagingController::class, 'analysisOffline']);
     Route::get('/packaging/analysis-online', [PackagingController::class, 'analysisOnline']);
+
+    Route::get('/online-orders/{id}/return', [OnlineOrderController::class, 'returnForm']);
+    Route::post('/online-orders/{id}/return', [OnlineOrderController::class, 'processReturn']);
         
 
     

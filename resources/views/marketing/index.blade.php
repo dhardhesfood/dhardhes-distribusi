@@ -48,7 +48,80 @@
 
 <div class="border-t mb-6"></div>
 
-    <!-- HEADER -->
+<details class="mb-6">
+
+<summary class="cursor-pointer font-semibold text-sm bg-gray-100 px-4 py-2 rounded">
+    🔍 Lihat Detail ACOS Produk & Paket
+</summary>
+
+<div class="mt-4">
+
+<div class="mt-8">
+
+<h3 class="font-bold mb-2">ACOS Produk (Offline)</h3>
+
+@foreach($offlineProduk as $row)
+
+<div class="bg-white p-3 rounded shadow mb-2 flex justify-between">
+
+<div>
+<div class="font-semibold">
+{{ $row->name }} - Rp {{ number_format($row->price,0,',','.') }}
+</div>
+</div>
+
+<div class="text-right">
+
+<div class="font-bold">
+{{ number_format($acos,2) }}%
+</div>
+
+<div class="text-xs text-gray-500">
+Rp {{ number_format($row->price * ($acos/100),0,',','.') }}
+</div>
+
+</div>
+
+</div>
+@endforeach
+
+</div>
+
+<div class="mt-8">
+
+<h3 class="font-bold mb-2">ACOS Paket (Online)</h3>
+
+@foreach($onlinePaket as $row)
+
+<div class="bg-white p-3 rounded shadow mb-2 flex justify-between">
+
+<div>
+<div class="font-semibold">
+{{ $row->package_name }} - Rp {{ number_format($row->price,0,',','.') }}
+</div>
+</div>
+
+<div class="text-right">
+
+<div class="font-bold">
+{{ number_format($acos,2) }}%
+</div>
+
+<div class="text-xs text-gray-500">
+Rp {{ number_format($row->price * ($acos/100),0,',','.') }}
+</div>
+
+</div>
+
+</div>
+
+@endforeach
+
+</div> <!-- end isi spoiler -->
+
+</details>
+
+ <!-- HEADER -->
     <div class="flex justify-between items-center mb-4">
 
         <h2 class="text-xl font-bold">
@@ -71,6 +144,22 @@
             </a>
 
         </div>
+
+        <form method="GET" class="flex gap-2 ml-4">
+
+<input type="date" name="start_date" value="{{ $start }}"
+class="border rounded px-2 py-1 text-sm">
+
+<input type="date" name="end_date" value="{{ $end }}"
+class="border rounded px-2 py-1 text-sm">
+
+<input type="hidden" name="type" value="{{ $type }}">
+
+<button class="bg-blue-600 text-white px-3 py-1 rounded text-sm">
+Filter
+</button>
+
+</form>
 
     </div>
 
@@ -247,6 +336,8 @@
     </tbody>
 
 </table>
+
+</div>
 
 </div>
 

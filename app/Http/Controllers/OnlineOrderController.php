@@ -512,6 +512,16 @@ if ($request->status == 'done') {
     }
 }
 
+        /*
+        =========================
+        RETURN → BALIKIN STOK (WAJIB)
+        =========================
+        */
+        if ($newStatus == 'returned') {
+
+        return redirect("/online-orders/{$id}/return");
+        }
+
     DB::transaction(function () use ($id, $newStatus) {
 
         $order = DB::table('online_orders')->where('id', $id)->first();
@@ -563,34 +573,6 @@ if ($request->status == 'done') {
 
         /*
         =========================
-        RETURN → BALIKIN STOK (WAJIB)
-        =========================
-        */
-        if ($newStatus == 'returned') {
-
-            if ($order->is_stock_deducted == 1 && $order->is_stock_returned == 0) {
-
-                $items = DB::table('online_order_items')
-                    ->where('online_order_id', $id)
-                    ->get();
-
-                foreach ($items as $item) {
-
-                    $this->updateWarehouseStock(
-                    $item->product_variant_id,
-                    $item->qty,
-                    'increment'
-                    );
-                }
-
-                DB::table('online_orders')->where('id', $id)->update([
-                    'is_stock_returned' => 1
-                ]);
-            }
-        }
-
-        /*
-        =========================
         CANCEL → TIDAK SENTUH STOK
         =========================
         */
@@ -615,6 +597,86 @@ if ($request->status == 'done') {
 
 
     return back()->with('success', 'Status berhasil diupdate');
+}
+
+public function returnForm($id)
+{
+    $order = DB::table('online_orders')->where('id', $id)->first();
+
+    if (!$order) {
+        return redirect('/online-orders')->with('error', 'Order tidak ditemukan');
+    }
+
+    $items = DB::table('online_order_items')
+        ->join('products', 'products.id', '=', 'online_order_items.product_id')
+        ->join('product_variants', 'product_variants.id', '=', 'online_order_items.product_variant_id')
+        ->where('online_order_items.online_order_id', $id)
+        ->select(
+            'online_order_items.product_id',
+            'online_order_items.product_variant_id',
+            'online_order_items.qty',
+            'products.name as product_name',
+            'product_variants.name as variant_name'
+        )
+        ->get();
+
+    return view('online_orders.return', compact('order', 'items'));
+}
+
+public function processReturn(Request $request, $id)
+{
+    DB::transaction(function () use ($request, $id) {
+
+        foreach ($request->items as $item) {
+
+            $qty   = (int) $item['qty'];
+            $fisik = (int) $item['fisik'];
+            $rusak = (int) $item['rusak'];
+
+            // VALIDASI
+            if ($fisik > $qty) {
+                throw new \Exception('Stok fisik tidak boleh lebih dari qty kirim');
+            }
+
+            if ($rusak > $fisik) {
+                throw new \Exception('Produk rusak tidak boleh lebih dari stok fisik');
+            }
+
+            // HITUNG YANG BAGUS
+            $good = $fisik - $rusak;
+
+            // MASUK GUDANG HANYA YANG BAGUS
+            if ($good > 0) {
+
+                DB::table('warehouse_variant_stocks')
+                    ->where('product_variant_id', $item['variant_id'])
+                    ->increment('stock_qty', $good);
+
+                DB::table('stock_movements')->insert([
+                    'product_id' => $item['product_id'],
+                    'quantity' => $good,
+                    'type' => 'return_good',
+                    'reference_id' => $id,
+                    'reference_type' => 'online_order_return',
+                    'notes' => 'Return barang bagus',
+                    'created_by' => auth()->id(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        DB::table('online_orders')->where('id', $id)->update([
+            'status' => 'returned',
+            'is_stock_returned' => 1,
+            'updated_at' => now()
+        ]);
+
+    });
+
+    $this->simulateStock();
+
+    return redirect('/online-orders')->with('success', 'Return berhasil diproses');
 }
 
 public function updateWarehouseStock($variantId, $qty, $type = 'set')

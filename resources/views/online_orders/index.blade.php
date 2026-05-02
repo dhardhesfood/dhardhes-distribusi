@@ -180,9 +180,11 @@
     <div class="flex gap-2">
         <div class="relative w-full">
     <input type="text"
-           id="searchInput"
-           placeholder="Ketik nama..."
-           class="border rounded px-2 py-1 text-sm w-full">
+       id="searchInput"
+       name="search"
+       value="{{ request('search') }}"
+       placeholder="Ketik nama..."
+       class="border rounded px-2 py-1 text-sm w-full">
 
     <div id="searchDropdown"
          class="absolute z-50 bg-white border w-full rounded shadow mt-1 hidden max-h-60 overflow-y-auto">
@@ -511,13 +513,40 @@ input.addEventListener('keyup', function () {
                 }
 
                 data.forEach(item => {
-                    dropdown.innerHTML += `
-                        <div class="p-2 hover:bg-gray-100 cursor-pointer text-sm"
-                             onclick="goToOrder(${item.id})">
-                            <div class="font-semibold">${item.customer_name}</div>
-                            <div class="text-xs text-gray-500">Order ID: ${item.id}</div>
-                        </div>
-                    `;
+                    let div = document.createElement('div');
+div.className = 'p-2 hover:bg-gray-100 cursor-pointer text-sm';
+
+div.innerHTML = `
+    <div class="font-semibold">${item.customer_name}</div>
+    <div class="text-xs text-gray-500">Order ID: ${item.id}</div>
+`;
+
+div.addEventListener('click', function () {
+
+    div.addEventListener('click', function () {
+
+    input.value = item.customer_name;
+
+    window.location.href = `/online-orders?search=${encodeURIComponent(item.customer_name)}`;
+
+});
+
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        el.classList.add('ring', 'ring-green-500');
+
+        setTimeout(() => {
+            el.classList.remove('ring', 'ring-green-500');
+        }, 3000);
+    } else {
+        alert('Order tidak ada di halaman ini (kena filter)');
+    }
+
+    dropdown.classList.add('hidden');
+});
+
+dropdown.appendChild(div);
                 });
 
                 dropdown.classList.remove('hidden');
@@ -527,14 +556,10 @@ input.addEventListener('keyup', function () {
     }, 300); // debounce biar nggak brutal ke server
 });
 
-function goToOrder(id) {
-    window.location.href = `/online-orders?highlight=${id}`;
-}
 </script>
 
 <script>
 const urlParams = new URLSearchParams(window.location.search);
-const highlightId = urlParams.get('highlight');
 
 if (highlightId) {
     const el = document.getElementById('order-' + highlightId);

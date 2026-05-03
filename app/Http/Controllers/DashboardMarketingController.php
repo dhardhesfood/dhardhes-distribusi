@@ -4,6 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\AI\GeminiService;
+use App\Models\Product;
+use Carbon\Carbon;
+
+
 
 class DashboardMarketingController extends Controller
 {
@@ -13,6 +18,22 @@ class DashboardMarketingController extends Controller
 
         $start = $request->start_date;
         $end   = $request->end_date;
+
+        $prevStart = null;
+        $prevEnd = null;
+
+if (!empty($start) && !empty($end)) {
+
+    $startDate = Carbon::parse($start);
+    $endDate   = Carbon::parse($end);
+
+    $diffDays = $startDate->diffInDays($endDate);
+
+    $prevStart = $startDate->copy()->subDays($diffDays + 1)->format('Y-m-d');
+    $prevEnd   = $startDate->copy()->subDay()->format('Y-m-d');
+}
+
+        
 
         // ================= TOTAL CHANNEL =================
 $totalOffline = DB::selectOne("
@@ -45,8 +66,64 @@ $totalAds = DB::selectOne("
 ")->total ?? 0;
 $totalAds = (float) $totalAds;
 
+// ================= PREVIOUS DATA =================
+$prevOffline = 0;
+$prevOnline = 0;
+$prevAds = 0;
+
+if ($prevStart && $prevEnd) {
+
+    $prevOffline = DB::selectOne("
+        SELECT COALESCE(SUM(omzet),0) as total FROM (
+            SELECT subtotal_amount as omzet
+            FROM sales_transaction_items sti
+            JOIN sales_transactions st ON st.id = sti.sales_transaction_id
+            WHERE st.transaction_date BETWEEN '$prevStart' AND '$prevEnd'
+
+            UNION ALL
+
+            SELECT csi.subtotal as omzet
+            FROM cash_sale_items csi
+            JOIN cash_sales cs ON cs.id = csi.cash_sale_id
+            WHERE cs.sale_date BETWEEN '$prevStart' AND '$prevEnd'
+        ) x
+    ")->total ?? 0;
+
+    $prevOnline = DB::selectOne("
+        SELECT COALESCE(SUM(total_price),0) as total
+        FROM online_orders
+        WHERE status = 'done'
+        AND order_date BETWEEN '$prevStart' AND '$prevEnd'
+    ")->total ?? 0;
+
+    $prevAds = DB::selectOne("
+        SELECT COALESCE(SUM(budget),0) as total
+        FROM ads_reports
+        WHERE report_date BETWEEN '$prevStart' AND '$prevEnd'
+    ")->total ?? 0;
+}
+
 // ================= RATIO =================
 $totalAll = $totalOffline + $totalOnline;
+
+$prevTotalAll = $prevOffline + $prevOnline;
+
+// growth omzet
+$growthOmzet = $prevTotalAll > 0 
+    ? (($totalAll - $prevTotalAll) / $prevTotalAll) * 100 
+    : 0;
+
+// growth ads
+$growthAds = $prevAds > 0 
+    ? (($totalAds - $prevAds) / $prevAds) * 100 
+    : 0;
+
+// acos
+$acosNow = $totalAll > 0 ? ($totalAds / $totalAll) * 100 : 0;
+$acosPrev = $prevTotalAll > 0 ? ($prevAds / $prevTotalAll) * 100 : 0;
+
+// growth acos (selisih, bukan persen)
+$growthAcos = $acosNow - $acosPrev;
 
 $offlineRatio = $totalAll > 0 ? $totalOffline / $totalAll : 0;
 $onlineRatio  = $totalAll > 0 ? $totalOnline / $totalAll : 0;
@@ -201,6 +278,41 @@ GROUP BY p.name
 ORDER BY total_qty DESC
 ");
 
+// ================= HITUNG HPP =================
+$totalHpp = 0;
+
+// OFFLINE
+foreach ($offlineSummary as $row) {
+
+    $product = Product::where('name', $row->name)->first();
+
+    if (!$product) continue;
+
+    $hpp = $product->getCostAt($end);
+
+    $totalHpp += $hpp * $row->total_qty;
+}
+
+// ONLINE
+foreach ($onlineSummary as $row) {
+
+    $product = Product::where('name', $row->name)->first();
+
+    if (!$product) continue;
+
+    $hpp = $product->getCostAt($end);
+
+    $totalHpp += $hpp * $row->total_qty;
+}
+
+// ================= HITUNG PROFIT =================
+$profit = $totalAll - $totalAds - $totalHpp;
+
+$margin = $totalAll > 0 
+    ? ($profit / $totalAll) * 100 
+    : 0;
+
+
     $acosGlobal = $totalAll > 0 ? ($totalAds / $totalAll) * 100 : 0;
 
        return view('marketing.index', compact(
@@ -212,8 +324,134 @@ ORDER BY total_qty DESC
     'onlinePaket',
     'acosGlobal',
     'offlineSummary',
-    'onlineSummary'
+    'onlineSummary',
+    'growthOmzet',
+    'growthAds',
+    'growthAcos',
+    'totalHpp',
+    'profit',
+    'margin',
 ));
 
     }
+
+    
+
+public function aiAnalysis(Request $request)
+{
+   $start = !empty($request->start_date) 
+    ? $request->start_date 
+    : now()->startOfMonth()->format('Y-m-d');
+
+   $end = !empty($request->end_date) 
+    ? $request->end_date 
+    : now()->format('Y-m-d');
+
+    // ===== ambil data sederhana (reuse logika) =====
+    $totalOmzet = DB::table('dashboard_marketing_base')
+        ->when($start && $end, fn($q) => $q->whereBetween('tanggal', [$start, $end]))
+        ->sum('total_omzet');
+
+    $totalAds = DB::table('dashboard_marketing_base')
+        ->when($start && $end, fn($q) => $q->whereBetween('tanggal', [$start, $end]))
+        ->sum('total_ads');
+
+        // ================= SUMMARY PRODUK OFFLINE =================
+$offlineSummary = DB::select("
+SELECT 
+    p.id,
+    p.name,
+    SUM(qty) as total_qty
+FROM (
+    SELECT sti.product_id, sti.quantity_sold as qty
+FROM sales_transaction_items sti
+JOIN sales_transactions st ON st.id = sti.sales_transaction_id
+WHERE st.transaction_date BETWEEN '$start' AND '$end'
+
+    UNION ALL
+
+    SELECT csi.product_id, csi.qty as qty
+FROM cash_sale_items csi
+JOIN cash_sales cs ON cs.id = csi.cash_sale_id
+WHERE cs.sale_date BETWEEN '$start' AND '$end'
+) x
+JOIN products p ON p.id = x.product_id
+GROUP BY p.id, p.name
+");
+
+// ================= SUMMARY PRODUK ONLINE =================
+$onlineSummary = DB::select("
+SELECT 
+    p.id,
+    p.name,
+    SUM(oi.qty) as total_qty
+FROM online_order_items oi
+JOIN online_orders o ON o.id = oi.online_order_id
+JOIN products p ON p.id = oi.product_id
+WHERE o.status = 'done'
+AND o.order_date BETWEEN '$start' AND '$end'
+GROUP BY p.id, p.name
+");
+
+// ================= HITUNG HPP =================
+$totalHpp = 0;
+
+// OFFLINE
+foreach ($offlineSummary as $row) {
+
+    $product = Product::find($row->id);
+
+    if (!$product) continue;
+
+    $hpp = $product->getCostAt($end);
+
+    $totalHpp += $hpp * $row->total_qty;
+}
+
+// ONLINE
+foreach ($onlineSummary as $row) {
+
+    $product = Product::find($row->id);
+
+    if (!$product) continue;
+
+    $hpp = $product->getCostAt($end ?? now());
+
+    $totalHpp += $hpp * $row->total_qty;
+}
+
+// ================= HITUNG PROFIT =================
+$profit = $totalOmzet - $totalAds - $totalHpp;
+
+$margin = $totalOmzet > 0 
+    ? ($profit / $totalOmzet) * 100 
+    : 0;
+
+    $acos = $totalOmzet > 0 ? ($totalAds / $totalOmzet) * 100 : 0;
+
+ $prompt = "
+Data Marketing:
+
+Omzet: Rp ".number_format($totalOmzet)."
+Ads: Rp ".number_format($totalAds)."
+HPP: Rp ".number_format($totalHpp)."
+Profit: Rp ".number_format($profit)."
+Margin: ".number_format($margin,2)."%
+
+Jawab SINGKAT:
+
+1. Kondisi bisnis (max 2 kalimat)
+2. Masalah utama (max 2 poin)
+3. 3 saran konkret (bullet, langsung action)
+
+Jangan panjang.
+";
+
+    $result = GeminiService::ask($prompt);
+
+    return response()->json([
+        'result' => $result
+    ]);
+}
+
 }

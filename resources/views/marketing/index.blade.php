@@ -21,6 +21,11 @@
         <div class="text-xl font-bold">
             Rp {{ number_format($totalOmzet,0,',','.') }}
         </div>
+
+        <div class="text-xs mt-1 
+        {{ $growthOmzet >= 0 ? 'text-green-600' : 'text-red-600' }}">
+        {{ $growthOmzet >= 0 ? '+' : '' }}{{ number_format($growthOmzet,1) }}%
+       </div>
     </div>
 
     <div class="bg-gray-100 p-4 rounded text-center">
@@ -28,6 +33,12 @@
         <div class="text-xl font-bold">
             Rp {{ number_format($totalAds,0,',','.') }}
         </div>
+
+        <div class="text-xs mt-1 
+           {{ $growthAds >= 0 ? 'text-red-600' : 'text-green-600' }}">
+           {{ $growthAds >= 0 ? '+' : '' }}{{ number_format($growthAds,1) }}%
+        </div>
+
     </div>
 
     <div class="bg-gray-100 p-4 rounded text-center">
@@ -42,11 +53,36 @@
         <div class="text-xl font-bold">
             {{ number_format($acos,2) }}%
         </div>
+
+        <div class="text-xs mt-1 
+    {{ $growthAcos <= 0 ? 'text-green-600' : 'text-red-600' }}">
+    {{ $growthAcos >= 0 ? '+' : '' }}{{ number_format($growthAcos,1) }}%
+       </div>
     </div>
 
 </div>
 
 <div class="border-t mb-6"></div>
+
+<div class="flex justify-between items-center">
+
+    <h2 class="text-xl font-bold">
+        Dashboard Marketing
+    </h2>
+
+    <button id="btnAI" onclick="runAI()" 
+class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-semibold shadow flex items-center gap-2">
+
+<span id="btnAIText">🧠 Analisa AI</span>
+
+<svg id="btnAILoading" class="hidden w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="white" stroke-width="4"></circle>
+    <path class="opacity-75" fill="white" d="M4 12a8 8 0 018-8v8z"></path>
+</svg>
+
+</button>
+
+</div>
 
 <details class="mb-6">
 
@@ -181,9 +217,6 @@ Rp {{ number_format($row->price * ($acos/100),0,',','.') }}
  <!-- HEADER -->
     <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-2">
 
-        <h2 class="text-xl font-bold">
-            Dashboard Marketing
-        </h2>
 
         <!-- FILTER -->
         <div class="flex gap-2">
@@ -401,6 +434,75 @@ Filter
 </div>
 
 </div>
+</div>
+
+<script>
+function closeAI(){
+    document.getElementById('aiModal').classList.add('hidden');
+}
+
+function runAI() {
+
+    let start = document.querySelector('[name="start_date"]').value;
+    let end   = document.querySelector('[name="end_date"]').value;
+
+    let btn = document.getElementById('btnAI');
+    let text = document.getElementById('btnAIText');
+    let loading = document.getElementById('btnAILoading');
+
+    // 🔥 START LOADING
+    btn.disabled = true;
+    btn.classList.add('opacity-70', 'cursor-not-allowed');
+
+    text.innerText = "Menganalisa...";
+    loading.classList.remove('hidden');
+
+    fetch(`/marketing/ai?start_date=${start}&end_date=${end}`)
+    .then(res => res.json())
+    .then(data => {
+
+        document.getElementById('aiResult').innerText = data.result;
+        document.getElementById('aiModal').classList.remove('hidden');
+
+    })
+    .catch(err => {
+        console.error(err);
+        alert('AI error: ' + err);
+    })
+    .finally(() => {
+
+        // 🔥 STOP LOADING
+        btn.disabled = false;
+        btn.classList.remove('opacity-70', 'cursor-not-allowed');
+
+        text.innerText = "🧠 Analisa AI";
+        loading.classList.add('hidden');
+
+    });
+
+}
+</script>
+
+
+
+<!-- ================= MODAL AI ================= -->
+<div id="aiModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+
+    <div class="bg-white w-full max-w-lg p-4 rounded shadow">
+
+        <!-- HEADER -->
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="font-bold text-lg">🧠 Hasil Analisa AI</h3>
+            <button onclick="closeAI()" class="text-red-500 text-lg">✖</button>
+        </div>
+
+        <!-- CONTENT -->
+        <div id="aiResult" 
+            class="text-sm max-h-96 overflow-y-auto whitespace-pre-line">
+        </div>
+
+    </div>
+
 </div>
 
 </x-app-layout>

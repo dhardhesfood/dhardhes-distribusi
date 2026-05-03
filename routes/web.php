@@ -544,6 +544,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard-marketing', [DashboardMarketingController::class, 'index'])
     ->name('dashboard.marketing');
     
+    Route::get('/marketing/ai', [DashboardMarketingController::class, 'aiAnalysis'])
+    ->name('marketing.ai');
     
     /*
     |--------------------------------------------------------------------------

@@ -348,14 +348,14 @@ $cpClosing = $ad->closing > 0
     <div class="grid grid-cols-3 gap-2 mt-3 text-xs">
 
         <div class="bg-white border rounded p-2 text-center">
-            <div class="text-gray-400">Cost / WA</div>
+            <div class="text-gray-400">Cost / Klik WA</div>
             <div class="font-bold text-red-500">
                 Rp {{ number_format($cpr,0,',','.') }}
             </div>
         </div>
 
         <div class="bg-white border rounded p-2 text-center">
-            <div class="text-gray-400">Cost / Chat</div>
+            <div class="text-gray-400">Cost / Real Chat</div>
             <div class="font-bold text-orange-500">
                 Rp {{ number_format($cpChat,0,',','.') }}
             </div>

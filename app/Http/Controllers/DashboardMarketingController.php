@@ -125,6 +125,82 @@ GROUP BY oo.package_template_id, pt.name
 ORDER BY pt.name ASC
 ");
 
+// ================= SUMMARY PRODUK OFFLINE =================
+$offlineSummary = DB::select("
+SELECT 
+    p.name,
+    SUM(qty) as total_qty,
+    SUM(omzet) as total_omzet
+FROM (
+
+    SELECT 
+        sti.product_id,
+        sti.quantity_sold as qty,
+        sti.subtotal_amount as omzet,
+        st.transaction_date as tanggal
+    FROM sales_transaction_items sti
+    JOIN sales_transactions st 
+        ON st.id = sti.sales_transaction_id
+
+    UNION ALL
+
+    SELECT 
+        csi.product_id,
+        csi.qty as qty,
+        csi.subtotal as omzet,
+        cs.sale_date as tanggal
+    FROM cash_sale_items csi
+    JOIN cash_sales cs 
+        ON cs.id = csi.cash_sale_id
+
+) x
+JOIN products p ON p.id = x.product_id
+
+" . (!empty($start) && !empty($end) ? "
+WHERE x.tanggal BETWEEN '$start' AND '$end'
+" : "") . "
+
+GROUP BY p.name
+ORDER BY total_qty DESC
+");
+
+
+// ================= SUMMARY PRODUK ONLINE =================
+$onlineSummary = DB::select("
+SELECT 
+    p.name,
+    SUM(oi.qty) as total_qty,
+
+    ROUND(SUM(
+        (oi.qty / t.total_qty_per_order) * o.total_price
+    ),0) as total_omzet
+
+FROM online_order_items oi
+
+JOIN online_orders o 
+    ON o.id = oi.online_order_id
+
+JOIN (
+    SELECT 
+        online_order_id,
+        SUM(qty) as total_qty_per_order
+    FROM online_order_items
+    GROUP BY online_order_id
+) t 
+    ON t.online_order_id = oi.online_order_id
+
+JOIN products p 
+    ON p.id = oi.product_id
+
+WHERE o.status = 'done'
+" . (!empty($start) && !empty($end) ? "
+AND o.order_date BETWEEN '$start' AND '$end'
+" : "") . "
+
+GROUP BY p.name
+ORDER BY total_qty DESC
+");
+
     $acosGlobal = $totalAll > 0 ? ($totalAds / $totalAll) * 100 : 0;
 
        return view('marketing.index', compact(
@@ -134,7 +210,9 @@ ORDER BY pt.name ASC
     'end',
     'offlineProduk',
     'onlinePaket',
-    'acosGlobal'
+    'acosGlobal',
+    'offlineSummary',
+    'onlineSummary'
 ));
 
     }

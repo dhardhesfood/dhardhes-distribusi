@@ -347,6 +347,9 @@ public function aiAnalysis(Request $request)
     ? $request->end_date 
     : now()->format('Y-m-d');
 
+    $startLabel = \Carbon\Carbon::parse($start)->translatedFormat('d M Y');
+    $endLabel   = \Carbon\Carbon::parse($end)->translatedFormat('d M Y');
+
     // ===== ambil data sederhana (reuse logika) =====
     $totalOmzet = DB::table('dashboard_marketing_base')
         ->when($start && $end, fn($q) => $q->whereBetween('tanggal', [$start, $end]))
@@ -429,22 +432,105 @@ $margin = $totalOmzet > 0
 
     $acos = $totalOmzet > 0 ? ($totalAds / $totalOmzet) * 100 : 0;
 
- $prompt = "
-Data Marketing:
+ $roas = $totalAds > 0 ? $totalOmzet / $totalAds : 0;
+$acos = $totalOmzet > 0 ? ($totalAds / $totalOmzet) * 100 : 0;
 
-Omzet: Rp ".number_format($totalOmzet)."
+
+// ================= OMZET CHANNEL =================
+$totalOffline = DB::selectOne("
+    SELECT COALESCE(SUM(omzet),0) as total FROM (
+        SELECT subtotal_amount as omzet
+        FROM sales_transaction_items sti
+        JOIN sales_transactions st ON st.id = sti.sales_transaction_id
+        WHERE st.transaction_date BETWEEN '$start' AND '$end'
+
+        UNION ALL
+
+        SELECT csi.subtotal as omzet
+        FROM cash_sale_items csi
+        JOIN cash_sales cs ON cs.id = csi.cash_sale_id
+        WHERE cs.sale_date BETWEEN '$start' AND '$end'
+    ) x
+")->total ?? 0;
+
+$totalOnline = DB::selectOne("
+    SELECT COALESCE(SUM(total_price),0) as total
+    FROM online_orders
+    WHERE status = 'done'
+    AND order_date BETWEEN '$start' AND '$end'
+")->total ?? 0;
+
+// ================= PROPORSI =================
+$offlineRatio = $totalOmzet > 0 ? ($totalOffline / $totalOmzet) * 100 : 0;
+$onlineRatio  = $totalOmzet > 0 ? ($totalOnline / $totalOmzet) * 100 : 0;
+
+$prompt = "
+Data Marketing (REAL DATA):
+
+Periode Analisa:
+$startLabel sampai $endLabel
+
+Omzet Total: Rp ".number_format($totalOmzet)."
+- Offline: Rp ".number_format($totalOffline)." (".number_format($offlineRatio,1)." %)
+- Online: Rp ".number_format($totalOnline)." (".number_format($onlineRatio,1)." %)
+
+CATATAN PENTING:
+Omzet total = gabungan omzet offline + omzet online.
+Semua analisa HARUS berdasarkan periode di atas.
+
 Ads: Rp ".number_format($totalAds)."
 HPP: Rp ".number_format($totalHpp)."
 Profit: Rp ".number_format($profit)."
 Margin: ".number_format($margin,2)."%
+ROAS: ".number_format($roas,2)."
+ACOS: ".number_format($acos,2)."%
 
-Jawab SINGKAT:
+TUGAS ANALISA:
 
-1. Kondisi bisnis (max 2 kalimat)
-2. Masalah utama (max 2 poin)
-3. 3 saran konkret (bullet, langsung action)
+1. Jelaskan kondisi bisnis dengan menyebut:
+   - total omzet
+   - proporsi offline vs online
+   - efisiensi iklan
 
-Jangan panjang.
+2. Analisa proporsi channel:
+   - apakah terlalu bergantung offline / online
+   - apakah komposisi sehat atau tidak
+
+3. Tentukan TARGET ANGKA untuk periode berikutnya:
+   - Target ROAS
+   - Target ACOS
+   - Target komposisi channel (%) ideal
+   - Target omzet realistis
+   - Sebutkan periode target (misal: 30 hari ke depan dari $endLabel)
+
+4. Berikan 3 langkah konkret berbasis kondisi channel:
+   (WAJIB spesifik, bukan teori)
+
+FORMAT WAJIB:
+
+**Kondisi:**
+...
+
+**Analisa Channel:**
+...
+
+**Masalah:**
+- ...
+- ...
+
+**Target (Periode Berikutnya):**
+- Periode: ...
+- ROAS: ...
+- ACOS: ...
+- Komposisi: Offline ...% | Online ...%
+- Omzet: ...
+
+**Action Plan:**
+1. ...
+2. ...
+3. ...
+
+Fokus eksekusi, jangan teori umum.
 ";
 
     $result = GeminiService::ask($prompt);

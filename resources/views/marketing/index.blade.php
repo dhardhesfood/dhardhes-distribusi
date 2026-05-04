@@ -461,7 +461,11 @@ function runAI() {
     .then(res => res.json())
     .then(data => {
 
-        document.getElementById('aiResult').innerText = data.result;
+        let formatted = data.result
+    .replace(/\*\*(.*?)\*\*/g, '<div class="font-bold text-base mt-2">$1</div>')
+    .replace(/\n/g, '<br>');
+
+        document.getElementById('aiResult').innerHTML = formatted;
         document.getElementById('aiModal').classList.remove('hidden');
 
     })
@@ -483,22 +487,32 @@ function runAI() {
 }
 </script>
 
-
-
 <!-- ================= MODAL AI ================= -->
-<div id="aiModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+<div id="aiModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
 
-    <div class="bg-white w-full max-w-lg p-4 rounded shadow">
+    <div class="min-h-screen flex items-start justify-center p-4">
 
-        <!-- HEADER -->
-        <div class="flex justify-between items-center mb-3">
-            <h3 class="font-bold text-lg">🧠 Hasil Analisa AI</h3>
-            <button onclick="closeAI()" class="text-red-500 text-lg">✖</button>
-        </div>
+        <div class="bg-white w-full max-w-lg rounded shadow mt-10">
 
-        <!-- CONTENT -->
-        <div id="aiResult" 
-            class="text-sm max-h-96 overflow-y-auto whitespace-pre-line">
+            <!-- HEADER -->
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 class="font-bold text-base">🧠 Hasil Analisa AI</h3>
+                <button onclick="closeAI()" class="text-red-500 text-lg font-bold">✕</button>
+            </div>
+
+            <!-- CONTENT -->
+            <div id="aiResult" 
+                 class="p-4 text-sm leading-relaxed max-h-[70vh] overflow-y-auto">
+            </div>
+
+            <!-- FOOTER -->
+            <div class="p-3 border-t">
+                <button onclick="closeAI()" 
+                    class="w-full bg-red-600 text-white py-2 rounded font-semibold">
+                    Tutup
+                </button>
+            </div>
+
         </div>
 
     </div>
